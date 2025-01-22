@@ -1,46 +1,117 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
   <head>
-    <meta charset="UTF-8" />
+    <meta charset="utf-8" />
+    <title>Login - Professor</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Login</title>
-    <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
-      rel="stylesheet"
-    />
+    <meta content="Login page for StudyZen" name="description" />
+    <meta content="coderthemes" name="author" />
+    <link rel="shortcut icon" href="/assets/favicon-8fd74f43.ico" />
+    <script type="module" crossorigin src="/assets/theme-e4584917.js"></script>
+    <script type="module" crossorigin src="/assets/auth-23747e5d.js"></script>
+    <link rel="stylesheet" href="/assets/theme-d32f8eb8.css" />
   </head>
-  <body class="d-flex justify-content-center align-items-center vh-100">
-    <div class="card p-4" style="width: 25rem">
-      <h2 class="text-center">Login</h2>
-      <% if (message) { %>
-      <div class="alert alert-danger"><%= message %></div>
-      <% } %>
-      <form action="/login" method="POST">
-        <div class="mb-3">
-          <label for="usuario" class="form-label">Usuário</label>
-          <input
-            type="text"
-            class="form-control"
-            id="usuario"
-            name="usuario"
-            required
-          />
+  <body
+    class="relative lg:h-screen py-6 flex justify-center items-center bg-auto bg-no-repeat bg-primary/10"
+    style="background-image: url('/assets/auth-bg-f57aaf4d.png')"
+  >
+    <div class="container">
+      <div class="flex justify-center">
+        <div class="lg:w-1/3 md:w-2/3 w-full relative">
+          <div
+            class="relative bg-white rounded-lg shadow-lg p-6 z-10 dark:bg-default-50"
+          >
+            <a href="index.html" class="block mb-8">
+              <img
+                class="h-20 dark:hidden block"
+                src="/assets/saep.png"
+                alt="Logo saep"
+              />
+              <img
+                class="h-12 dark:block hidden"
+                src="/assets/logo-light-43c180d2.png"
+                alt="Logo Light"
+              />
+            </a>
+            <h4 class="text-2xl font-semibold text-default-800 mb-4">Login</h4>
+            <p class="mb-10 dark:text-default-600">
+              Bem vindo de volta professor!
+            </p>
+            <form action="/login" method="POST" class="mt-10">
+              <div class="mb-4">
+                <label
+                  for="usuario"
+                  class="block text-base font-semibold text-default-900 mb-2"
+                  >Usuário</label
+                >
+                <input
+                  type="text"
+                  id="usuario"
+                  name="usuario"
+                  class="block w-full rounded py-2.5 px-4 bg-transparent border-default-200 text-default-900 focus:outline-0 focus:ring-0"
+                  placeholder="Digite seu usuário"
+                  required
+                />
+              </div>
+              <div class="mb-4">
+                <label
+                  for="password"
+                  class="block text-base font-semibold text-default-900 mb-2"
+                  >Senha</label
+                >
+                <div class="flex">
+                  <input
+                    type="password"
+                    id="password"
+                    name="password"
+                    class="form-password text-default-900 block w-full rounded-s py-2.5 px-4 bg-transparent border border-default-200 focus:ring-transparent -me-px"
+                    placeholder="Digite sua senha"
+                    required
+                  />
+                </div>
+              </div>
+              <div
+                class="flex justify-between items-center flex-wrap gap-x-1 gap-y-2 mb-6"
+              >
+                <div class="inline-flex items-center">
+                  <input
+                    type="checkbox"
+                    class="h-4 w-4 rounded border-default-200 bg-default-100 text-primary shadow-sm"
+                    id="checkbox-signin"
+                  />
+                  <label
+                    class="text-base ms-2 text-default-900 align-middle select-none"
+                    for="checkbox-signin"
+                    >Lembrar-me</label
+                  >
+                </div>
+                <a
+                  href="/recuperar-senha"
+                  class="text-default-900 border-b border-dashed"
+                  ><small>Esqueceu sua senha?</small></a
+                >
+              </div>
+              <div class="mb-6 text-center">
+                <button
+                  type="submit"
+                  class="relative inline-flex items-center justify-center px-6 py-3 rounded text-base bg-primary text-white capitalize transition-all hover:bg-primary-500 w-full"
+                >
+                  Entrar
+                </button>
+              </div>
+              <h4 class="text-center text-base text-default-700 mb-4">
+                Não tem uma conta?
+                <a href="/registro" class="text-primary">Cadastre-se</a>
+              </h4>
+            </form>
+          </div>
+          <div class="absolute -left-20 bottom-0 hidden lg:block">
+            <img src="/assets/auth-cardbg-1-5e4948cf.png" alt="Background 1" />
+          </div>
+          <div class="absolute -right-20 bottom-0 hidden lg:block">
+            <img src="/assets/auth-cardbg-2-8584e00f.png" alt="Background 2" />
+          </div>
         </div>
-        <div class="mb-3">
-          <label for="password" class="form-label">Senha</label>
-          <input
-            type="password"
-            class="form-control"
-            id="password"
-            name="password"
-            required
-          />
-        </div>
-        <button type="submit" class="btn btn-primary w-100">Entrar</button>
-      </form>
-
-      <div class="mt-3 text-center">
-        <a href="/registro">Cadastre-se</a>
       </div>
     </div>
   </body>
