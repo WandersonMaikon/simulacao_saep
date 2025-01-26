@@ -80,6 +80,47 @@ app.post("/login", (request, response) => {
     }
   );
 });
+// Rota para processar o registro de usuário com verificação de matrícula
+app.post("/registro", async (request, response) => {
+  const { username, matricula, cursos, email, password } = request.body;
+
+  // Verifica se a matrícula está cadastrada na tabela de professores permitidos
+  db.query(
+    "SELECT * FROM professores_permitidos WHERE matricula = ?",
+    [matricula],
+    async (error, results) => {
+      if (error) {
+        console.error("Erro ao verificar matrícula:", error);
+        return response.render("registro", {
+          message: "Erro no sistema ao verificar matrícula",
+        });
+      }
+
+      if (results.length === 0) {
+        return response.render("registro", {
+          message: "Não permitido o cadastro do professor, entrar em contato",
+        });
+      }
+
+      // Matrícula válida, procede com o cadastro
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      db.query(
+        "INSERT INTO usuario (usuario, matricula, cursos, email, password) VALUES (?, ?, ?, ?, ?)",
+        [username, matricula, cursos, email, hashedPassword],
+        (error) => {
+          if (error) {
+            console.error("Erro ao cadastrar usuário:", error);
+            return response.render("registro", {
+              message: "Erro ao criar usuário",
+            });
+          }
+          response.redirect("/login");
+        }
+      );
+    }
+  );
+});
 
 // Rota para exibir a página do dashboard
 app.get("/dashboard", (request, response) => {
