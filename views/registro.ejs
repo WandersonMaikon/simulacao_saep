@@ -150,23 +150,23 @@
       document.addEventListener("DOMContentLoaded", function () {
         const alertMessage = "<%= message %>";
 
-        if (alertMessage && alertMessage !== "") {
+        if (alertMessage && alertMessage.trim() !== "") {
           Swal.fire({
             title: alertMessage.includes("sucesso") ? "Sucesso!" : "Erro!",
-            text: alertMessage,
+            text: alertMessage.includes("sucesso")
+              ? "Sucesso! Você será redirecionado para o login."
+              : alertMessage,
             icon: alertMessage.includes("sucesso") ? "success" : "error",
             confirmButtonText: "OK",
-            timer: 3000, // Tempo para o alerta desaparecer (3000 ms = 3 segundos)
-            timerProgressBar: true, // Exibe a barra de progresso no alerta
+            timer: 5000, // O alerta desaparecerá após 3 segundos
+            timerProgressBar: true,
+          }).then(() => {
+            if (alertMessage.includes("sucesso")) {
+              window.location.href = "/login"; // Redireciona para a página de login após sucesso
+            } else {
+              window.location.href = "/registro"; // Redireciona para a página de registro em caso de erro
+            }
           });
-        }
-      });
-      document.addEventListener("DOMContentLoaded", function () {
-        const messageBox = document.querySelector(".alert");
-        if (messageBox) {
-          setTimeout(() => {
-            window.location.href = "/registro";
-          }, 3000); // Recarrega a página após 3 segundos
         }
       });
     </script>
