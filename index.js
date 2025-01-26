@@ -46,11 +46,6 @@ const verificarAutenticacao = (req, res, next) => {
 };
 
 // Rota para exibir a página de login
-app.get("/login", (req, res) => {
-  res.render("login", { message: "" });
-});
-
-// Rota para processar o login
 app.post("/login", (req, res) => {
   const { email, password } = req.body;
 
@@ -60,24 +55,34 @@ app.post("/login", (req, res) => {
     async (err, results) => {
       if (err) {
         console.error("Erro na consulta SQL:", err);
-        return res.render("login", { message: "Erro no sistema" });
+        req.session.message = "Erro no sistema. Tente novamente.";
+        return res.redirect("/login");
       }
 
       if (results.length === 0) {
-        return res.render("login", { message: "Usuário ou senha inválidos" });
+        req.session.message = "Usuário ou senha inválidos.";
+        return res.redirect("/login");
       }
 
       const user = results[0];
       const passwordMatch = await bcrypt.compare(password, user.senha);
 
       if (!passwordMatch) {
-        return res.render("login", { message: "Usuário ou senha inválidos" });
+        req.session.message = "Usuário ou senha inválidos.";
+        return res.redirect("/login");
       }
 
       req.session.user = user;
       res.redirect("/dashboard");
     }
   );
+});
+
+// Rota para exibir a página de login
+app.get("/login", (req, res) => {
+  const message = req.session.message || "";
+  req.session.message = ""; // Limpa a mensagem para evitar repetição ao dar refresh
+  res.render("login", { message });
 });
 
 // Rota para exibir a página de registro com cursos dinâmicos
@@ -125,7 +130,7 @@ app.post("/registro", async (request, response) => {
       const hashedPassword = await bcrypt.hash(password, 10);
 
       db.query(
-        "INSERT INTO professor (nome, matricula, email, senha) VALUES (?, ?, ?, ?)",
+        "INSERT INTO professor (nome, matricula, curso_id, email, senha) VALUES (?, ?,  ?, ?, ?)",
         [nome, matricula, curso, email, hashedPassword],
         (error) => {
           if (error) {

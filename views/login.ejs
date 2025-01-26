@@ -8,8 +8,13 @@
     <meta content="coderthemes" name="author" />
     <link rel="shortcut icon" href="/assets/favicon-8fd74f43.ico" />
     <script type="module" crossorigin src="/assets/theme-e4584917.js"></script>
-    <script type="module" crossorigin src="/assets/auth-23747e5d.js"></script>
     <link rel="stylesheet" href="/assets/theme-d32f8eb8.css" />
+
+    <!-- SweetAlert2 CSS -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css"
+    />
   </head>
   <body
     class="relative lg:h-screen py-6 flex justify-center items-center bg-auto bg-no-repeat bg-primary/10"
@@ -21,38 +26,39 @@
           <div
             class="relative bg-white rounded-lg shadow-lg p-6 z-10 dark:bg-default-50"
           >
-            <a href="index.html" class="block mb-8">
+            <a href="/" class="block mb-8 text-center">
               <img
-                class="h-20 dark:hidden block"
+                class="h-20 dark:hidden mx-auto"
                 src="/assets/saep.png"
                 alt="Logo saep"
               />
-              <img
-                class="h-12 dark:block hidden"
-                src="/assets/logo-light-43c180d2.png"
-                alt="Logo Light"
-              />
             </a>
-            <h4 class="text-2xl font-semibold text-default-800 mb-4">Login</h4>
-            <p class="mb-10 dark:text-default-600">
-              Bem vindo de volta professor!
+            <h4
+              class="text-2xl font-semibold text-default-800 mb-4 text-center"
+            >
+              Login
+            </h4>
+            <p class="mb-10 dark:text-default-600 text-center">
+              Bem-vindo de volta, professor!
             </p>
+
             <form action="/login" method="POST" class="mt-10">
               <div class="mb-4">
                 <label
-                  for="usuario"
+                  for="email"
                   class="block text-base font-semibold text-default-900 mb-2"
-                  >Usuário</label
+                  >E-mail</label
                 >
                 <input
-                  type="text"
-                  id="usuario"
-                  name="usuario"
+                  type="email"
+                  id="email"
+                  name="email"
                   class="block w-full rounded py-2.5 px-4 bg-transparent border-default-200 text-default-900 focus:outline-0 focus:ring-0"
-                  placeholder="Digite seu usuário"
+                  placeholder="Digite seu e-mail"
                   required
                 />
               </div>
+
               <div class="mb-4">
                 <label
                   for="password"
@@ -70,6 +76,7 @@
                   />
                 </div>
               </div>
+
               <div
                 class="flex justify-between items-center flex-wrap gap-x-1 gap-y-2 mb-6"
               >
@@ -91,6 +98,7 @@
                   ><small>Esqueceu sua senha?</small></a
                 >
               </div>
+
               <div class="mb-6 text-center">
                 <button
                   type="submit"
@@ -99,20 +107,34 @@
                   Entrar
                 </button>
               </div>
+
               <h4 class="text-center text-base text-default-700 mb-4">
                 Não tem uma conta?
                 <a href="/registro" class="text-primary">Cadastre-se</a>
               </h4>
             </form>
           </div>
-          <div class="absolute -left-20 bottom-0 hidden lg:block">
-            <img src="/assets/auth-cardbg-1-5e4948cf.png" alt="Background 1" />
-          </div>
-          <div class="absolute -right-20 bottom-0 hidden lg:block">
-            <img src="/assets/auth-cardbg-2-8584e00f.png" alt="Background 2" />
-          </div>
         </div>
       </div>
     </div>
+
+    <!-- SweetAlert2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        const alertMessage = "<%= message %>";
+
+        if (alertMessage && alertMessage.trim() !== "") {
+          Swal.fire({
+            title: "Erro!",
+            text: alertMessage,
+            icon: "error",
+            confirmButtonText: "OK",
+            timer: 3000, // O alerta desaparecerá após 3 segundos
+            timerProgressBar: true,
+          });
+        }
+      });
+    </script>
   </body>
 </html>

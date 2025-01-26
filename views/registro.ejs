@@ -161,6 +161,14 @@
           });
         }
       });
+      document.addEventListener("DOMContentLoaded", function () {
+        const messageBox = document.querySelector(".alert");
+        if (messageBox) {
+          setTimeout(() => {
+            window.location.href = "/registro";
+          }, 3000); // Recarrega a página após 3 segundos
+        }
+      });
     </script>
   </body>
 </html>
