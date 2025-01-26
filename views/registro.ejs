@@ -7,17 +7,18 @@
     <meta content="Cadastro de usuário no StudyZen" name="description" />
     <meta content="coderthemes" name="author" />
 
-    <!-- Theme favicon -->
     <link rel="shortcut icon" href="assets/favicon-8fd74f43.ico" />
-
-    <!-- Theme CSS -->
-    <script type="module" crossorigin src="assets/theme-e4584917.js"></script>
     <link rel="stylesheet" href="assets/theme-d32f8eb8.css" />
 
     <!-- Choices.js CSS -->
     <link
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css"
+    />
+    <!-- SweetAlert2 CSS -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css"
     />
   </head>
 
@@ -31,7 +32,7 @@
           <div
             class="relative bg-white rounded-lg shadow-lg p-6 z-10 dark:bg-default-50"
           >
-            <a href="index.html" class="block mb-8 text-center">
+            <a href="/" class="block mb-8 text-center">
               <img
                 class="h-12 dark:hidden mx-auto"
                 src="assets/saep.png"
@@ -52,16 +53,16 @@
             <form action="/registro" method="POST">
               <div class="mb-4">
                 <label
-                  for="username"
+                  for="nome"
                   class="block text-base font-semibold text-default-900 mb-2"
-                  >Usuário</label
+                  >Nome</label
                 >
                 <input
                   type="text"
-                  class="block w-full rounded py-2.5 px-4 bg-transparent border-default-200 text-default-900 focus:outline-0 focus:ring-0"
-                  id="username"
-                  name="username"
-                  placeholder="Digite seu usuário"
+                  class="block w-full rounded py-2.5 px-4 border"
+                  id="nome"
+                  name="nome"
+                  placeholder="Digite seu nome"
                   required
                 />
               </div>
@@ -74,33 +75,27 @@
                 >
                 <input
                   type="text"
-                  class="block w-full rounded py-2.5 px-4 bg-transparent border-default-200 text-default-900 focus:outline-0 focus:ring-0"
+                  class="block w-full rounded py-2.5 px-4 border"
                   id="matricula"
                   name="matricula"
-                  placeholder="Digite a sua matrícula"
+                  placeholder="Digite sua matrícula"
                   required
                 />
               </div>
 
               <div class="mb-4">
                 <label
-                  for="courses"
+                  for="curso"
                   class="block text-base font-semibold text-default-900 mb-2"
-                  >Professor nos cursos de:</label
+                  >Curso</label
                 >
-                <select
-                  class="choices__input"
-                  id="choices-multiple-default"
-                  name="courses[]"
-                  multiple
-                >
-                  <option value="Informática">Informática</option>
-                  <option value="Eletrotécnica">Eletrotécnica</option>
-                  <option value="Mecânica">Mecânica</option>
-                  <option value="Administração">Administração</option>
-                  <option value="Segurança do Trabalho">
-                    Segurança do Trabalho
-                  </option>
+                <select class="choices__input" id="curso" name="curso" required>
+                  <% if (typeof cursos !== 'undefined' && cursos.length > 0) {
+                  %> <% cursos.forEach(curso => { %>
+                  <option value="<%= curso.id %>"><%= curso.nome %></option>
+                  <% }); %> <% } else { %>
+                  <option value="">Nenhum curso disponível</option>
+                  <% } %>
                 </select>
               </div>
 
@@ -112,7 +107,7 @@
                 >
                 <input
                   type="email"
-                  class="block w-full rounded py-2.5 px-4 bg-transparent border-default-200 text-default-900 focus:outline-0 focus:ring-0"
+                  class="block w-full rounded py-2.5 px-4 border"
                   id="email"
                   name="email"
                   placeholder="Digite seu e-mail"
@@ -126,59 +121,45 @@
                   class="block text-base font-semibold text-default-900 mb-2"
                   >Senha</label
                 >
-                <div class="flex" data-x-password="">
-                  <input
-                    type="password"
-                    id="password"
-                    class="form-password text-default-900 block w-full rounded-s py-2.5 px-4 bg-transparent border border-default-200 focus:ring-transparent -me-px"
-                    name="password"
-                    placeholder="Digite sua senha"
-                    required
-                  />
-                  <button
-                    type="button"
-                    id="password-addon"
-                    class="password-toggle inline-flex items-center justify-center py-2.5 px-4 border rounded-e bg-transparent border-default-200"
-                  >
-                    <i
-                      data-lucide="eye"
-                      class="password-eye-on h-5 w-5 text-default-600"
-                    ></i>
-                    <i
-                      data-lucide="eye-off"
-                      class="password-eye-off h-5 w-5 text-default-600 hidden"
-                    ></i>
-                  </button>
-                </div>
+                <input
+                  type="password"
+                  class="block w-full rounded py-2.5 px-4 border"
+                  id="password"
+                  name="password"
+                  placeholder="Digite sua senha"
+                  required
+                />
               </div>
 
               <button
                 type="submit"
-                class="relative inline-flex items-center justify-center px-6 py-3 rounded text-base bg-primary text-white capitalize transition-all hover:bg-primary-500 w-full"
+                class="bg-primary text-white w-full py-3 rounded"
               >
                 Cadastrar
               </button>
             </form>
-
-            <h4 class="text-center text-base text-default-700 mt-6">
-              Já tem uma conta?
-              <a href="/login" class="text-primary">Faça login</a>
-            </h4>
           </div>
         </div>
       </div>
     </div>
-
+    <!-- SweetAlert2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
     <script>
+      new Choices("#curso");
       document.addEventListener("DOMContentLoaded", function () {
-        const element = document.getElementById("choices-multiple-default");
-        const choices = new Choices(element, {
-          removeItemButton: true,
-          placeholderValue: "Selecione os cursos",
-          searchEnabled: true,
-          noResultsText: "Nenhum curso encontrado",
-        });
+        const alertMessage = "<%= message %>";
+
+        if (alertMessage && alertMessage !== "") {
+          Swal.fire({
+            title: alertMessage.includes("sucesso") ? "Sucesso!" : "Erro!",
+            text: alertMessage,
+            icon: alertMessage.includes("sucesso") ? "success" : "error",
+            confirmButtonText: "OK",
+            timer: 3000, // Tempo para o alerta desaparecer (3000 ms = 3 segundos)
+            timerProgressBar: true, // Exibe a barra de progresso no alerta
+          });
+        }
       });
     </script>
   </body>
