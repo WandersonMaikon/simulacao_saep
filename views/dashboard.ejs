@@ -52,7 +52,7 @@
           <li class="menu-item">
             <a
               class="flex items-center gap-x-3.5 py-3 px-5 text-sm font-medium text-default-700 rounded-md transition-all hover:bg-default-100"
-              href="admin-dashboard.html"
+              href="/dashboard"
             >
               <i class="ph-duotone ph-gauge text-xl"></i>
               Dashboard
@@ -62,7 +62,7 @@
           <li class="menu-item">
             <a
               class="flex items-center gap-x-3.5 py-3 px-5 text-sm font-medium text-default-700 rounded-md transition-all hover:bg-default-100"
-              href="admin-chat.html"
+              href="/cadastrar-questao"
             >
               <i class="ph-duotone ph-book text-xl"></i>
               Cadastrar questões
@@ -141,154 +141,6 @@
             </div>
 
             <!-- Notification Dropdown -->
-            <div class="md:flex hidden">
-              <div
-                class="hs-dropdown relative inline-flex [--placement:bottom-right]"
-              >
-                <button
-                  id="hs-dropdown-with-header"
-                  type="button"
-                  class="hs-dropdown-toggle inline-flex flex-shrink-0 justify-center items-center gap-2 h-10 w-10 rounded-md font-medium text-default-700 align-middle bg-default-100 hover:text-primary transition-all text-xs"
-                >
-                  <i class="ph-duotone ph-bell text-2xl"></i>
-                </button>
-
-                <div
-                  class="hs-dropdown-menu mt-2 transition-[opacity,margin] duration hs-dropdown-open:opacity-100 opacity-0 hidden min-w-[20rem] shadow-md rounded-lg border border-default-200 bg-white dark:bg-default-50"
-                >
-                  <div class="px-4 py-2 flex items-center justify-between">
-                    <h6 class="text-sm font-medium">Notification</h6>
-                    <a href="javascript: void(0);" class="text-default-500">
-                      <small>Clear All</small>
-                    </a>
-                  </div>
-
-                  <div
-                    class="p-4 h-80 border-y border-dashed border-default-200"
-                    data-simplebar
-                  >
-                    <h5 class="text-xs text-default-700 mb-2">Today</h5>
-
-                    <a
-                      href="javascript:void(0);"
-                      class="flex items-center mb-4"
-                    >
-                      <img
-                        src="assets/avatar-1-f1564e7c.png"
-                        class="rounded-full h-10 w-10"
-                      />
-                      <div class="flex-grow truncate ms-2">
-                        <div class="flex items-center justify-between">
-                          <h5 class="text-sm font-medium text-default-800">
-                            Datacorp
-                          </h5>
-                          <small class="inline-flex text-xs text-default-500"
-                            >1 min ago</small
-                          >
-                        </div>
-                        <small class="text-default-400"
-                          >Caleb Flakelar commented on Admin</small
-                        >
-                      </div>
-                    </a>
-
-                    <a
-                      href="javascript:void(0);"
-                      class="flex items-center mb-4"
-                    >
-                      <div class="flex-shrink-0">
-                        <img
-                          src="assets/avatar-2-cb0540ba.png"
-                          class="rounded-full h-10 w-10"
-                        />
-                      </div>
-                      <div class="flex-grow truncate ms-2">
-                        <div class="flex items-center justify-between">
-                          <h5 class="text-sm font-medium text-default-800">
-                            Admin
-                          </h5>
-                          <small class="inline-flex text-xs text-default-500"
-                            >1 hr ago</small
-                          >
-                        </div>
-                        <small class="text-default-400"
-                          >New user registered</small
-                        >
-                      </div>
-                    </a>
-
-                    <a
-                      href="javascript:void(0);"
-                      class="flex items-center mb-4"
-                    >
-                      <div class="flex-shrink-0">
-                        <img
-                          src="assets/avatar-3-7b02f585.png"
-                          class="rounded-full h-10 w-10"
-                        />
-                      </div>
-                      <div class="flex-grow truncate ms-2">
-                        <div class="flex items-center justify-between">
-                          <h5 class="text-sm font-medium text-default-800">
-                            Cristina Pride
-                          </h5>
-                          <small class="inline-flex text-xs text-default-500"
-                            >1 day ago</small
-                          >
-                        </div>
-                        <small class="text-default-400"
-                          >Hi, How are you? What about our next meeting</small
-                        >
-                      </div>
-                    </a>
-
-                    <h5 class="text-xs text-default-700 mb-2">Yesterday</h5>
-
-                    <a
-                      href="javascript:void(0);"
-                      class="flex items-center mb-4"
-                    >
-                      <div class="flex-shrink-0">
-                        <img
-                          src="assets/avatar-4-2345eb04.png"
-                          class="rounded-full h-10 w-10"
-                        />
-                      </div>
-                      <div class="flex-grow truncate ms-2">
-                        <h5 class="text-sm font-semibold mb-1">Datacorp</h5>
-                        <small class="text-default-400"
-                          >Caleb Flakelar commented on Admin</small
-                        >
-                      </div>
-                    </a>
-
-                    <a href="javascript:void(0);" class="flex">
-                      <div class="flex-shrink-0">
-                        <img
-                          src="assets/avatar-5-0368e7b5.png"
-                          class="rounded-full h-10 w-10"
-                        />
-                      </div>
-                      <div class="flex-grow truncate ms-2">
-                        <h5 class="text-sm font-semibold mb-1">
-                          Karen Robinson
-                        </h5>
-                        <small class="text-default-400"
-                          >Wow ! this admin looks good and awesome design</small
-                        >
-                      </div>
-                    </a>
-                  </div>
-
-                  <a
-                    href="javascript:void(0);"
-                    class="px-4 py-2 block text-center text-primary font-medium text-sm"
-                  >
-                    View All
-                  </a>
-                </div>
-              </div>
-            </div>
 
             <!-- Profile Dropdown -->
             <div class="flex">
@@ -346,20 +198,8 @@
             <script>
               document.write(new Date().getFullYear());
             </script>
-            Design & Crafted With 💙 by Coderthemes
+            © SENAI. Todos os direitos reservados.
           </p>
-
-          <div class="flex justify-end text-center gap-6">
-            <a href="javascript:void(0)" class="text-default-500 font-semibold">
-              Terms
-            </a>
-            <a href="javascript:void(0)" class="text-default-500 font-semibold">
-              Privacy
-            </a>
-            <a href="javascript:void(0)" class="text-default-500 font-semibold">
-              Cookies
-            </a>
-          </div>
         </div>
       </footer>
 

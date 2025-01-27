@@ -159,6 +159,45 @@ app.post("/registro", async (request, response) => {
   );
 });
 
+// Rota para exibir a página de cadastro de questões
+app.get("/cadastrar-questao", (req, res) => {
+  db.query("SELECT id, nome FROM curso", (err, results) => {
+    if (err) {
+      console.error("Erro ao buscar cursos:", err);
+      return res.render("admin-questoes", {
+        message: "Erro ao carregar cursos.",
+        cursos: [],
+      });
+    }
+    res.render("admin-questoes", { message: "", cursos: results });
+  });
+});
+
+// Rota para processar o cadastro de questões
+app.post("/cadastrar-questao", (req, res) => {
+  const { titulo, descricao, alternativaA, alternativaB, alternativaC, alternativaD, correta, curso, dificuldade } =
+    req.body;
+
+  db.query(
+    "INSERT INTO questao (titulo, descricao, alternativaA, alternativaB, alternativaC, alternativaD, correta, curso_id, dificuldade) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+    [titulo, descricao, alternativaA, alternativaB, alternativaC, alternativaD, correta, curso, dificuldade],
+    (err) => {
+      if (err) {
+        console.error("Erro ao cadastrar questão:", err);
+        return res.render("admin-questoes", {
+          message: "Erro ao cadastrar a questão.",
+          cursos: [],
+        });
+      }
+      return res.render("admin-questoes", {
+        message: "Questão cadastrada com sucesso!",
+        cursos: [],
+      });
+    }
+  );
+});
+
+
 // Rota para exibir o dashboard (protegida)
 app.get("/dashboard", verificarAutenticacao, (req, res) => {
   res.render("dashboard", { username: req.session.user.nome });
