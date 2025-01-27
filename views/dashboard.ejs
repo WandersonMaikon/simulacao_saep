@@ -11,8 +11,6 @@
     <!-- Theme favicon -->
     <link rel="shortcut icon" href="assets/favicon-8fd74f43.ico" />
 
-    <!--&lt;!&ndash; Head js &ndash;&gt;-->
-
     <script
       type="module"
       crossorigin
@@ -25,6 +23,9 @@
       href="assets/apexcharts.common-ac06378e.js"
     />
     <link rel="stylesheet" href="assets/theme-d32f8eb8.css" />
+
+    <!-- SweetAlert CSS e JS -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   </head>
 
   <body>
@@ -383,6 +384,19 @@
 
     <!-- Theme Js -->
   </body>
-
+  <% if (message) { %>
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      Swal.fire({
+        title: "Sucesso!",
+        text: "<%= message %>",
+        icon: "success",
+        confirmButtonText: "OK",
+        timer: 3000, // O alerta desaparecerá após 3 segundos
+        timerProgressBar: true,
+      });
+    });
+  </script>
+  <% } %>
   <!-- Mirrored from coderthemes.com/wb/studyzen/admin-dashboard.html by HTTrack Website Copier/3.x [XR&CO'2014], Wed, 22 Jan 2025 13:08:33 GMT -->
 </html>

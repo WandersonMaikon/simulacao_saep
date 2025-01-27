@@ -45,7 +45,7 @@ const verificarAutenticacao = (req, res, next) => {
   next();
 };
 
-// Rota para exibir a página de login
+// Rota para processar o login
 app.post("/login", (req, res) => {
   const { email, password } = req.body;
 
@@ -55,27 +55,38 @@ app.post("/login", (req, res) => {
     async (err, results) => {
       if (err) {
         console.error("Erro na consulta SQL:", err);
-        req.session.message = "Erro no sistema. Tente novamente.";
-        return res.redirect("/login");
+        return res.render("login", { message: "Erro no sistema" });
       }
 
       if (results.length === 0) {
-        req.session.message = "Usuário ou senha inválidos.";
-        return res.redirect("/login");
+        return res.render("login", { message: "Usuário ou senha inválidos" });
       }
 
       const user = results[0];
       const passwordMatch = await bcrypt.compare(password, user.senha);
 
       if (!passwordMatch) {
-        req.session.message = "Usuário ou senha inválidos.";
-        return res.redirect("/login");
+        return res.render("login", { message: "Usuário ou senha inválidos" });
       }
 
       req.session.user = user;
+      req.session.successMessage = "Logado com sucesso!";
+
       res.redirect("/dashboard");
     }
   );
+});
+
+// Rota para exibir o dashboard
+app.get("/dashboard", (req, res) => {
+  if (!req.session.user) {
+    return res.redirect("/login");
+  }
+
+  const successMessage = req.session.successMessage || "";
+  delete req.session.successMessage; // Remove a mensagem para evitar repetição
+
+  res.render("dashboard", { username: req.session.user.nome, message: successMessage });
 });
 
 // Rota para exibir a página de login
