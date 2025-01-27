@@ -86,7 +86,10 @@ app.get("/dashboard", (req, res) => {
   const successMessage = req.session.successMessage || "";
   delete req.session.successMessage; // Remove a mensagem para evitar repetição
 
-  res.render("dashboard", { username: req.session.user.nome, message: successMessage });
+  res.render("dashboard", {
+    username: req.session.user.nome,
+    message: successMessage,
+  });
 });
 
 // Rota para exibir a página de login
@@ -106,9 +109,6 @@ app.get("/registro", (req, res) => {
         cursos: [],
       });
     }
-
-    // Certifique-se de que os dados retornados são um array válido
-    console.log("Cursos carregados:", results);
 
     res.render("registro", { message: "", cursos: results });
   });
@@ -161,7 +161,21 @@ app.post("/registro", async (request, response) => {
 
 // Rota para exibir a página de cadastro de questões
 app.get("/cadastrar-questao", (req, res) => {
-  db.query("SELECT id, nome FROM curso", (err, results) => {
+  if (!req.session.user) {
+    return res.redirect("/login");
+  }
+
+  const professorId = req.session.user.id; // Obtendo o ID do professor logado
+
+  // Consulta para buscar apenas os cursos associados ao professor logado
+  const query = `
+    SELECT c.id, c.nome 
+    FROM curso c
+    JOIN professor p ON p.curso_id = c.id
+    WHERE p.id = ?;
+  `;
+
+  db.query(query, [professorId], (err, results) => {
     if (err) {
       console.error("Erro ao buscar cursos:", err);
       return res.render("admin-questoes", {
@@ -169,18 +183,40 @@ app.get("/cadastrar-questao", (req, res) => {
         cursos: [],
       });
     }
+
+    // Renderiza a página com os cursos do professor logado
     res.render("admin-questoes", { message: "", cursos: results });
   });
 });
 
+
 // Rota para processar o cadastro de questões
 app.post("/cadastrar-questao", (req, res) => {
-  const { titulo, descricao, alternativaA, alternativaB, alternativaC, alternativaD, correta, curso, dificuldade } =
-    req.body;
+  const {
+    titulo,
+    descricao,
+    alternativaA,
+    alternativaB,
+    alternativaC,
+    alternativaD,
+    correta,
+    curso,
+    dificuldade,
+  } = req.body;
 
   db.query(
     "INSERT INTO questao (titulo, descricao, alternativaA, alternativaB, alternativaC, alternativaD, correta, curso_id, dificuldade) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-    [titulo, descricao, alternativaA, alternativaB, alternativaC, alternativaD, correta, curso, dificuldade],
+    [
+      titulo,
+      descricao,
+      alternativaA,
+      alternativaB,
+      alternativaC,
+      alternativaD,
+      correta,
+      curso,
+      dificuldade,
+    ],
     (err) => {
       if (err) {
         console.error("Erro ao cadastrar questão:", err);
@@ -196,7 +232,6 @@ app.post("/cadastrar-questao", (req, res) => {
     }
   );
 });
-
 
 // Rota para exibir o dashboard (protegida)
 app.get("/dashboard", verificarAutenticacao, (req, res) => {
