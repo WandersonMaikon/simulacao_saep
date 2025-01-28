@@ -189,9 +189,13 @@ app.get("/cadastrar-questao", (req, res) => {
   });
 });
 
-
-// Rota para processar o cadastro de questões
+// Rota para cadastrar questões
 app.post("/cadastrar-questao", (req, res) => {
+  if (!req.session.user) {
+    return res.redirect("/login");
+  }
+
+  const professorId = req.session.user.id; // Obtendo o ID do professor logado
   const {
     titulo,
     descricao,
@@ -204,33 +208,66 @@ app.post("/cadastrar-questao", (req, res) => {
     dificuldade,
   } = req.body;
 
-  db.query(
-    "INSERT INTO questao (titulo, descricao, alternativaA, alternativaB, alternativaC, alternativaD, correta, curso_id, dificuldade) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-    [
-      titulo,
-      descricao,
-      alternativaA,
-      alternativaB,
-      alternativaC,
-      alternativaD,
-      correta,
-      curso,
-      dificuldade,
-    ],
-    (err) => {
-      if (err) {
-        console.error("Erro ao cadastrar questão:", err);
-        return res.render("admin-questoes", {
-          message: "Erro ao cadastrar a questão.",
-          cursos: [],
-        });
-      }
+  // Verifica se o curso selecionado pertence ao professor logado
+  const verificaCursoQuery = `
+    SELECT c.id 
+    FROM curso c
+    JOIN professor p ON p.curso_id = c.id
+    WHERE p.id = ? AND c.id = ?;
+  `;
+
+  db.query(verificaCursoQuery, [professorId, curso], (err, results) => {
+    if (err) {
+      console.error("Erro ao verificar curso:", err);
       return res.render("admin-questoes", {
-        message: "Questão cadastrada com sucesso!",
+        message: "Erro ao verificar o curso.",
         cursos: [],
       });
     }
-  );
+
+    if (results.length === 0) {
+      return res.render("admin-questoes", {
+        message: "Você não tem permissão para cadastrar questões nesse curso.",
+        cursos: [],
+      });
+    }
+
+    // Insere a questão no banco de dados
+    const cadastrarQuestaoQuery = `
+      INSERT INTO questao (enunciado, descricao, alternativa_a, alternativa_b, alternativa_c, alternativa_d, resposta_correta, dificuldade)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+    `;
+
+    db.query(
+      cadastrarQuestaoQuery,
+      [
+        titulo,
+        descricao,
+        alternativaA,
+        alternativaB,
+        alternativaC,
+        alternativaD,
+        correta,
+        curso,
+        dificuldade,
+        professorId,
+      ],
+      (err) => {
+        if (err) {
+          console.error("Erro ao cadastrar questão:", err);
+          return res.render("admin-questoes", {
+            message: "Erro ao cadastrar a questão.",
+            cursos: [],
+          });
+        }
+
+        return res.render("admin-questoes", {
+          message: "Questão cadastrada com sucesso!",
+          cursos: [],
+        });
+      }
+    );
+  });
 });
 
 // Rota para exibir o dashboard (protegida)
