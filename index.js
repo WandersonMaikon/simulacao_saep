@@ -178,14 +178,52 @@ app.get("/cadastrar-questao", (req, res) => {
   db.query(query, [professorId], (err, results) => {
     if (err) {
       console.error("Erro ao buscar cursos:", err);
-      return res.render("admin-questoes", {
+      return res.render("questoes", {
         message: "Erro ao carregar cursos.",
         cursos: [],
       });
     }
 
     // Renderiza a página com os cursos do professor logado
-    res.render("admin-questoes", { message: "", cursos: results });
+    res.render("questoes", { message: "", cursos: results });
+  });
+});
+
+// Rota para exibir a página de cadastro de matéria
+app.get("/cadastrar-materia", (req, res) => {
+  db.query("SELECT * FROM materia", (err, results) => {
+    if (err) {
+      console.error("Erro ao buscar matérias:", err);
+      return res.render("materia", {
+        message: "Erro ao carregar matérias.",
+        materias: [],
+      });
+    }
+    res.render("materia", { message: "", materias: results });
+  });
+});
+
+// Rota para cadastrar uma nova matéria
+app.post("/materia", (req, res) => {
+  const { nome_materia } = req.body;
+
+  if (!nome_materia) {
+    return res.render("materia", {
+      message: "O nome da matéria é obrigatório!",
+    });
+  }
+
+  // Inserir matéria no banco de dados
+  db.query("INSERT INTO materia (nome) VALUES (?)", [nome_materia], (err) => {
+    if (err) {
+      console.error("Erro ao cadastrar matéria:", err);
+      return res.render("materia", {
+        message: "Erro ao cadastrar matéria. Tente novamente!",
+      });
+    }
+    return res.render("materia", {
+      message: "Matéria cadastrada com sucesso!",
+    });
   });
 });
 
@@ -197,13 +235,13 @@ app.post("/cadastrar-questao", (req, res) => {
 
   const professorId = req.session.user.id; // Obtendo o ID do professor logado
   const {
-    titulo,
-    descricao,
+    enunciado,
     alternativaA,
     alternativaB,
     alternativaC,
     alternativaD,
     correta,
+    titulo,
     curso,
     dificuldade,
   } = req.body;
@@ -219,14 +257,14 @@ app.post("/cadastrar-questao", (req, res) => {
   db.query(verificaCursoQuery, [professorId, curso], (err, results) => {
     if (err) {
       console.error("Erro ao verificar curso:", err);
-      return res.render("admin-questoes", {
+      return res.render("questoes", {
         message: "Erro ao verificar o curso.",
         cursos: [],
       });
     }
 
     if (results.length === 0) {
-      return res.render("admin-questoes", {
+      return res.render("questoes", {
         message: "Você não tem permissão para cadastrar questões nesse curso.",
         cursos: [],
       });
@@ -234,34 +272,34 @@ app.post("/cadastrar-questao", (req, res) => {
 
     // Insere a questão no banco de dados
     const cadastrarQuestaoQuery = `
-      INSERT INTO questao (enunciado, descricao, alternativa_a, alternativa_b, alternativa_c, alternativa_d, resposta_correta, dificuldade)
+      INSERT INTO questao (enunciado, alternativa_a, alternativa_b, alternativa_c, alternativa_d, resposta_correta, titulo, dificuldade)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
     `;
 
     db.query(
       cadastrarQuestaoQuery,
       [
-        titulo,
-        descricao,
+        enunciado,
         alternativaA,
         alternativaB,
         alternativaC,
         alternativaD,
         correta,
         curso,
+        titulo,
         dificuldade,
         professorId,
       ],
       (err) => {
         if (err) {
           console.error("Erro ao cadastrar questão:", err);
-          return res.render("admin-questoes", {
+          return res.render("questoes", {
             message: "Erro ao cadastrar a questão.",
             cursos: [],
           });
         }
 
-        return res.render("admin-questoes", {
+        return res.render("questoes", {
           message: "Questão cadastrada com sucesso!",
           cursos: [],
         });
