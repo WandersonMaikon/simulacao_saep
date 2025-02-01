@@ -115,44 +115,61 @@ app.get("/registro", (req, res) => {
 });
 
 // Rota para processar o registro de usuário
-// Rota para processar o registro de usuário
-app.post("/registro", async (request, response) => {
-  const { nome, matricula, curso, email, password } = request.body;
+app.post("/registro", async (req, res) => {
+  const { nome, matricula, curso, email, password } = req.body;
 
-  // Verifica se a matrícula existe na tabela de matrículas válidas
+  // Verifica se a matrícula é válida
   db.query(
     "SELECT * FROM matricula_validada WHERE matricula = ?",
     [matricula],
     async (error, results) => {
       if (error) {
         console.error("Erro ao verificar matrícula:", error);
-        return response.render("registro", {
-          message: "Matricula inexistente ou alguma informação incorreta.",
+        return res.render("registro", {
+          message: "Erro no sistema. Tente novamente!",
         });
       }
 
       if (results.length === 0) {
-        return response.render("registro", {
-          message: "Matricula inexistente ou alguma informação incorreta.",
+        return res.render("registro", {
+          message: "Matrícula inválida ou não cadastrada.",
         });
       }
 
-      // Se a matrícula for válida, insere o professor no banco de dados
+      // Criptografa a senha
       const hashedPassword = await bcrypt.hash(password, 10);
 
+      // Insere o professor
       db.query(
-        "INSERT INTO professor (nome, matricula, curso_id, email, senha) VALUES (?, ?,  ?, ?, ?)",
+        "INSERT INTO professor (nome, matricula, curso_id, email, senha) VALUES (?, ?, ?, ?, ?)",
         [nome, matricula, curso, email, hashedPassword],
-        (error) => {
+        (error, result) => {
           if (error) {
-            console.error("Erro ao inserir usuário:", error);
-            return response.render("registro", {
-              message: "Erro ao criar usuário.",
+            console.error("Erro ao cadastrar professor:", error);
+            return res.render("registro", {
+              message: "Erro ao criar professor.",
             });
           }
-          return response.render("registro", {
-            message: "Cadastro de professor feito com sucesso!",
-          });
+
+          const professorId = result.insertId;
+
+          // Agora, adiciona o relacionamento na tabela professor_curso
+          db.query(
+            "INSERT INTO professor_curso (professor_id, curso_id) VALUES (?, ?)",
+            [professorId, curso],
+            (err) => {
+              if (err) {
+                console.error("Erro ao vincular professor ao curso:", err);
+                return res.render("registro", {
+                  message: "Erro ao vincular professor ao curso.",
+                });
+              }
+
+              return res.render("registro", {
+                message: "Cadastro realizado com sucesso!",
+              });
+            }
+          );
         }
       );
     }
@@ -160,71 +177,89 @@ app.post("/registro", async (request, response) => {
 });
 
 // Rota para exibir a página de cadastro de questões
-app.get("/cadastrar-questao", (req, res) => {
-  if (!req.session.user) {
-    return res.redirect("/login");
-  }
-
-  const professorId = req.session.user.id; // Obtendo o ID do professor logado
-
-  // Consulta para buscar apenas os cursos associados ao professor logado
-  const query = `
-    SELECT c.id, c.nome 
-    FROM curso c
-    JOIN professor p ON p.curso_id = c.id
-    WHERE p.id = ?;
-  `;
-
-  db.query(query, [professorId], (err, results) => {
-    if (err) {
-      console.error("Erro ao buscar cursos:", err);
-      return res.render("questoes", {
-        message: "Erro ao carregar cursos.",
-        cursos: [],
-      });
-    }
-
-    // Renderiza a página com os cursos do professor logado
-    res.render("questoes", { message: "", cursos: results });
-  });
-});
-
-// Rota para exibir a página de cadastro de matéria
 app.get("/cadastrar-materia", (req, res) => {
-  db.query("SELECT * FROM materia", (err, results) => {
-    if (err) {
-      console.error("Erro ao buscar matérias:", err);
-      return res.render("materia", {
-        message: "Erro ao carregar matérias.",
-        materias: [],
-      });
+  if (!req.session.user) {
+    return res.redirect("/login"); // Verifica se o usuário está autenticado
+  }
+
+  const professorId = req.session.user.id;
+
+  // Buscar cursos vinculados ao professor
+  db.query(
+    "SELECT curso.id, curso.nome FROM curso INNER JOIN professor_curso ON curso.id = professor_curso.curso_id WHERE professor_curso.professor_id = ?",
+    [professorId],
+    (err, results) => {
+      if (err) {
+        console.error("Erro ao buscar cursos:", err);
+        return res.render("materia", {
+          message: "Erro ao carregar cursos.",
+          cursos: [],
+        });
+      }
+
+      // Verifica se a variável `cursos` está correta antes de renderizar a página
+      console.log("Cursos carregados:", results);
+
+      res.render("materia", { message: "", cursos: results });
     }
-    res.render("materia", { message: "", materias: results });
-  });
+  );
 });
 
-// Rota para cadastrar uma nova matéria
-app.post("/materia", (req, res) => {
-  const { nome_materia } = req.body;
+app.post("/cadastrar-materia", (req, res) => {
+  if (!req.session.user) {
+    return res.redirect("/login"); // Verifica se o usuário está autenticado
+  }
 
-  if (!nome_materia) {
+  const { nome_materia, curso_id } = req.body;
+
+  if (!nome_materia || !curso_id) {
     return res.render("materia", {
-      message: "O nome da matéria é obrigatório!",
+      message: "Todos os campos são obrigatórios!",
+      cursos: [],
     });
   }
 
-  // Inserir matéria no banco de dados
-  db.query("INSERT INTO materia (nome) VALUES (?)", [nome_materia], (err) => {
-    if (err) {
-      console.error("Erro ao cadastrar matéria:", err);
-      return res.render("materia", {
-        message: "Erro ao cadastrar matéria. Tente novamente!",
-      });
+  // Verifica se a matéria já existe no curso
+  db.query(
+    "SELECT * FROM materia WHERE nome = ? AND curso_id = ?",
+    [nome_materia, curso_id],
+    (err, results) => {
+      if (err) {
+        console.error("Erro ao verificar matéria:", err);
+        return res.render("materia", {
+          message: "Erro ao verificar matéria.",
+          cursos: [],
+        });
+      }
+
+      if (results.length > 0) {
+        return res.render("materia", {
+          message: "Essa matéria já está cadastrada para este curso.",
+          cursos: [],
+        });
+      }
+
+      // Insere a nova matéria vinculada ao curso
+      db.query(
+        "INSERT INTO materia (nome, curso_id) VALUES (?, ?)",
+        [nome_materia, curso_id],
+        (err) => {
+          if (err) {
+            console.error("Erro ao cadastrar matéria:", err);
+            return res.render("materia", {
+              message: "Erro ao cadastrar matéria.",
+              cursos: [],
+            });
+          }
+
+          return res.render("materia", {
+            message: "Matéria cadastrada com sucesso!",
+            cursos: [],
+          });
+        }
+      );
     }
-    return res.render("materia", {
-      message: "Matéria cadastrada com sucesso!",
-    });
-  });
+  );
 });
 
 // Rota para cadastrar questões
