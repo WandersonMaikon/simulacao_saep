@@ -23,7 +23,7 @@ db.connect((error) => {
   }
 });
 
-// Configuração do Express e middlewares
+// Configuração dos middlewares
 app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static("public"));
@@ -37,7 +37,7 @@ app.use(
   })
 );
 
-// Middleware de autenticação: redireciona para /login se o usuário não estiver logado
+// Middleware de autenticação
 const verificarAutenticacao = (req, res, next) => {
   if (!req.session.user) {
     return res.redirect("/login");
@@ -45,18 +45,11 @@ const verificarAutenticacao = (req, res, next) => {
   next();
 };
 
-// ======================================
-// Rotas de Login e Registro
-// ======================================
+// ==========================
+// Rotas de Autenticação
+// ==========================
 
-// Exibe a página de login (GET)
-app.get("/login", (req, res) => {
-  const message = req.session.message || "";
-  req.session.message = ""; // Limpa a mensagem para evitar repetição
-  res.render("login", { message });
-});
-
-// Processa o login (POST)
+// Processa o login
 app.post("/login", (req, res) => {
   const { email, password } = req.body;
   db.query(
@@ -82,7 +75,14 @@ app.post("/login", (req, res) => {
   );
 });
 
-// Exibe o dashboard (somente para usuários autenticados)
+// Exibe a página de login
+app.get("/login", (req, res) => {
+  const message = req.session.message || "";
+  req.session.message = "";
+  res.render("login", { message });
+});
+
+// Exibe o dashboard (rota protegida)
 app.get("/dashboard", verificarAutenticacao, (req, res) => {
   const successMessage = req.session.successMessage || "";
   delete req.session.successMessage;
@@ -92,9 +92,19 @@ app.get("/dashboard", verificarAutenticacao, (req, res) => {
   });
 });
 
-// Exibe a página de registro (GET)
+// Logout
+app.get("/logout", (req, res) => {
+  req.session.destroy();
+  res.redirect("/login");
+});
+
+// ==========================
+// Rotas de Registro (Professor)
+// ==========================
+
+// Exibe a página de registro
 app.get("/registro", (req, res) => {
-  // Aqui são buscados todos os cursos; se desejar filtrar, ajuste conforme necessário
+  // Aqui busca todos os cursos, pois o usuário ainda não está logado
   db.query("SELECT id, nome FROM curso", (err, results) => {
     if (err) {
       console.error("Erro ao buscar cursos:", err);
@@ -107,11 +117,9 @@ app.get("/registro", (req, res) => {
   });
 });
 
-// Processa o registro de usuário (POST)
+// Processa o registro de professor
 app.post("/registro", async (req, res) => {
   const { nome, matricula, curso, email, password } = req.body;
-
-  // Verifica se a matrícula é válida
   db.query(
     "SELECT * FROM matricula_validada WHERE matricula = ?",
     [matricula],
@@ -127,9 +135,7 @@ app.post("/registro", async (req, res) => {
           message: "Matrícula inválida ou não cadastrada.",
         });
       }
-      // Criptografa a senha
       const hashedPassword = await bcrypt.hash(password, 10);
-      // Insere o professor
       db.query(
         "INSERT INTO professor (nome, matricula, curso_id, email, senha) VALUES (?, ?, ?, ?, ?)",
         [nome, matricula, curso, email, hashedPassword],
@@ -141,7 +147,7 @@ app.post("/registro", async (req, res) => {
             });
           }
           const professorId = result.insertId;
-          // Adiciona o relacionamento na tabela professor_curso
+          // Insere o relacionamento na tabela professor_curso
           db.query(
             "INSERT INTO professor_curso (professor_id, curso_id) VALUES (?, ?)",
             [professorId, curso],
@@ -164,83 +170,86 @@ app.post("/registro", async (req, res) => {
   );
 });
 
-// ======================================
-// Rotas para Matérias (Listagem, Cadastro, Exclusão)
-// ======================================
+// ==========================
+// Rotas de Matéria
+// ==========================
 
-// Exibe a listagem de matérias com paginação (GET /materias)
+// Listagem de matérias com paginação (rota protegida)
 app.get("/materias", verificarAutenticacao, (req, res) => {
   const page = parseInt(req.query.page) || 1;
-  const limit = 10; // 10 registros por página
+  const limit = 10;
   const offset = (page - 1) * limit;
 
-  // Conta o total de registros
-  db.query("SELECT COUNT(*) AS count FROM materia", (err, countResult) => {
-    if (err) {
-      console.error("Erro ao contar matérias:", err);
-      return res.render("materia", {
-        message: "Erro ao buscar matérias",
-        materias: [],
-        currentPage: page,
-        totalPages: 0,
-        totalRows: 0,
-        cursos: [],
-      });
-    }
-    const totalRows = countResult[0].count;
-    const totalPages = Math.ceil(totalRows / limit);
-
-    // Busca as matérias com JOIN no curso
-    db.query(
-      "SELECT m.id, m.nome, m.curso_id, c.nome AS curso FROM materia m INNER JOIN curso c ON m.curso_id = c.id LIMIT ? OFFSET ?",
-      [limit, offset],
-      (err, materias) => {
-        if (err) {
-          console.error("Erro ao buscar matérias:", err);
-          return res.render("materia", {
-            message: "Erro ao buscar matérias",
-            materias: [],
-            currentPage: page,
-            totalPages: 0,
-            totalRows: 0,
-            cursos: [],
-          });
-        }
-        // Busca somente os cursos vinculados ao professor logado para o modal de cadastro
-        db.query(
-          "SELECT curso.id, curso.nome FROM curso INNER JOIN professor_curso pc ON curso.id = pc.curso_id WHERE pc.professor_id = ?",
-          [req.session.user.id],
-          (err, cursos) => {
-            if (err) {
-              console.error("Erro ao buscar cursos do professor:", err);
-              cursos = [];
-            }
-            res.render("materia", {
-              message: "",
-              materias,
+  // Conta apenas as matérias do professor logado
+  db.query(
+    "SELECT COUNT(*) AS count FROM materia WHERE professor_id = ?",
+    [req.session.user.id],
+    (err, countResult) => {
+      if (err) {
+        console.error("Erro ao contar matérias:", err);
+        return res.render("materia", {
+          message: "Erro ao buscar matérias",
+          materias: [],
+          currentPage: page,
+          totalPages: 0,
+          totalRows: 0,
+          cursos: [],
+        });
+      }
+      const totalRows = countResult[0].count;
+      const totalPages = Math.ceil(totalRows / limit);
+      // Busca as matérias do professor logado com join no curso
+      db.query(
+        "SELECT m.id, m.nome, m.curso_id, c.nome AS curso FROM materia m INNER JOIN curso c ON m.curso_id = c.id WHERE m.professor_id = ? LIMIT ? OFFSET ?",
+        [req.session.user.id, limit, offset],
+        (err, materias) => {
+          if (err) {
+            console.error("Erro ao buscar matérias:", err);
+            return res.render("materia", {
+              message: "Erro ao buscar matérias",
+              materias: [],
               currentPage: page,
-              totalPages,
-              totalRows,
-              cursos,
+              totalPages: 0,
+              totalRows: 0,
+              cursos: [],
             });
           }
-        );
-      }
-    );
-  });
+          // Para o modal, busca somente os cursos vinculados ao professor logado
+          db.query(
+            "SELECT curso.id, curso.nome FROM curso INNER JOIN professor_curso ON curso.id = professor_curso.curso_id WHERE professor_curso.professor_id = ?",
+            [req.session.user.id],
+            (err, cursos) => {
+              if (err) {
+                console.error("Erro ao buscar cursos do professor:", err);
+                cursos = [];
+              }
+              res.render("materia", {
+                message: "",
+                materias,
+                currentPage: page,
+                totalPages,
+                totalRows,
+                cursos,
+              });
+            }
+          );
+        }
+      );
+    }
+  );
 });
 
-// Processa o cadastro de nova matéria (POST /cadastrar-materia)
-// Essa rota é chamada via AJAX e retorna JSON
+// Cadastro de nova matéria (rota protegida)
 app.post("/cadastrar-materia", verificarAutenticacao, (req, res) => {
   const { nome_materia, curso_id } = req.body;
   if (!nome_materia || !curso_id) {
     return res.status(400).json({ error: "Todos os campos são obrigatórios!" });
   }
-  // Verifica se a matéria já existe para o mesmo curso
+
+  // Verifica se a matéria já existe para o mesmo curso e professor
   db.query(
-    "SELECT * FROM materia WHERE nome = ? AND curso_id = ?",
-    [nome_materia, curso_id],
+    "SELECT * FROM materia WHERE nome = ? AND curso_id = ? AND professor_id = ?",
+    [nome_materia, curso_id, req.session.user.id],
     (err, results) => {
       if (err) {
         console.error("Erro ao verificar matéria:", err);
@@ -251,10 +260,11 @@ app.post("/cadastrar-materia", verificarAutenticacao, (req, res) => {
           .status(400)
           .json({ error: "Essa matéria já está cadastrada para este curso." });
       }
-      // Insere a nova matéria
+
+      // Insere a nova matéria associada ao professor logado
       db.query(
-        "INSERT INTO materia (nome, curso_id) VALUES (?, ?)",
-        [nome_materia, curso_id],
+        "INSERT INTO materia (nome, curso_id, professor_id) VALUES (?, ?, ?)",
+        [nome_materia, curso_id, req.session.user.id],
         (err, result) => {
           if (err) {
             console.error("Erro ao cadastrar matéria:", err);
@@ -262,10 +272,10 @@ app.post("/cadastrar-materia", verificarAutenticacao, (req, res) => {
               .status(500)
               .json({ error: "Erro ao cadastrar matéria." });
           }
-          // Após inserir, retorna a lista atualizada (página 1)
+          // Retorna a lista atualizada filtrada pelo professor logado, para a página 1
           db.query(
-            "SELECT m.id, m.nome, m.curso_id, c.nome AS curso FROM materia m INNER JOIN curso c ON m.curso_id = c.id LIMIT ? OFFSET ?",
-            [10, 0],
+            "SELECT m.id, m.nome, m.curso_id, c.nome AS curso FROM materia m INNER JOIN curso c ON m.curso_id = c.id WHERE m.professor_id = ? LIMIT ? OFFSET ?",
+            [req.session.user.id, 10, 0],
             (err, materias) => {
               if (err) {
                 console.error("Erro ao buscar matérias:", err);
@@ -285,22 +295,82 @@ app.post("/cadastrar-materia", verificarAutenticacao, (req, res) => {
   );
 });
 
-// Exclui uma matéria (GET /deletar-materia/:id)
-// Essa rota é chamada via AJAX e retorna JSON
+// Exclusão de matéria (rota protegida)
 app.get("/deletar-materia/:id", verificarAutenticacao, (req, res) => {
   const materiaId = req.params.id;
-  db.query("DELETE FROM materia WHERE id = ?", [materiaId], (err, result) => {
-    if (err) {
-      console.error("Erro ao excluir matéria:", err);
-      return res.status(500).json({ error: "Erro ao excluir matéria." });
+  // Verifica se a matéria pertence ao professor logado antes de excluir
+  db.query(
+    "DELETE FROM materia WHERE id = ? AND professor_id = ?",
+    [materiaId, req.session.user.id],
+    (err, result) => {
+      if (err) {
+        console.error("Erro ao excluir matéria:", err);
+        return res.status(500).json({ error: "Erro ao excluir matéria." });
+      }
+      // Se nenhuma linha foi afetada, a matéria não pertence ao professor
+      if (result.affectedRows === 0) {
+        return res.status(403).json({ error: "Acesso negado." });
+      }
+      return res.json({ message: "Matéria excluída com sucesso!" });
     }
-    return res.json({ message: "Matéria excluída com sucesso!" });
-  });
+  );
 });
 
-// ======================================
-// Rota para Cadastrar Questões
-// ======================================
+// Edição de matéria – exibe o formulário de edição (rota protegida)
+app.get("/editar-materia/:id", verificarAutenticacao, (req, res) => {
+  const materiaId = req.params.id;
+  db.query(
+    "SELECT * FROM materia WHERE id = ?",
+    [materiaId],
+    (err, results) => {
+      if (err) {
+        console.error("Erro ao buscar matéria:", err);
+        return res.redirect("/materias");
+      }
+      if (results.length === 0) {
+        return res.redirect("/materias");
+      }
+      const materia = results[0];
+      // Busca somente os cursos vinculados ao professor logado
+      db.query(
+        "SELECT curso.id, curso.nome FROM curso INNER JOIN professor_curso ON curso.id = professor_curso.curso_id WHERE professor_curso.professor_id = ?",
+        [req.session.user.id],
+        (err, cursos) => {
+          if (err) {
+            console.error("Erro ao buscar cursos:", err);
+            cursos = [];
+          }
+          res.render("editarMateria", { materia, cursos, message: "" });
+        }
+      );
+    }
+  );
+});
+
+// Atualização de matéria (rota protegida)
+app.post("/editar-materia/:id", verificarAutenticacao, (req, res) => {
+  const materiaId = req.params.id;
+  const { nome_materia, curso_id } = req.body;
+  db.query(
+    "UPDATE materia SET nome = ?, curso_id = ? WHERE id = ?",
+    [nome_materia, curso_id, materiaId],
+    (err, result) => {
+      if (err) {
+        console.error("Erro ao atualizar matéria:", err);
+        return res.render("editarMateria", {
+          materia: { id: materiaId, nome: nome_materia, curso_id },
+          cursos: [],
+          message: "Erro ao atualizar matéria.",
+        });
+      }
+      res.redirect("/materias");
+    }
+  );
+});
+
+// ==========================
+// Rotas de Questões
+// ==========================
 
 app.post("/cadastrar-questao", verificarAutenticacao, (req, res) => {
   const professorId = req.session.user.id;
@@ -311,16 +381,16 @@ app.post("/cadastrar-questao", verificarAutenticacao, (req, res) => {
     alternativaC,
     alternativaD,
     correta,
-    titulo,
     curso,
+    titulo,
     dificuldade,
   } = req.body;
 
-  // Verifica se o professor tem permissão para cadastrar questões para o curso selecionado
+  // Verifica se o professor está vinculado ao curso usando a tabela professor_curso
   const verificaCursoQuery = `
     SELECT c.id 
     FROM curso c
-    JOIN professor_curso pc ON c.id = pc.curso_id
+    JOIN professor_curso pc ON pc.curso_id = c.id
     WHERE pc.professor_id = ? AND c.id = ?;
   `;
   db.query(verificaCursoQuery, [professorId, curso], (err, results) => {
@@ -337,7 +407,7 @@ app.post("/cadastrar-questao", verificarAutenticacao, (req, res) => {
         cursos: [],
       });
     }
-    // Ajuste a query conforme o esquema da sua tabela "questao"
+    // Query de inserção para 10 colunas:
     const cadastrarQuestaoQuery = `
       INSERT INTO questao (enunciado, alternativa_a, alternativa_b, alternativa_c, alternativa_d, resposta_correta, curso, titulo, dificuldade, professor_id)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
@@ -371,15 +441,6 @@ app.post("/cadastrar-questao", verificarAutenticacao, (req, res) => {
       }
     );
   });
-});
-
-// ======================================
-// Rota de Logout
-// ======================================
-
-app.get("/logout", (req, res) => {
-  req.session.destroy();
-  res.redirect("/login");
 });
 
 // Inicializa o servidor
