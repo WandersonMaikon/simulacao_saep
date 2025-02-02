@@ -1,32 +1,27 @@
 <!DOCTYPE html>
-<html lang="en">
-  <!-- Mirrored from coderthemes.com/wb/studyzen/admin-course-list.html by HTTrack Website Copier/3.x [XR&CO'2014], Wed, 22 Jan 2025 13:08:57 GMT -->
+<html lang="PT-br">
   <head>
     <meta charset="utf-8" />
-    <title>StudyZen - Tailwind Study Client & Admin Manage HTML Template</title>
+    <title>Cadastrar UC</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta content="" name="description" />
     <meta content="coderthemes" name="author" />
 
-    <!-- Theme favicon -->
     <link rel="shortcut icon" href="assets/favicon-8fd74f43.ico" />
-
-    <!--&lt;!&ndash; Head js &ndash;&gt;-->
-
     <script type="module" crossorigin src="assets/theme-e4584917.js"></script>
     <link rel="stylesheet" href="assets/theme-d32f8eb8.css" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <style>
+      .modal-overlay {
+        z-index: 9999; /* valor alto para ficar acima de tudo */
+      }
+    </style>
   </head>
-
   <body>
-    <!-- Sidebar -->
     <%- include('partials/sidebar') %>
-    <!-- Start Sidebar -->
-
-    <!-- Start Content -->
     <div class="min-h-screen flex flex-col lg:ps-64 w-full">
-      <!-- Start Header -->
       <%- include('partials/header') %>
-      <!-- End Header -->
       <div class="p-6 space-y-6">
         <div class="flex items-center justify-between w-full print:hidden">
           <h4 class="text-lg font-semibold text-default-900">
@@ -39,7 +34,7 @@
               <div class="flex items-center justify-between">
                 <div>
                   <p class="text-base font-semibold text-default-600">
-                    Total de Ucs
+                    Total de UCs
                   </p>
                   <h4 class="text-2xl font-semibold text-default-900 mt-4">
                     8
@@ -54,7 +49,6 @@
             </div>
           </div>
         </div>
-
         <div class="shadow rounded-lg bg-white dark:bg-default-50 h-fit">
           <div class="flex flex-wrap items-center justify-between py-4 px-5">
             <div class="relative flex">
@@ -69,12 +63,13 @@
                 ></i>
               </span>
             </div>
-            <a
-              href="admin-course-add.html"
+            <button
+              id="open-modal"
               class="py-2 px-4 inline-flex items-center justify-center font-semibold tracking-wide align-middle duration-500 text-xs text-center bg-primary hover:bg-primary-500 text-white rounded"
-              ><i class="ph-duotone ph-plus-circle text-lg/none me-3"></i>
+            >
+              <i class="ph-duotone ph-plus-circle text-lg/none me-3"></i>
               Adicionar UC
-            </a>
+            </button>
           </div>
           <div
             class="border-t border-dashed border-default-200 relative overflow-x-auto"
@@ -89,35 +84,21 @@
                     />
                   </td>
                   <th
-                    scope="col"
                     class="px-6 py-3 text-start text-sm capitalize font-semibold text-default-900 min-w-32"
                   >
                     Id
                   </th>
                   <th
-                    scope="col"
                     class="px-6 py-3 text-start text-sm capitalize font-semibold text-default-900 min-w-32"
                   >
                     UC
                   </th>
                   <th
-                    scope="col"
                     class="px-6 py-3 text-start text-sm capitalize font-semibold text-default-900 min-w-40"
                   >
                     Curso
                   </th>
                   <th
-                    scope="col"
-                    class="px-6 py-3 text-start text-sm capitalize font-semibold text-default-900 min-w-40"
-                  ></th>
-                  <th
-                    scope="col"
-                    class="px-6 py-3 text-start text-sm capitalize font-semibold text-default-900 min-w-32"
-                  >
-                   
-                  </th>
-                  <th
-                    scope="col"
                     class="px-3 py-3 text-center text-sm capitalize font-semibold text-default-900 min-w-32"
                   >
                     Ação
@@ -125,6 +106,8 @@
                 </tr>
               </thead>
               <tbody class="divide-y divide-dashed divide-default-200">
+                <% if (materias && materias.length > 0) { %> <%
+                materias.forEach(materia => { %>
                 <tr>
                   <td class="px-6 py-3">
                     <input
@@ -132,45 +115,21 @@
                       class="form-checkbox transition-all duration-100 ease-in-out border-default-200 cursor-pointer rounded focus:ring-0 bg-transparent"
                     />
                   </td>
-                  <td
-                    class="px-6 py-3 text-default-900 font-semibold whitespace-nowrap"
-                  >
-                    <b>1</b>
-                  </td>
-                  <td
-                    class="px-6 py-3 text-default-600 font-medium whitespace-nowrap"
-                  >
-                    Lógica de programação
-                  </td>
-                  <td
-                    class="px-6 py-3 text-default-600 font-medium whitespace-nowrap"
-                  >
-                    Técnico em informática
-                  </td>
-                  <td
-                    class="px-6 py-3 text-default-600 font-medium whitespace-nowrap"
-                  >
-                    <span class="inline-flex items-center gap-2 mb-4">
-                      
-                      
-                  </td>
-                  <td
-                    class="px-6 py-3 text-teal-600 font-medium whitespace-nowrap"
-                  >
-                    
-                  </td>
+                  <td class="px-6 py-3"><%= materia.id %></td>
+                  <td class="px-6 py-3"><%= materia.nome %></td>
+                  <td class="px-6 py-3"><%= materia.curso %></td>
                   <td
                     class="whitespace-nowrap py-3 px-3 text-center text-sm font-medium"
                   >
                     <div class="flex items-center justify-center gap-2">
                       <a
-                        href="admin-course-detail.html"
+                        href="admin-teacher-detail.html"
                         class="inline-flex items-center justify-center h-8 w-8 rounded-md bg-primary-500/20 text-primary-500 transition-all duration-200 hover:bg-primary-500 hover:text-white"
                       >
                         <i class="ph-duotone ph-eye text-base"></i>
                       </a>
                       <a
-                        href="admin-course-edit.html"
+                        href="admin-teacher-edit.html"
                         class="inline-flex items-center justify-center h-8 w-8 rounded-md bg-cyan-500/20 text-cyan-500 transition-all duration-200 hover:bg-cyan-500 hover:text-white"
                       >
                         <i
@@ -185,114 +144,97 @@
                     </div>
                   </td>
                 </tr>
+                <% }) %> <% } else { %>
                 <tr>
-                  <td class="px-6 py-3">
-                    <input
-                      type="checkbox"
-                      class="form-checkbox transition-all duration-100 ease-in-out border-default-200 cursor-pointer rounded focus:ring-0 bg-transparent"
-                    />
-                  </td>
-                  <td
-                    class="px-6 py-3 text-default-900 font-semibold whitespace-nowrap"
-                  >
-                    <b>2</b>
-                  </td>
-                  <td
-                    class="px-6 py-3 text-default-600 font-medium whitespace-nowrap"
-                  >
-                    Técnicas de programação
-                  </td>
-                  <td
-                    class="px-6 py-3 text-default-600 font-medium whitespace-nowrap"
-                  >
-                  Técnico em informática	
-                  </td>
-                  <td
-                    class="px-6 py-3 text-default-600 font-medium whitespace-nowrap"
-                  >
-                    <span class="inline-flex items-center gap-2 mb-4">
-                      
-                      
-                  </td>
-                  <td
-                    class="px-6 py-3 text-amber-600 font-medium whitespace-nowrap"
-                  >
-                    
-                  </td>
-                  <td
-                    class="whitespace-nowrap py-3 px-3 text-center text-sm font-medium"
-                  >
-                    <div class="flex items-center justify-center gap-2">
-                      <a
-                        href="admin-course-detail.html"
-                        class="inline-flex items-center justify-center h-8 w-8 rounded-md bg-primary-500/20 text-primary-500 transition-all duration-200 hover:bg-primary-500 hover:text-white"
-                      >
-                        <i class="ph-duotone ph-eye text-base"></i>
-                      </a>
-                      <a
-                        href="admin-course-edit.html"
-                        class="inline-flex items-center justify-center h-8 w-8 rounded-md bg-cyan-500/20 text-cyan-500 transition-all duration-200 hover:bg-cyan-500 hover:text-white"
-                      >
-                        <i
-                          class="ph-duotone ph-pencil-simple-line text-base"
-                        ></i>
-                      </a>
-                      <button
-                        class="inline-flex items-center justify-center h-8 w-8 rounded-md bg-red-500/20 text-red-500 transition-all duration-200 hover:bg-red-500 hover:text-white"
-                      >
-                        <i class="ph-duotone ph-trash text-base"></i>
-                      </button>
-                    </div>
+                  <td colspan="5" class="text-center py-6">
+                    Nenhuma matéria cadastrada.
                   </td>
                 </tr>
+                <% } %>
               </tbody>
             </table>
           </div>
-          <div
-            class="flex items-center justify-between py-3 px-6 border-t border-dashed border-default-200"
-          >
-            <h6 class="text-default-600">Mostrando 1 de 5</h6>
-
-            <nav class="flex items-center gap-1">
-              <a
-                class="inline-flex items-center justify-center h-8 w-8 border border-default-200 rounded-md text-default-950 transition-all duration-200 hover:bg-primary hover:text-white hover:border-primary"
-                href="#"
-              >
-                <i class="ph ph-caret-left text-base"></i>
-              </a>
-              <a
-                class="inline-flex items-center justify-center h-8 w-8 border rounded-md transition-all duration-200 bg-primary text-white border-primary"
-                href="#"
-                aria-current="page"
-                >1</a
-              >
-              <a
-                class="inline-flex items-center justify-center h-8 w-8 border border-default-200 rounded-md text-default-950 transition-all duration-200 hover:bg-primary hover:text-white hover:border-primary"
-                href="#"
-                >2</a
-              >
-              <a
-                class="inline-flex items-center justify-center h-8 w-8 border border-default-200 rounded-md text-default-950 transition-all duration-200 hover:bg-primary hover:text-white hover:border-primary"
-                href="#"
-                >...</a
-              >
-              <a
-                class="inline-flex items-center justify-center h-8 w-8 border border-default-200 rounded-md text-default-950 transition-all duration-200 hover:bg-primary hover:text-white hover:border-primary"
-                href="#"
-                >12</a
-              >
-              <a
-                class="inline-flex items-center justify-center h-8 w-8 border border-default-200 rounded-md text-default-950 transition-all duration-200 hover:bg-primary hover:text-white hover:border-primary"
-                href="#"
-              >
-                <i class="ph ph-caret-right text-base"></i>
-              </a>
-            </nav>
-          </div>
         </div>
       </div>
-
       <%- include('partials/footer') %>
     </div>
+
+    <!-- Modal para Cadastro de UC -->
+    <div
+      id="modal-uc"
+      class="fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-50 z-[9999] hidden modal-overlay"
+    >
+      <!-- Alterado para ocupar a largura total com um máximo de 2xl -->
+      <div class="bg-white p-10 rounded-lg shadow-lg w-full max-w-2xl">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Cadastrar UC</h3>
+        <form id="form-cadastrar-uc" action="/cadastrar-materia" method="POST">
+          <div class="mb-8">
+            <label
+              for="curso_id"
+              class="block text-base font-semibold text-default-900 mb-2"
+            >
+              Curso
+            </label>
+            <select
+              name="curso_id"
+              id="curso_id"
+              required
+              class="border border-gray-300 rounded-md w-full p-2"
+            >
+              <% cursos.forEach(curso => { %>
+              <option value="<%= curso.id %>"><%= curso.nome %></option>
+              <% }); %>
+            </select>
+          </div>
+          <div class="mb-8">
+            <label for="nome_materia" class="block font-semibold text-gray-700"
+              >Nome da UC:</label
+            >
+            <input
+              type="text"
+              name="nome_materia"
+              id="nome_materia"
+              required
+              class="border border-gray-300 rounded-md w-96 p-2"
+            />
+          </div>
+          <div class="text-center mt-8">
+            <button
+              type="submit"
+              class="bg-primary text-white px-6 py-2 rounded-md"
+            >
+              Cadastrar
+            </button>
+          </div>
+        </form>
+        <button id="close-modal" class="mt-4 text-red-500">Fechar</button>
+      </div>
+    </div>
+
+    <script>
+      $(document).ready(function () {
+        $("#open-modal").click(function () {
+          $("#modal-uc").removeClass("hidden");
+        });
+        $("#close-modal").click(function () {
+          $("#modal-uc").addClass("hidden");
+        });
+        $("#form-cadastrar-uc").submit(function (event) {
+          event.preventDefault();
+          $.ajax({
+            url: "/cadastrar-materia",
+            type: "POST",
+            data: $(this).serialize(),
+            success: function (response) {
+              alert("Matéria cadastrada com sucesso!");
+              $("#modal-uc").addClass("hidden");
+            },
+            error: function () {
+              alert("Erro ao cadastrar matéria.");
+            },
+          });
+        });
+      });
+    </script>
   </body>
 </html>

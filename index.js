@@ -176,7 +176,6 @@ app.post("/registro", async (req, res) => {
   );
 });
 
-// Rota para exibir a página de cadastro de questões
 app.get("/cadastrar-materia", (req, res) => {
   if (!req.session.user) {
     return res.redirect("/login"); // Verifica se o usuário está autenticado
@@ -184,26 +183,41 @@ app.get("/cadastrar-materia", (req, res) => {
 
   const professorId = req.session.user.id;
 
-  // Buscar cursos vinculados ao professor
+  // Busca cursos vinculados ao professor
   db.query(
     "SELECT curso.id, curso.nome FROM curso INNER JOIN professor_curso ON curso.id = professor_curso.curso_id WHERE professor_curso.professor_id = ?",
     [professorId],
-    (err, results) => {
+    (err, cursos) => {
       if (err) {
         console.error("Erro ao buscar cursos:", err);
         return res.render("materia", {
           message: "Erro ao carregar cursos.",
           cursos: [],
+          materias: [] // Array vazio para matérias em caso de erro
         });
       }
 
-      // Verifica se a variável `cursos` está correta antes de renderizar a página
-      console.log("Cursos carregados:", results);
+      // Após buscar os cursos, busca as matérias cadastradas
+      db.query(
+        "SELECT m.id, m.nome, c.nome AS curso FROM materia m INNER JOIN curso c ON m.curso_id = c.id",
+        (err, materias) => {
+          if (err) {
+            console.error("Erro ao buscar matérias:", err);
+            return res.render("materia", {
+              message: "Erro ao carregar matérias.",
+              cursos: cursos,
+              materias: []
+            });
+          }
 
-      res.render("materia", { message: "", cursos: results });
+          // Renderiza a view passando os cursos e as matérias
+          res.render("materia", { message: "", cursos: cursos, materias: materias });
+        }
+      );
     }
   );
 });
+
 
 app.post("/cadastrar-materia", (req, res) => {
   if (!req.session.user) {
