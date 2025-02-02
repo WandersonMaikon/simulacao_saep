@@ -23,7 +23,7 @@ db.connect((error) => {
   }
 });
 
-// Configuração do middleware
+// Configuração do Express e middlewares
 app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static("public"));
@@ -37,7 +37,7 @@ app.use(
   })
 );
 
-// Middleware de autenticação
+// Middleware de autenticação: redireciona para /login se o usuário não estiver logado
 const verificarAutenticacao = (req, res, next) => {
   if (!req.session.user) {
     return res.redirect("/login");
@@ -45,10 +45,20 @@ const verificarAutenticacao = (req, res, next) => {
   next();
 };
 
-// Rota para processar o login
+// ======================================
+// Rotas de Login e Registro
+// ======================================
+
+// Exibe a página de login (GET)
+app.get("/login", (req, res) => {
+  const message = req.session.message || "";
+  req.session.message = ""; // Limpa a mensagem para evitar repetição
+  res.render("login", { message });
+});
+
+// Processa o login (POST)
 app.post("/login", (req, res) => {
   const { email, password } = req.body;
-
   db.query(
     "SELECT * FROM professor WHERE email = ?",
     [email],
@@ -57,50 +67,34 @@ app.post("/login", (req, res) => {
         console.error("Erro na consulta SQL:", err);
         return res.render("login", { message: "Erro no sistema" });
       }
-
       if (results.length === 0) {
         return res.render("login", { message: "Usuário ou senha inválidos" });
       }
-
       const user = results[0];
       const passwordMatch = await bcrypt.compare(password, user.senha);
-
       if (!passwordMatch) {
         return res.render("login", { message: "Usuário ou senha inválidos" });
       }
-
       req.session.user = user;
       req.session.successMessage = "Logado com sucesso!";
-
       res.redirect("/dashboard");
     }
   );
 });
 
-// Rota para exibir o dashboard
-app.get("/dashboard", (req, res) => {
-  if (!req.session.user) {
-    return res.redirect("/login");
-  }
-
+// Exibe o dashboard (somente para usuários autenticados)
+app.get("/dashboard", verificarAutenticacao, (req, res) => {
   const successMessage = req.session.successMessage || "";
-  delete req.session.successMessage; // Remove a mensagem para evitar repetição
-
+  delete req.session.successMessage;
   res.render("dashboard", {
     username: req.session.user.nome,
     message: successMessage,
   });
 });
 
-// Rota para exibir a página de login
-app.get("/login", (req, res) => {
-  const message = req.session.message || "";
-  req.session.message = ""; // Limpa a mensagem para evitar repetição ao dar refresh
-  res.render("login", { message });
-});
-
-// Rota para exibir a página de registro com cursos dinâmicos
+// Exibe a página de registro (GET)
 app.get("/registro", (req, res) => {
+  // Aqui são buscados todos os cursos; se desejar filtrar, ajuste conforme necessário
   db.query("SELECT id, nome FROM curso", (err, results) => {
     if (err) {
       console.error("Erro ao buscar cursos:", err);
@@ -109,12 +103,11 @@ app.get("/registro", (req, res) => {
         cursos: [],
       });
     }
-
     res.render("registro", { message: "", cursos: results });
   });
 });
 
-// Rota para processar o registro de usuário
+// Processa o registro de usuário (POST)
 app.post("/registro", async (req, res) => {
   const { nome, matricula, curso, email, password } = req.body;
 
@@ -129,16 +122,13 @@ app.post("/registro", async (req, res) => {
           message: "Erro no sistema. Tente novamente!",
         });
       }
-
       if (results.length === 0) {
         return res.render("registro", {
           message: "Matrícula inválida ou não cadastrada.",
         });
       }
-
       // Criptografa a senha
       const hashedPassword = await bcrypt.hash(password, 10);
-
       // Insere o professor
       db.query(
         "INSERT INTO professor (nome, matricula, curso_id, email, senha) VALUES (?, ?, ?, ?, ?)",
@@ -150,10 +140,8 @@ app.post("/registro", async (req, res) => {
               message: "Erro ao criar professor.",
             });
           }
-
           const professorId = result.insertId;
-
-          // Agora, adiciona o relacionamento na tabela professor_curso
+          // Adiciona o relacionamento na tabela professor_curso
           db.query(
             "INSERT INTO professor_curso (professor_id, curso_id) VALUES (?, ?)",
             [professorId, curso],
@@ -164,9 +152,9 @@ app.post("/registro", async (req, res) => {
                   message: "Erro ao vincular professor ao curso.",
                 });
               }
-
               return res.render("registro", {
                 message: "Cadastro realizado com sucesso!",
+                cursos: [],
               });
             }
           );
@@ -176,113 +164,146 @@ app.post("/registro", async (req, res) => {
   );
 });
 
-app.get("/cadastrar-materia", (req, res) => {
-  if (!req.session.user) {
-    return res.redirect("/login"); // Verifica se o usuário está autenticado
-  }
+// ======================================
+// Rotas para Matérias (Listagem, Cadastro, Exclusão)
+// ======================================
 
-  const professorId = req.session.user.id;
+// Exibe a listagem de matérias com paginação (GET /materias)
+app.get("/materias", verificarAutenticacao, (req, res) => {
+  const page = parseInt(req.query.page) || 1;
+  const limit = 10; // 10 registros por página
+  const offset = (page - 1) * limit;
 
-  // Busca cursos vinculados ao professor
-  db.query(
-    "SELECT curso.id, curso.nome FROM curso INNER JOIN professor_curso ON curso.id = professor_curso.curso_id WHERE professor_curso.professor_id = ?",
-    [professorId],
-    (err, cursos) => {
-      if (err) {
-        console.error("Erro ao buscar cursos:", err);
-        return res.render("materia", {
-          message: "Erro ao carregar cursos.",
-          cursos: [],
-          materias: [] // Array vazio para matérias em caso de erro
-        });
-      }
+  // Conta o total de registros
+  db.query("SELECT COUNT(*) AS count FROM materia", (err, countResult) => {
+    if (err) {
+      console.error("Erro ao contar matérias:", err);
+      return res.render("materia", {
+        message: "Erro ao buscar matérias",
+        materias: [],
+        currentPage: page,
+        totalPages: 0,
+        totalRows: 0,
+        cursos: [],
+      });
+    }
+    const totalRows = countResult[0].count;
+    const totalPages = Math.ceil(totalRows / limit);
 
-      // Após buscar os cursos, busca as matérias cadastradas
-      db.query(
-        "SELECT m.id, m.nome, c.nome AS curso FROM materia m INNER JOIN curso c ON m.curso_id = c.id",
-        (err, materias) => {
-          if (err) {
-            console.error("Erro ao buscar matérias:", err);
-            return res.render("materia", {
-              message: "Erro ao carregar matérias.",
-              cursos: cursos,
-              materias: []
+    // Busca as matérias com JOIN no curso
+    db.query(
+      "SELECT m.id, m.nome, m.curso_id, c.nome AS curso FROM materia m INNER JOIN curso c ON m.curso_id = c.id LIMIT ? OFFSET ?",
+      [limit, offset],
+      (err, materias) => {
+        if (err) {
+          console.error("Erro ao buscar matérias:", err);
+          return res.render("materia", {
+            message: "Erro ao buscar matérias",
+            materias: [],
+            currentPage: page,
+            totalPages: 0,
+            totalRows: 0,
+            cursos: [],
+          });
+        }
+        // Busca somente os cursos vinculados ao professor logado para o modal de cadastro
+        db.query(
+          "SELECT curso.id, curso.nome FROM curso INNER JOIN professor_curso pc ON curso.id = pc.curso_id WHERE pc.professor_id = ?",
+          [req.session.user.id],
+          (err, cursos) => {
+            if (err) {
+              console.error("Erro ao buscar cursos do professor:", err);
+              cursos = [];
+            }
+            res.render("materia", {
+              message: "",
+              materias,
+              currentPage: page,
+              totalPages,
+              totalRows,
+              cursos,
             });
           }
-
-          // Renderiza a view passando os cursos e as matérias
-          res.render("materia", { message: "", cursos: cursos, materias: materias });
-        }
-      );
-    }
-  );
+        );
+      }
+    );
+  });
 });
 
-
-app.post("/cadastrar-materia", (req, res) => {
-  if (!req.session.user) {
-    return res.redirect("/login"); // Verifica se o usuário está autenticado
-  }
-
+// Processa o cadastro de nova matéria (POST /cadastrar-materia)
+// Essa rota é chamada via AJAX e retorna JSON
+app.post("/cadastrar-materia", verificarAutenticacao, (req, res) => {
   const { nome_materia, curso_id } = req.body;
-
   if (!nome_materia || !curso_id) {
-    return res.render("materia", {
-      message: "Todos os campos são obrigatórios!",
-      cursos: [],
-    });
+    return res.status(400).json({ error: "Todos os campos são obrigatórios!" });
   }
-
-  // Verifica se a matéria já existe no curso
+  // Verifica se a matéria já existe para o mesmo curso
   db.query(
     "SELECT * FROM materia WHERE nome = ? AND curso_id = ?",
     [nome_materia, curso_id],
     (err, results) => {
       if (err) {
         console.error("Erro ao verificar matéria:", err);
-        return res.render("materia", {
-          message: "Erro ao verificar matéria.",
-          cursos: [],
-        });
+        return res.status(500).json({ error: "Erro ao verificar matéria." });
       }
-
       if (results.length > 0) {
-        return res.render("materia", {
-          message: "Essa matéria já está cadastrada para este curso.",
-          cursos: [],
-        });
+        return res
+          .status(400)
+          .json({ error: "Essa matéria já está cadastrada para este curso." });
       }
-
-      // Insere a nova matéria vinculada ao curso
+      // Insere a nova matéria
       db.query(
         "INSERT INTO materia (nome, curso_id) VALUES (?, ?)",
         [nome_materia, curso_id],
-        (err) => {
+        (err, result) => {
           if (err) {
             console.error("Erro ao cadastrar matéria:", err);
-            return res.render("materia", {
-              message: "Erro ao cadastrar matéria.",
-              cursos: [],
-            });
+            return res
+              .status(500)
+              .json({ error: "Erro ao cadastrar matéria." });
           }
-
-          return res.render("materia", {
-            message: "Matéria cadastrada com sucesso!",
-            cursos: [],
-          });
+          // Após inserir, retorna a lista atualizada (página 1)
+          db.query(
+            "SELECT m.id, m.nome, m.curso_id, c.nome AS curso FROM materia m INNER JOIN curso c ON m.curso_id = c.id LIMIT ? OFFSET ?",
+            [10, 0],
+            (err, materias) => {
+              if (err) {
+                console.error("Erro ao buscar matérias:", err);
+                return res
+                  .status(500)
+                  .json({ error: "Erro ao buscar matérias." });
+              }
+              return res.json({
+                message: "Cadastro realizado com sucesso!",
+                materias,
+              });
+            }
+          );
         }
       );
     }
   );
 });
 
-// Rota para cadastrar questões
-app.post("/cadastrar-questao", (req, res) => {
-  if (!req.session.user) {
-    return res.redirect("/login");
-  }
+// Exclui uma matéria (GET /deletar-materia/:id)
+// Essa rota é chamada via AJAX e retorna JSON
+app.get("/deletar-materia/:id", verificarAutenticacao, (req, res) => {
+  const materiaId = req.params.id;
+  db.query("DELETE FROM materia WHERE id = ?", [materiaId], (err, result) => {
+    if (err) {
+      console.error("Erro ao excluir matéria:", err);
+      return res.status(500).json({ error: "Erro ao excluir matéria." });
+    }
+    return res.json({ message: "Matéria excluída com sucesso!" });
+  });
+});
 
-  const professorId = req.session.user.id; // Obtendo o ID do professor logado
+// ======================================
+// Rota para Cadastrar Questões
+// ======================================
+
+app.post("/cadastrar-questao", verificarAutenticacao, (req, res) => {
+  const professorId = req.session.user.id;
   const {
     enunciado,
     alternativaA,
@@ -295,14 +316,13 @@ app.post("/cadastrar-questao", (req, res) => {
     dificuldade,
   } = req.body;
 
-  // Verifica se o curso selecionado pertence ao professor logado
+  // Verifica se o professor tem permissão para cadastrar questões para o curso selecionado
   const verificaCursoQuery = `
     SELECT c.id 
     FROM curso c
-    JOIN professor p ON p.curso_id = c.id
-    WHERE p.id = ? AND c.id = ?;
+    JOIN professor_curso pc ON c.id = pc.curso_id
+    WHERE pc.professor_id = ? AND c.id = ?;
   `;
-
   db.query(verificaCursoQuery, [professorId, curso], (err, results) => {
     if (err) {
       console.error("Erro ao verificar curso:", err);
@@ -311,20 +331,17 @@ app.post("/cadastrar-questao", (req, res) => {
         cursos: [],
       });
     }
-
     if (results.length === 0) {
       return res.render("questoes", {
         message: "Você não tem permissão para cadastrar questões nesse curso.",
         cursos: [],
       });
     }
-
-    // Insere a questão no banco de dados
+    // Ajuste a query conforme o esquema da sua tabela "questao"
     const cadastrarQuestaoQuery = `
-      INSERT INTO questao (enunciado, alternativa_a, alternativa_b, alternativa_c, alternativa_d, resposta_correta, titulo, dificuldade)
+      INSERT INTO questao (enunciado, alternativa_a, alternativa_b, alternativa_c, alternativa_d, resposta_correta, curso, titulo, dificuldade, professor_id)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
     `;
-
     db.query(
       cadastrarQuestaoQuery,
       [
@@ -347,7 +364,6 @@ app.post("/cadastrar-questao", (req, res) => {
             cursos: [],
           });
         }
-
         return res.render("questoes", {
           message: "Questão cadastrada com sucesso!",
           cursos: [],
@@ -357,12 +373,10 @@ app.post("/cadastrar-questao", (req, res) => {
   });
 });
 
-// Rota para exibir o dashboard (protegida)
-app.get("/dashboard", verificarAutenticacao, (req, res) => {
-  res.render("dashboard", { username: req.session.user.nome });
-});
+// ======================================
+// Rota de Logout
+// ======================================
 
-// Rota para logout
 app.get("/logout", (req, res) => {
   req.session.destroy();
   res.redirect("/login");

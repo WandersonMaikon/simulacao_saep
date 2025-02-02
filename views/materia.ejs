@@ -6,15 +6,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta content="" name="description" />
     <meta content="coderthemes" name="author" />
-
     <link rel="shortcut icon" href="assets/favicon-8fd74f43.ico" />
     <script type="module" crossorigin src="assets/theme-e4584917.js"></script>
     <link rel="stylesheet" href="assets/theme-d32f8eb8.css" />
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
+    <!-- Biblioteca SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
       .modal-overlay {
-        z-index: 9999; /* valor alto para ficar acima de tudo */
+        z-index: 9999;
+      }
+      .swal2-container {
+        z-index: 100000 !important;
       }
     </style>
   </head>
@@ -23,11 +26,13 @@
     <div class="min-h-screen flex flex-col lg:ps-64 w-full">
       <%- include('partials/header') %>
       <div class="p-6 space-y-6">
+        <!-- Título da página -->
         <div class="flex items-center justify-between w-full print:hidden">
           <h4 class="text-lg font-semibold text-default-900">
             Lista de matérias
           </h4>
         </div>
+        <!-- Cartão com total de UCs (exemplo estático) -->
         <div class="grid lg:grid-cols-4 md:grid-cols-2 grid-cols-1 gap-6">
           <div class="shadow rounded-lg bg-white dark:bg-default-50">
             <div class="p-5">
@@ -37,7 +42,7 @@
                     Total de UCs
                   </p>
                   <h4 class="text-2xl font-semibold text-default-900 mt-4">
-                    8
+                    <%= totalRows %>
                   </h4>
                 </div>
                 <span
@@ -49,6 +54,7 @@
             </div>
           </div>
         </div>
+        <!-- Tabela de matérias -->
         <div class="shadow rounded-lg bg-white dark:bg-default-50 h-fit">
           <div class="flex flex-wrap items-center justify-between py-4 px-5">
             <div class="relative flex">
@@ -108,28 +114,20 @@
               <tbody class="divide-y divide-dashed divide-default-200">
                 <% if (materias && materias.length > 0) { %> <%
                 materias.forEach(materia => { %>
+                <!-- Dentro do loop que renderiza cada matéria -->
                 <tr>
                   <td class="px-6 py-3">
-                    <input
-                      type="checkbox"
-                      class="form-checkbox transition-all duration-100 ease-in-out border-default-200 cursor-pointer rounded focus:ring-0 bg-transparent"
-                    />
+                    <input type="checkbox" class="form-checkbox ..." />
                   </td>
                   <td class="px-6 py-3"><%= materia.id %></td>
                   <td class="px-6 py-3"><%= materia.nome %></td>
                   <td class="px-6 py-3"><%= materia.curso %></td>
                   <td
-                    class="whitespace-nowrap py-3 px-3 text-center text-sm font-medium"
+                    class="px-3 py-3 text-center whitespace-nowrap text-sm font-medium"
                   >
                     <div class="flex items-center justify-center gap-2">
                       <a
-                        href="admin-teacher-detail.html"
-                        class="inline-flex items-center justify-center h-8 w-8 rounded-md bg-primary-500/20 text-primary-500 transition-all duration-200 hover:bg-primary-500 hover:text-white"
-                      >
-                        <i class="ph-duotone ph-eye text-base"></i>
-                      </a>
-                      <a
-                        href="admin-teacher-edit.html"
+                        href="/editar-materia/<%= materia.id %>"
                         class="inline-flex items-center justify-center h-8 w-8 rounded-md bg-cyan-500/20 text-cyan-500 transition-all duration-200 hover:bg-cyan-500 hover:text-white"
                       >
                         <i
@@ -137,13 +135,15 @@
                         ></i>
                       </a>
                       <button
-                        class="inline-flex items-center justify-center h-8 w-8 rounded-md bg-red-500/20 text-red-500 transition-all duration-200 hover:bg-red-500 hover:text-white"
+                        class="delete-materia inline-flex items-center justify-center h-8 w-8 rounded-md bg-red-500/20 text-red-500 transition-all duration-200 hover:bg-red-500 hover:text-white"
+                        data-id="<%= materia.id %>"
                       >
                         <i class="ph-duotone ph-trash text-base"></i>
                       </button>
                     </div>
                   </td>
                 </tr>
+
                 <% }) %> <% } else { %>
                 <tr>
                   <td colspan="5" class="text-center py-6">
@@ -154,6 +154,42 @@
               </tbody>
             </table>
           </div>
+          <!-- Paginação -->
+          <div
+            class="flex items-center justify-between py-3 px-6 border-t border-dashed border-default-200"
+          >
+            <h6 class="text-default-600">
+              Mostrando <%= (currentPage - 1) * 10 + 1 %> a <%= (currentPage *
+              10 > totalRows ? totalRows : currentPage * 10) %> de <%= totalRows
+              %>
+            </h6>
+            <nav class="flex items-center gap-1">
+              <% if (currentPage > 1) { %>
+              <a
+                class="inline-flex items-center justify-center h-8 w-8 border border-default-200 rounded-md text-default-950 transition-all duration-200 hover:bg-primary hover:text-white hover:border-primary"
+                href="/materias?page=<%= currentPage - 1 %>"
+              >
+                <i class="ph ph-caret-left text-base"></i>
+              </a>
+              <% } %> <% for (let i = 1; i <= totalPages; i++) { %>
+              <a
+                class="inline-flex items-center justify-center h-8 w-8 border rounded-md transition-all duration-200 <%= currentPage === i ? 'bg-primary text-white border-primary' : 'border-default-200 text-default-950 hover:bg-primary hover:text-white hover:border-primary' %>"
+                href="/materias?page=<%= i %>"
+                aria-current="<%= currentPage === i ? 'page' : '' %>"
+              >
+                <%= i %>
+              </a>
+              <% } %> <% if (currentPage < totalPages) { %>
+              <a
+                class="inline-flex items-center justify-center h-8 w-8 border border-default-200 rounded-md text-default-950 transition-all duration-200 hover:bg-primary hover:text-white hover:border-primary"
+                href="/materias?page=<%= currentPage + 1 %>"
+              >
+                <i class="ph ph-caret-right text-base"></i>
+              </a>
+              <% } %>
+            </nav>
+          </div>
+          <!-- Fim da Paginação -->
         </div>
       </div>
       <%- include('partials/footer') %>
@@ -164,7 +200,6 @@
       id="modal-uc"
       class="fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-50 z-[9999] hidden modal-overlay"
     >
-      <!-- Alterado para ocupar a largura total com um máximo de 2xl -->
       <div class="bg-white p-10 rounded-lg shadow-lg w-full max-w-2xl">
         <h3 class="text-lg font-semibold text-gray-900 mb-4">Cadastrar UC</h3>
         <form id="form-cadastrar-uc" action="/cadastrar-materia" method="POST">
@@ -172,9 +207,8 @@
             <label
               for="curso_id"
               class="block text-base font-semibold text-default-900 mb-2"
+              >Curso</label
             >
-              Curso
-            </label>
             <select
               name="curso_id"
               id="curso_id"
@@ -213,12 +247,15 @@
 
     <script>
       $(document).ready(function () {
+        // Abrir e fechar o modal de cadastro
         $("#open-modal").click(function () {
           $("#modal-uc").removeClass("hidden");
         });
         $("#close-modal").click(function () {
           $("#modal-uc").addClass("hidden");
         });
+
+        // Envio do formulário de cadastro via AJAX
         $("#form-cadastrar-uc").submit(function (event) {
           event.preventDefault();
           $.ajax({
@@ -226,12 +263,84 @@
             type: "POST",
             data: $(this).serialize(),
             success: function (response) {
-              alert("Matéria cadastrada com sucesso!");
               $("#modal-uc").addClass("hidden");
+              Swal.fire({
+                title: response.message.includes("sucesso")
+                  ? "Sucesso!"
+                  : "Erro!",
+                text: response.message.includes("sucesso")
+                  ? "Cadastro realizado com sucesso!"
+                  : response.message,
+                icon: response.message.includes("sucesso")
+                  ? "success"
+                  : "error",
+                confirmButtonText: "OK",
+                timer: 5000,
+                timerProgressBar: true,
+              }).then(() => {
+                window.location.href = "/materias?page=1";
+              });
             },
-            error: function () {
-              alert("Erro ao cadastrar matéria.");
+            error: function (xhr) {
+              $("#modal-uc").addClass("hidden");
+              let errorMsg =
+                (xhr.responseJSON && xhr.responseJSON.error) ||
+                "Erro ao cadastrar matéria.";
+              Swal.fire({
+                title: "Erro!",
+                text: errorMsg,
+                icon: "error",
+                confirmButtonText: "OK",
+                timer: 5000,
+                timerProgressBar: true,
+              });
             },
+          });
+        });
+
+        // Exclusão via AJAX com SweetAlert2
+        $(document).ready(function () {
+          // Captura o clique no botão com a classe "delete-materia"
+          $(document).on("click", ".delete-materia", function (e) {
+            e.preventDefault();
+            const materiaId = $(this).data("id");
+
+            // Exibe confirmação com SweetAlert2
+            Swal.fire({
+              title: "Tem certeza?",
+              text: "Esta ação não pode ser desfeita.",
+              icon: "warning",
+              showCancelButton: true,
+              confirmButtonText: "Sim, excluir!",
+              cancelButtonText: "Cancelar",
+              confirmButtonColor: "#02A824",
+              cancelButtonColor: "#d33",
+            }).then((result) => {
+              if (result.isConfirmed) {
+                // Envia a requisição AJAX para excluir a matéria
+                $.ajax({
+                  url: "/deletar-materia/" + materiaId,
+                  type: "GET", // Altere para "DELETE" se estiver usando esse método
+                  success: function (response) {
+                    Swal.fire(
+                      "Excluída!",
+                      "A matéria foi excluída com sucesso.",
+                      "success"
+                    ).then(() => {
+                      // Atualiza a página ou remova a linha da tabela dinamicamente
+                      window.location.reload();
+                    });
+                  },
+                  error: function (xhr) {
+                    Swal.fire(
+                      "Erro!",
+                      "Não foi possível excluir a matéria.",
+                      "error"
+                    );
+                  },
+                });
+              }
+            });
           });
         });
       });
