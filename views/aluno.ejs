@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Cadastro de Aluno - Selecionar Turma</title>
+    <link rel="stylesheet" href="/assets/theme-d32f8eb8.css" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  </head>
+  <body>
+    <%- include('partials/sidebar') %>
+    <div class="min-h-screen flex flex-col lg:ps-64 w-full">
+      <%- include('partials/header') %>
+      <div class="p-6 space-y-6">
+        <!-- Título da página -->
+        <div class="flex items-center justify-between w-full print:hidden">
+          <h4 class="text-lg font-semibold text-default-900">
+            Cadastro de Alunos
+          </h4>
+        </div>
+
+        <!-- Exemplo de cartão com total de turmas -->
+        <div class="grid lg:grid-cols-4 md:grid-cols-2 grid-cols-1 gap-6">
+          <div class="shadow rounded-lg bg-white dark:bg-default-50">
+            <div class="p-5">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-base font-semibold text-default-600">
+                    Total de Turmas cadastradas
+                  </p>
+                  <h4 class="text-2xl font-semibold text-default-900 mt-4">
+                    <%= turmas.length %>
+                  </h4>
+                </div>
+                <span
+                  class="shrink h-18 w-18 inline-flex items-center justify-center rounded-lg bg-primary/20 text-primary"
+                >
+                  <i class="ph ph-chalkboard text-4xl"></i>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Exibir mensagem, se houver -->
+        <% if (message) { %>
+        <div class="alert alert-warning"><%= message %></div>
+        <% } %>
+
+        <!-- Tabela de Turmas -->
+        <div class="shadow rounded-lg bg-white dark:bg-default-50 h-fit">
+          <div class="flex flex-wrap items-center justify-between py-4 px-5">
+            <div class="relative flex">
+              <input
+                type="search"
+                class="ps-12 pe-4 py-2.5 block lg:w-64 border-none bg-default-100 text-default-700 rounded-lg text-sm focus:border-primary focus:ring-primary"
+                placeholder="Procurar turma..."
+              />
+              <span class="absolute start-4 top-2.5">
+                <i
+                  class="ph-duotone ph-magnifying-glass text-lg text-default-600"
+                ></i>
+              </span>
+            </div>
+          </div>
+
+          <div
+            class="border-t border-dashed border-default-200 relative overflow-x-auto"
+          >
+            <table class="min-w-full">
+              <thead class="border-b border-dashed border-default-200">
+                <tr>
+                  <td class="px-6 py-3 w-10 font-medium text-default-900">
+                    <input type="checkbox" class="form-checkbox ..." />
+                  </td>
+                  <th
+                    class="px-6 py-3 text-start text-sm capitalize font-semibold text-default-900 min-w-32"
+                  >
+                    Id
+                  </th>
+                  <th
+                    class="px-6 py-3 text-start text-sm capitalize font-semibold text-default-900 min-w-32"
+                  >
+                    Turma
+                  </th>
+                  <th
+                    class="px-6 py-3 text-start text-sm capitalize font-semibold text-default-900 min-w-32"
+                  >
+                    Curso
+                  </th>
+                  <th
+                    class="px-6 py-3 text-start text-sm capitalize font-semibold text-default-900 min-w-32"
+                  >
+                    Data Criação
+                  </th>
+                  <th
+                    class="px-3 py-3 text-center text-sm capitalize font-semibold text-default-900 min-w-32"
+                  >
+                    Ação
+                  </th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-dashed divide-default-200">
+                <% if (turmas.length > 0) { %> <% turmas.forEach(function(turma)
+                { %>
+                <tr>
+                  <td class="px-6 py-3">
+                    <input type="checkbox" class="form-checkbox ..." />
+                  </td>
+                  <td class="px-6 py-3"><%= turma.id %></td>
+                  <td class="px-6 py-3"><%= turma.nome %></td>
+                  <td class="px-6 py-3">
+                    <%= turma.curso ? turma.curso : "Curso não definido" %>
+                  </td>
+                  <td class="px-6 py-3">
+                    <%= new Date(turma.data_criacao).toLocaleString() %>
+                  </td>
+                  <td
+                    class="px-3 py-3 text-center whitespace-nowrap text-sm font-medium"
+                  >
+                    <div class="flex items-center justify-center gap-2">
+                      <a
+                        href="/aluno/cadastrar?turma_id=<%= turma.id %>"
+                        class="text-blue-500 hover:underline"
+                        >Cadastrar Alunos</a
+                      >
+                      &nbsp;|&nbsp;
+                      <a
+                        href="/aluno/listar?turma_id=<%= turma.id %>"
+                        class="text-green-500 hover:underline"
+                        >Ver Alunos</a
+                      >
+                    </div>
+                  </td>
+                </tr>
+                <% }); %> <% } else { %>
+                <tr>
+                  <td colspan="6" class="text-center py-6">
+                    Nenhuma turma cadastrada.
+                  </td>
+                </tr>
+                <% } %>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Paginação -->
+          <div
+            class="flex items-center justify-between py-3 px-6 border-t border-dashed border-default-200"
+          >
+            <h6 class="text-default-600">
+              Mostrando 1 a <%= turmas.length %> de <%= turmas.length %>
+            </h6>
+            <nav class="flex items-center gap-1">
+              <a
+                class="inline-flex items-center justify-center h-8 w-8 border rounded-md transition-all duration-200 bg-primary text-white border-primary"
+                href="/turmas?page=1"
+                aria-current="page"
+              >
+                1
+              </a>
+            </nav>
+          </div>
+        </div>
+      </div>
+      <%- include('partials/footer') %>
+    </div>
+  </body>
+</html>

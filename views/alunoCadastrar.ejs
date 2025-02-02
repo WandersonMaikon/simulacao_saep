@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Cadastro de Turma e Aluno</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta content="" name="description" />
+    <meta content="coderthemes" name="author" />
+    <link rel="shortcut icon" href="assets/favicon-8fd74f43.ico" />
+    <script type="module" crossorigin src="assets/theme-e4584917.js"></script>
+    <link rel="stylesheet" href="assets/theme-d32f8eb8.css" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+      .modal-overlay { z-index: 9999; }
+      .swal2-container { z-index: 100000 !important; }
+    </style>
+  </head>
+  <body>
+    <%- include('./partials/sidebar') %>
+    <div class="min-h-screen flex flex-col lg:ps-64 w-full">
+      <%- include('./partials/header') %>
+      <div class="p-6 space-y-6">
+        
+        <!-- Título da página -->
+        <div class="flex items-center justify-between w-full print:hidden">
+          <h4 class="text-lg font-semibold text-default-900">
+            Cadastro de Turma e Aluno
+          </h4>
+        </div>
+
+        <!-- Informações de Turmas -->
+        <div class="grid lg:grid-cols-4 md:grid-cols-2 grid-cols-1 gap-6">
+          <div class="shadow rounded-lg bg-white dark:bg-default-50">
+            <div class="p-5">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-base font-semibold text-default-600">
+                    Total de Turmas
+                  </p>
+                  <h4 class="text-2xl font-semibold text-default-900 mt-4">
+                    <%= typeof totalRows !== 'undefined' ? totalRows : '0' %>
+                  </h4>
+                </div>
+                <span class="shrink h-18 w-18 inline-flex items-center justify-center rounded-lg bg-primary/20 text-primary">
+                  <i class="ph ph-chalkboard text-4xl"></i>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tabela de Turmas -->
+        <div class="shadow rounded-lg bg-white dark:bg-default-50 h-fit">
+          <div class="flex flex-wrap items-center justify-between py-4 px-5">
+            <div class="relative flex">
+              <input type="search" class="ps-12 pe-4 py-2.5 block lg:w-64 border-none bg-default-100 text-default-700 rounded-lg text-sm focus:border-primary focus:ring-primary" placeholder="Procurar turma..." />
+              <span class="absolute start-4 top-2.5">
+                <i class="ph-duotone ph-magnifying-glass text-lg text-default-600"></i>
+              </span>
+            </div>
+          </div>
+
+          <div class="border-t border-dashed border-default-200 relative overflow-x-auto">
+            <table class="min-w-full">
+              <thead class="border-b border-dashed border-default-200">
+                <tr>
+                  <th class="px-6 py-3">Id</th>
+                  <th class="px-6 py-3">Nome</th>
+                  <th class="px-6 py-3">Curso</th>
+                  <th class="px-6 py-3">Data Criação</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-dashed divide-default-200">
+                <% if (turmas && turmas.length > 0) { %>
+                  <% turmas.forEach(function(turma) { %>
+                    <tr>
+                      <td class="px-6 py-3"><%= turma.id %></td>
+                      <td class="px-6 py-3"><%= turma.nome %></td>
+                      <td class="px-6 py-3"><%= turma.curso %></td>
+                      <td class="px-6 py-3"><%= new Date(turma.data_criacao).toLocaleString() %></td>
+                    </tr>
+                  <% }); %>
+                <% } else { %>
+                  <tr>
+                    <td colspan="4" class="text-center py-4">
+                      Nenhuma turma disponível.
+                    </td>
+                  </tr>
+                <% } %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Formulário de Cadastro de Aluno -->
+        <div class="shadow rounded-lg bg-white dark:bg-default-50 p-6">
+          <h3 class="text-lg font-semibold text-gray-900 mb-4">Cadastrar Aluno</h3>
+          
+          <% if (message) { %>
+            <div class="alert alert-warning"><%= message %></div>
+          <% } %>
+
+          <form action="/aluno/cadastrar" method="POST">
+            <div class="mb-4">
+              <label class="block font-semibold">Nome:</label>
+              <input type="text" name="nome" required class="border rounded-md p-2 w-full">
+            </div>
+            <div class="mb-4">
+              <label class="block font-semibold">Usuário:</label>
+              <input type="text" name="usuario" required class="border rounded-md p-2 w-full">
+            </div>
+            <div class="mb-4">
+              <label class="block font-semibold">Senha:</label>
+              <input type="password" name="senha" required class="border rounded-md p-2 w-full">
+            </div>
+            <div class="mb-4">
+              <label class="block font-semibold">Turma:</label>
+              <select name="turma_id" required class="border rounded-md p-2 w-full" <%= turmas.length === 0 ? 'disabled' : '' %>>
+                <% if (turmas.length > 0) { %>
+                  <% turmas.forEach(function(turma) { %>
+                    <option value="<%= turma.id %>"><%= turma.nome %></option>
+                  <% }); %>
+                <% } else { %>
+                  <option value="">Nenhuma turma disponível</option>
+                <% } %>
+              </select>
+            </div>
+            <button type="submit" class="bg-primary text-white px-4 py-2 rounded-md" <%= turmas.length === 0 ? 'disabled' : '' %>>
+              Cadastrar Aluno
+            </button>
+          </form>
+        </div>
+
+      </div>
+      <%- include('./partials/footer') %>
+    </div>
+  </body>
+</html>

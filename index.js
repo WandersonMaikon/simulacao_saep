@@ -332,6 +332,10 @@ app.post("/editar-turma", verificarAutenticacao, (req, res) => {
 });
 
 // ==========================
+// Fim da Rotas de Turmas
+// ==========================
+
+// ==========================
 // Rotas de Matéria
 // ==========================
 
@@ -526,6 +530,171 @@ app.post("/editar-materia", verificarAutenticacao, (req, res) => {
           .json({ error: "Acesso negado ou matéria não encontrada." });
       }
       return res.json({ message: "Matéria editada com sucesso!" });
+    }
+  );
+});
+
+// ==========================
+// Fim da Rotas de Matéria
+// ==========================
+
+// ==========================
+// Rotas de aluno
+// ==========================
+
+// Rota para listar turmas para cadastro de alunos
+app.get("/aluno", verificarAutenticacao, (req, res) => {
+  // Contar quantas turmas existem para o professor logado
+  db.query(
+    "SELECT COUNT(*) AS count FROM turma WHERE professor_id = ?",
+    [req.session.user.id],
+    (err, countResult) => {
+      if (err) {
+        console.error("Erro ao contar turmas:", err);
+        return res.render("aluno", {
+          message: "Erro ao buscar turmas",
+          turmas: [],
+          totalRows: 0, // Garante que a variável é enviada
+        });
+      }
+
+      const totalRows = countResult[0].count; // Obtém a contagem correta das turmas
+
+      // Buscar as turmas do professor logado
+      db.query(
+        "SELECT t.id, t.nome, t.data_criacao, c.nome AS curso FROM turma t INNER JOIN curso c ON t.curso_id = c.id WHERE t.professor_id = ?",
+        [req.session.user.id],
+        (err, turmas) => {
+          if (err) {
+            console.error("Erro ao buscar turmas:", err);
+            return res.render("aluno", {
+              message: "Erro ao buscar turmas",
+              turmas: [],
+              totalRows: 0,
+            });
+          }
+
+          if (turmas.length === 0) {
+            return res.render("aluno", {
+              message: "Nenhuma turma cadastrada.",
+              turmas: [],
+              totalRows,
+            });
+          }
+
+          res.render("aluno", { message: "", turmas, totalRows });
+        }
+      );
+    }
+  );
+});
+
+// Rota para exibir o formulário de cadastro de aluno para uma turma específica
+app.get("/aluno/cadastrar", verificarAutenticacao, (req, res) => {
+  const turmaId = req.query.turma_id;
+
+  if (!turmaId) {
+    return res.redirect("/aluno");
+  }
+
+  // Verifica se a turma pertence ao professor logado
+  db.query(
+    "SELECT * FROM turma WHERE id = ? AND professor_id = ?",
+    [turmaId, req.session.user.id],
+    (err, results) => {
+      if (err || results.length === 0) {
+        return res.redirect("/aluno");
+      }
+
+      const turma = results[0];
+
+      // Busca todas as turmas do professor logado
+      db.query(
+        "SELECT id, nome FROM turma WHERE professor_id = ?",
+        [req.session.user.id],
+        (err, turmas) => {
+          if (err) {
+            console.error("Erro ao buscar turmas:", err);
+            return res.render("alunoCadastrar", {
+              turma,
+              turmas: [],
+              message: "Erro ao buscar turmas",
+              totalRows: 0,
+            });
+          }
+
+          // Contagem de turmas para exibição na página
+          const totalRows = turmas.length;
+
+          res.render("alunoCadastrar", {
+            turma,
+            turmas,
+            totalRows,
+            message: "",
+          });
+        }
+      );
+    }
+  );
+});
+
+// Rota para processar o cadastro de aluno
+app.post("/aluno/cadastrar", verificarAutenticacao, (req, res) => {
+  const { nome, usuario, senha, turma_id } = req.body;
+  if (!nome || !usuario || !senha || !turma_id) {
+    return res.render("alunoCadastrar", {
+      turma: { id: turma_id },
+      message: "Todos os campos são obrigatórios.",
+    });
+  }
+  // Insere o aluno (observe que a senha não está criptografada; você pode adicionar criptografia se desejar)
+  db.query(
+    "INSERT INTO aluno (nome, usuario, senha, turma_id) VALUES (?, ?, ?, ?)",
+    [nome, usuario, senha, turma_id],
+    (err, result) => {
+      if (err) {
+        console.error("Erro ao cadastrar aluno:", err);
+        return res.render("alunoCadastrar", {
+          turma: { id: turma_id },
+          message: "Erro ao cadastrar aluno.",
+        });
+      }
+      // Após o cadastro, redireciona para uma página de listagem de alunos daquela turma
+      res.redirect("/aluno/listar?turma_id=" + turma_id);
+    }
+  );
+});
+
+// Rota para listar os alunos de uma turma
+app.get("/aluno/listar", verificarAutenticacao, (req, res) => {
+  const turmaId = req.query.turma_id;
+  if (!turmaId) {
+    return res.redirect("/aluno");
+  }
+  // Verifica se a turma pertence ao professor logado
+  db.query(
+    "SELECT * FROM turma WHERE id = ? AND professor_id = ?",
+    [turmaId, req.session.user.id],
+    (err, results) => {
+      if (err || results.length === 0) {
+        return res.redirect("/aluno");
+      }
+      const turma = results[0];
+      db.query(
+        "SELECT * FROM aluno WHERE turma_id = ?",
+        [turmaId],
+        (err, alunos) => {
+          if (err) {
+            console.error("Erro ao buscar alunos:", err);
+            return res.render("alunoListar", {
+              turma,
+              alunos: [],
+              message: "Erro ao buscar alunos.",
+            });
+          }
+          res.render("alunoListar", { turma, alunos, message: "" });
+        }
+      );
     }
   );
 });
