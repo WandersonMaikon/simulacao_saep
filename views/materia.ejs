@@ -115,6 +115,7 @@
                 <% if (materias && materias.length > 0) { %> <%
                 materias.forEach(materia => { %>
                 <!-- Dentro do loop que renderiza cada matéria -->
+                <!-- Exemplo de uma linha da tabela na listagem -->
                 <tr>
                   <td class="px-6 py-3">
                     <input type="checkbox" class="form-checkbox ..." />
@@ -126,14 +127,19 @@
                     class="px-3 py-3 text-center whitespace-nowrap text-sm font-medium"
                   >
                     <div class="flex items-center justify-center gap-2">
+                      <!-- Botão para abrir o modal de edição -->
                       <a
-                        href="/editar-materia/<%= materia.id %>"
-                        class="inline-flex items-center justify-center h-8 w-8 rounded-md bg-cyan-500/20 text-cyan-500 transition-all duration-200 hover:bg-cyan-500 hover:text-white"
+                        href="#"
+                        class="edit-materia inline-flex items-center justify-center h-8 w-8 rounded-md bg-cyan-500/20 text-cyan-500 transition-all duration-200 hover:bg-cyan-500 hover:text-white"
+                        data-id="<%= materia.id %>"
+                        data-nome="<%= materia.nome %>"
+                        data-curso_id="<%= materia.curso_id %>"
                       >
                         <i
                           class="ph-duotone ph-pencil-simple-line text-base"
                         ></i>
                       </a>
+                      <!-- Botão de exclusão já implementado -->
                       <button
                         class="delete-materia inline-flex items-center justify-center h-8 w-8 rounded-md bg-red-500/20 text-red-500 transition-all duration-200 hover:bg-red-500 hover:text-white"
                         data-id="<%= materia.id %>"
@@ -245,7 +251,121 @@
       </div>
     </div>
 
+    <!-- Modal para Edição de Matéria -->
+    <div
+      id="modal-editar"
+      class="fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-50 z-[9999] hidden modal-overlay"
+    >
+      <div class="bg-white p-10 rounded-lg shadow-lg w-full max-w-2xl">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Editar Matéria</h3>
+        <form id="form-editar-materia">
+          <!-- Campo oculto para o ID da matéria -->
+          <input type="hidden" id="edit_id" name="id" value="" />
+          <div class="mb-8">
+            <label
+              for="edit_curso_id"
+              class="block text-base font-semibold text-default-900 mb-2"
+              >Curso</label
+            >
+            <select
+              name="curso_id"
+              id="edit_curso_id"
+              required
+              class="border border-gray-300 rounded-md w-full p-2"
+            >
+              <% cursos.forEach(curso => { %>
+              <option value="<%= curso.id %>"><%= curso.nome %></option>
+              <% }); %>
+            </select>
+          </div>
+          <div class="mb-8">
+            <label
+              for="edit_nome_materia"
+              class="block text-base font-semibold text-default-900 mb-2"
+              >Nome da Matéria</label
+            >
+            <input
+              type="text"
+              id="edit_nome_materia"
+              name="nome_materia"
+              required
+              class="border border-gray-300 rounded-md w-full p-2"
+            />
+          </div>
+          <div class="text-center mt-8">
+            <button
+              type="submit"
+              class="bg-primary text-white px-6 py-2 rounded-md"
+            >
+              Salvar Alterações
+            </button>
+          </div>
+        </form>
+        <button id="close-edit-modal" class="mt-4 text-red-500">Fechar</button>
+      </div>
+    </div>
+
     <script>
+      $(document).ready(function () {
+        // Ao clicar no botão de edição, abre o modal e preenche os campos
+        $(document).on("click", ".edit-materia", function (e) {
+          e.preventDefault();
+          var id = $(this).data("id");
+          var nome = $(this).data("nome");
+          var curso_id = $(this).data("curso_id");
+
+          $("#edit_id").val(id);
+          $("#edit_nome_materia").val(nome);
+          $("#edit_curso_id").val(curso_id);
+          $("#modal-editar").removeClass("hidden");
+        });
+
+        // Fecha o modal de edição
+        $("#close-edit-modal").click(function () {
+          $("#modal-editar").addClass("hidden");
+        });
+
+        // Envio do formulário de edição com confirmação
+        $("#form-editar-materia").submit(function (e) {
+          e.preventDefault();
+
+          Swal.fire({
+            title: "Tem certeza?",
+            text: "Deseja salvar as alterações nesta matéria?",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonText: "Sim, editar!",
+            cancelButtonText: "Cancelar",
+            confirmButtonColor: "#02A824",
+            cancelButtonColor: "#d33",
+          }).then((result) => {
+            if (result.isConfirmed) {
+              $.ajax({
+                url: "/editar-materia",
+                type: "POST",
+                data: $("#form-editar-materia").serialize(),
+                success: function (response) {
+                  Swal.fire(
+                    "Editada!",
+                    "Matéria editada com sucesso!",
+                    "success"
+                  ).then(() => {
+                    window.location.reload();
+                  });
+                },
+                error: function (xhr) {
+                  var errorMsg =
+                    xhr.responseJSON && xhr.responseJSON.error
+                      ? xhr.responseJSON.error
+                      : "Erro ao editar matéria.";
+                  Swal.fire("Erro!", errorMsg, "error");
+                },
+              });
+            }
+          });
+        });
+      });
+
       $(document).ready(function () {
         // Abrir e fechar o modal de cadastro
         $("#open-modal").click(function () {

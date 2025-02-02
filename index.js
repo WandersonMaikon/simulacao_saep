@@ -348,22 +348,23 @@ app.get("/editar-materia/:id", verificarAutenticacao, (req, res) => {
 });
 
 // Atualização de matéria (rota protegida)
-app.post("/editar-materia/:id", verificarAutenticacao, (req, res) => {
-  const materiaId = req.params.id;
-  const { nome_materia, curso_id } = req.body;
+app.post("/editar-materia", verificarAutenticacao, (req, res) => {
+  const { id, nome_materia, curso_id } = req.body;
+
   db.query(
-    "UPDATE materia SET nome = ?, curso_id = ? WHERE id = ?",
-    [nome_materia, curso_id, materiaId],
+    "UPDATE materia SET nome = ?, curso_id = ? WHERE id = ? AND professor_id = ?",
+    [nome_materia, curso_id, id, req.session.user.id],
     (err, result) => {
       if (err) {
         console.error("Erro ao atualizar matéria:", err);
-        return res.render("editarMateria", {
-          materia: { id: materiaId, nome: nome_materia, curso_id },
-          cursos: [],
-          message: "Erro ao atualizar matéria.",
-        });
+        return res.status(500).json({ error: "Erro ao atualizar matéria." });
       }
-      res.redirect("/materias");
+      if (result.affectedRows === 0) {
+        return res
+          .status(403)
+          .json({ error: "Acesso negado ou matéria não encontrada." });
+      }
+      return res.json({ message: "Matéria editada com sucesso!" });
     }
   );
 });
