@@ -592,6 +592,9 @@ app.get("/aluno", verificarAutenticacao, (req, res) => {
 // Rota para exibir o formulário de cadastro de aluno para uma turma específica
 app.get("/aluno/cadastrar", verificarAutenticacao, (req, res) => {
   const turmaId = req.query.turma_id;
+  const page = parseInt(req.query.page) || 1; // Obtém o número da página ou usa 1 por padrão
+  const limit = 10; // Defina o limite de alunos por página
+  const offset = (page - 1) * limit;
 
   if (!turmaId) {
     return res.redirect("/aluno");
@@ -603,6 +606,7 @@ app.get("/aluno/cadastrar", verificarAutenticacao, (req, res) => {
     [turmaId, req.session.user.id],
     (err, results) => {
       if (err || results.length === 0) {
+        console.error("Erro ao verificar a turma:", err);
         return res.redirect("/aluno");
       }
 
@@ -618,20 +622,66 @@ app.get("/aluno/cadastrar", verificarAutenticacao, (req, res) => {
             return res.render("alunoCadastrar", {
               turma,
               turmas: [],
-              message: "Erro ao buscar turmas",
+              alunos: [],
               totalRows: 0,
+              currentPage: page,
+              totalPages: 0,
+              message: "Erro ao buscar turmas",
             });
           }
 
-          // Contagem de turmas para exibição na página
-          const totalRows = turmas.length;
+          // Busca os alunos da turma, paginando os resultados
+          db.query(
+            "SELECT id, nome, usuario FROM aluno WHERE turma_id = ? LIMIT ? OFFSET ?",
+            [turmaId, limit, offset],
+            (err, alunos) => {
+              if (err) {
+                console.error("Erro ao buscar alunos:", err);
+                return res.render("alunoCadastrar", {
+                  turma,
+                  turmas,
+                  alunos: [],
+                  totalRows: 0,
+                  currentPage: page,
+                  totalPages: 0,
+                  message: "Erro ao buscar alunos",
+                });
+              }
 
-          res.render("alunoCadastrar", {
-            turma,
-            turmas,
-            totalRows,
-            message: "",
-          });
+              // Contagem total de alunos para paginação
+              db.query(
+                "SELECT COUNT(*) AS total FROM aluno WHERE turma_id = ?",
+                [turmaId],
+                (err, countResult) => {
+                  if (err) {
+                    console.error("Erro ao contar alunos:", err);
+                    return res.render("alunoCadastrar", {
+                      turma,
+                      turmas,
+                      alunos: [],
+                      totalRows: 0,
+                      currentPage: page,
+                      totalPages: 0,
+                      message: "Erro ao contar alunos",
+                    });
+                  }
+
+                  const totalRows = countResult[0].total;
+                  const totalPages = Math.ceil(totalRows / limit);
+
+                  res.render("alunoCadastrar", {
+                    turma,
+                    turmas,
+                    alunos,
+                    totalRows,
+                    currentPage: page,
+                    totalPages,
+                    message: "",
+                  });
+                }
+              );
+            }
+          );
         }
       );
     }
