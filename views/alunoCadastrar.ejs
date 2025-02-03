@@ -112,7 +112,12 @@
                   <th
                     class="px-6 py-3 text-start text-sm capitalize font-semibold text-default-900 min-w-32"
                   >
-                    Data de Cadastro
+                    Senha
+                  </th>
+                  <th
+                    class="px-6 py-3 text-start text-sm capitalize font-semibold text-default-900 min-w-32"
+                  >
+                    Data cadastro
                   </th>
                   <th
                     class="px-3 py-3 text-center text-sm capitalize font-semibold text-default-900 min-w-32"
@@ -131,8 +136,11 @@
                   <td class="px-6 py-3"><%= aluno.id %></td>
                   <td class="px-6 py-3"><%= aluno.nome %></td>
                   <td class="px-6 py-3"><%= aluno.usuario %></td>
+                  <td class="px-6 py-3"><%= aluno.senha %></td>
                   <td class="px-6 py-3">
-                    <%= new Date(aluno.data_cadastro).toLocaleString() %>
+                    <% if (aluno.data_cadastro) { %> <%= new
+                    Date(aluno.data_cadastro).toLocaleString("pt-BR") %> <% }
+                    else { %> Não definida <% } %>
                   </td>
                   <td
                     class="px-3 py-3 text-center whitespace-nowrap text-sm font-medium"

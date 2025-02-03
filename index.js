@@ -632,7 +632,7 @@ app.get("/aluno/cadastrar", verificarAutenticacao, (req, res) => {
 
           // Busca os alunos da turma, paginando os resultados
           db.query(
-            "SELECT id, nome, usuario FROM aluno WHERE turma_id = ? LIMIT ? OFFSET ?",
+            "SELECT id, nome, usuario, senha, DATE_FORMAT(data_cadastro, '%d/%m/%Y %H:%i:%s') AS data_cadastro FROM aluno WHERE turma_id = ? LIMIT ? OFFSET ?",
             [turmaId, limit, offset],
             (err, alunos) => {
               if (err) {
@@ -723,7 +723,7 @@ app.get("/aluno/listar", verificarAutenticacao, (req, res) => {
   }
   // Verifica se a turma pertence ao professor logado
   db.query(
-    "SELECT * FROM turma WHERE id = ? AND professor_id = ?",
+    "SELECT * FROM aluno WHERE id = ? AND professor_id = ?",
     [turmaId, req.session.user.id],
     (err, results) => {
       if (err || results.length === 0) {
