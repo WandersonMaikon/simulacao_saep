@@ -20,6 +20,23 @@
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css"
     />
+
+    <style>
+      .choices__list--multiple {
+        color: red !important;
+        background-color: transparent !important;
+        border: black;
+      }
+      .choices__button {
+        color: red !important;
+        background-color: transparent !important;
+        border: none !important;
+      }
+
+      .choices__button:hover {
+        color: darkred !important;
+      }
+    </style>
   </head>
 
   <body
@@ -83,13 +100,22 @@
                 />
               </div>
 
-              <div class="mb-4">
-                <label
-                  for="curso"
-                  class="block text-base font-semibold text-default-900 mb-2"
-                  >Curso</label
+              <div class="w-full">
+                <div class="mb-2">
+                  <label
+                    for="choices-multiple-remove-button"
+                    class="form-label font-medium text-13 text-gray-500 dark:text-zinc-100"
+                  >
+                    Selecione os Cursos que você ministra
+                  </label>
+                </div>
+                <select
+                  name="curso"
+                  id="choices-multiple-remove-button"
+                  placeholder="Selecione os cursos"
+                  multiple
+                  required
                 >
-                <select class="choices__input" id="curso" name="curso" required>
                   <% if (typeof cursos !== 'undefined' && cursos.length > 0) {
                   %> <% cursos.forEach(curso => { %>
                   <option value="<%= curso.id %>"><%= curso.nome %></option>
@@ -150,28 +176,39 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
     <script>
-      new Choices("#curso");
       document.addEventListener("DOMContentLoaded", function () {
-        const alertMessage = "<%= message %>";
+        const params = new URLSearchParams(window.location.search);
+        const successMessage = params.get("success");
+        const errorMessage = params.get("error");
 
-        if (alertMessage && alertMessage.trim() !== "") {
+        if (successMessage) {
           Swal.fire({
-            title: alertMessage.includes("sucesso") ? "Sucesso!" : "Erro!",
-            text: alertMessage.includes("sucesso")
-              ? "Sucesso! Você será redirecionado para o login."
-              : alertMessage,
-            icon: alertMessage.includes("sucesso") ? "success" : "error",
+            title: "Sucesso!",
+            text: "Cadastro realizado com sucesso! Você será redirecionado para o login.",
+            icon: "success",
             confirmButtonText: "OK",
-            timer: 5000, // O alerta desaparecerá após 3 segundos
+            timer: 5000,
             timerProgressBar: true,
           }).then(() => {
-            if (alertMessage.includes("sucesso")) {
-              window.location.href = "/login"; // Redireciona para a página de login após sucesso
-            } else {
-              window.location.href = "/registro"; // Redireciona para a página de registro em caso de erro
-            }
+            window.location.href = "/login"; // Redireciona após sucesso
+          });
+        } else if (errorMessage) {
+          Swal.fire({
+            title: "Erro!",
+            text: decodeURIComponent(errorMessage),
+            icon: "error",
+            confirmButtonText: "OK",
           });
         }
+      });
+    </script>
+    <script>
+      // Inicializa o Choices para o select múltiplo
+      new Choices("#choices-multiple-remove-button", {
+        removeItemButton: true,
+
+        placeholder: true,
+        placeholderValue: "Selecione os cursos",
       });
     </script>
   </body>

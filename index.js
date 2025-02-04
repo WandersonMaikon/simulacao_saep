@@ -104,7 +104,7 @@ app.get("/logout", (req, res) => {
 
 // Exibe a página de registro
 app.get("/registro", (req, res) => {
-  // Aqui busca todos os cursos, pois o usuário ainda não está logado
+  // Busca todos os cursos disponíveis
   db.query("SELECT id, nome FROM curso", (err, results) => {
     if (err) {
       console.error("Erro ao buscar cursos:", err);
@@ -117,57 +117,66 @@ app.get("/registro", (req, res) => {
   });
 });
 
-// Processa o registro de professor
 app.post("/registro", async (req, res) => {
   const { nome, matricula, curso, email, password } = req.body;
-  db.query(
-    "SELECT * FROM matricula_validada WHERE matricula = ?",
-    [matricula],
-    async (error, results) => {
-      if (error) {
-        console.error("Erro ao verificar matrícula:", error);
-        return res.render("registro", {
-          message: "Erro no sistema. Tente novamente!",
-        });
-      }
-      if (results.length === 0) {
-        return res.render("registro", {
-          message: "Matrícula inválida ou não cadastrada.",
-        });
-      }
-      const hashedPassword = await bcrypt.hash(password, 10);
-      db.query(
-        "INSERT INTO professor (nome, matricula, curso_id, email, senha) VALUES (?, ?, ?, ?, ?)",
-        [nome, matricula, curso, email, hashedPassword],
-        (error, result) => {
-          if (error) {
-            console.error("Erro ao cadastrar professor:", error);
-            return res.render("registro", {
-              message: "Erro ao criar professor.",
-            });
-          }
-          const professorId = result.insertId;
-          // Insere o relacionamento na tabela professor_curso
-          db.query(
-            "INSERT INTO professor_curso (professor_id, curso_id) VALUES (?, ?)",
-            [professorId, curso],
-            (err) => {
-              if (err) {
-                console.error("Erro ao vincular professor ao curso:", err);
-                return res.render("registro", {
-                  message: "Erro ao vincular professor ao curso.",
-                });
-              }
-              return res.render("registro", {
-                message: "Cadastro realizado com sucesso!",
-                cursos: [],
-              });
-            }
-          );
-        }
+
+  try {
+    // Verifica se a matrícula é válida
+    const [results] = await db
+      .promise()
+      .query("SELECT * FROM matricula_validada WHERE matricula = ?", [
+        matricula,
+      ]);
+
+    if (results.length === 0) {
+      return res.redirect(
+        "/registro?error=Matrícula inválida ou não cadastrada."
       );
     }
-  );
+
+    // Verifica se algum curso foi selecionado
+    let cursosSelecionados = Array.isArray(curso) ? curso : [curso];
+
+    if (!cursosSelecionados.length || cursosSelecionados[0] === "") {
+      return res.redirect("/registro?error=Selecione pelo menos um curso.");
+    }
+
+    // Hash da senha antes de inserir no banco
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Insere o professor sem curso_id
+    const [professorResult] = await db
+      .promise()
+      .query(
+        "INSERT INTO professor (nome, matricula, email, senha) VALUES (?, ?, ?, ?)",
+        [nome, matricula, email, hashedPassword]
+      );
+
+    const professorId = professorResult.insertId;
+
+    // Cria os placeholders para inserção múltipla
+    let placeholders = cursosSelecionados.map(() => "(?, ?)").join(", ");
+    let values = cursosSelecionados.flatMap((c) => [professorId, c]);
+
+    // Insere os cursos na tabela professor_curso
+    await db
+      .promise()
+      .query(
+        `INSERT INTO professor_curso (professor_id, curso_id) VALUES ${placeholders}`,
+        values
+      );
+
+    return res.redirect("/registro?success=true");
+  } catch (error) {
+    console.error("Erro no registro:", error);
+
+    let errorMessage = "Erro ao cadastrar professor.";
+    if (error.code === "ER_DUP_ENTRY") {
+      errorMessage = "E-mail ou matrícula já cadastrados.";
+    }
+
+    return res.redirect(`/registro?error=${encodeURIComponent(errorMessage)}`);
+  }
 });
 
 // ==========================
