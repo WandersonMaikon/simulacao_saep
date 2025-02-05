@@ -762,76 +762,246 @@ app.get("/aluno/listar", verificarAutenticacao, (req, res) => {
 // Rotas de Questões
 // ==========================
 
-app.post("/cadastrar-questao", verificarAutenticacao, (req, res) => {
-  const professorId = req.session.user.id;
-  const {
-    enunciado,
-    alternativaA,
-    alternativaB,
-    alternativaC,
-    alternativaD,
-    correta,
-    curso,
-    titulo,
-    dificuldade,
-  } = req.body;
+app.get("/questoes", verificarAutenticacao, (req, res) => {
+  const page = parseInt(req.query.page) || 1;
+  const limit = 10;
+  const offset = (page - 1) * limit;
 
-  // Verifica se o professor está vinculado ao curso usando a tabela professor_curso
-  const verificaCursoQuery = `
-    SELECT c.id 
-    FROM curso c
-    JOIN professor_curso pc ON pc.curso_id = c.id
-    WHERE pc.professor_id = ? AND c.id = ?;
-  `;
-  db.query(verificaCursoQuery, [professorId, curso], (err, results) => {
-    if (err) {
-      console.error("Erro ao verificar curso:", err);
-      return res.render("questoes", {
-        message: "Erro ao verificar o curso.",
-        cursos: [],
-      });
-    }
-    if (results.length === 0) {
-      return res.render("questoes", {
-        message: "Você não tem permissão para cadastrar questões nesse curso.",
-        cursos: [],
-      });
-    }
-    // Query de inserção para 10 colunas:
-    const cadastrarQuestaoQuery = `
-      INSERT INTO questao (enunciado, alternativa_a, alternativa_b, alternativa_c, alternativa_d, resposta_correta, curso, titulo, dificuldade, professor_id)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
-    `;
-    db.query(
-      cadastrarQuestaoQuery,
-      [
-        enunciado,
-        alternativaA,
-        alternativaB,
-        alternativaC,
-        alternativaD,
-        correta,
-        curso,
-        titulo,
-        dificuldade,
-        professorId,
-      ],
-      (err) => {
-        if (err) {
-          console.error("Erro ao cadastrar questão:", err);
-          return res.render("questoes", {
-            message: "Erro ao cadastrar a questão.",
-            cursos: [],
-          });
-        }
-        return res.render("questoes", {
-          message: "Questão cadastrada com sucesso!",
+  // Conta as questões que pertencem ao professor (através da matéria)
+  db.query(
+    "SELECT COUNT(*) AS count FROM questao q INNER JOIN materia m ON q.materia_id = m.id WHERE m.professor_id = ?",
+    [req.session.user.id],
+    (err, countResult) => {
+      if (err) {
+        console.error("Erro ao contar questões:", err);
+        return res.render("questao", {
+          message: "Erro ao buscar questões",
+          questoes: [],
+          currentPage: page,
+          totalPages: 0,
+          totalRows: 0,
           cursos: [],
+          materias: [],
         });
       }
-    );
-  });
+      const totalRows = countResult[0].count;
+      const totalPages = Math.ceil(totalRows / limit);
+      // Busca as questões com junção para obter nomes dos cursos e matérias
+      db.query(
+        `SELECT q.id, q.titulo, q.enunciado, q.alternativa_a, q.alternativa_b, q.alternativa_c, q.alternativa_d, q.resposta_correta, q.curso_id, q.materia_id, c.nome AS curso, m.nome AS materia 
+         FROM questao q 
+         INNER JOIN curso c ON q.curso_id = c.id 
+         INNER JOIN materia m ON q.materia_id = m.id 
+         WHERE m.professor_id = ? 
+         LIMIT ? OFFSET ?`,
+        [req.session.user.id, limit, offset],
+        (err, questoes) => {
+          if (err) {
+            console.error("Erro ao buscar questões:", err);
+            return res.render("questao", {
+              message: "Erro ao buscar questões",
+              questoes: [],
+              currentPage: page,
+              totalPages: 0,
+              totalRows: 0,
+              cursos: [],
+              materias: [],
+            });
+          }
+          // Busca os cursos vinculados ao professor (para os selects dos modais)
+          db.query(
+            "SELECT c.id, c.nome FROM curso c INNER JOIN professor_curso pc ON c.id = pc.curso_id WHERE pc.professor_id = ?",
+            [req.session.user.id],
+            (err, cursos) => {
+              if (err) {
+                console.error("Erro ao buscar cursos:", err);
+                cursos = [];
+              }
+              // Busca as matérias do professor
+              db.query(
+                "SELECT m.id, m.nome FROM materia m WHERE m.professor_id = ?",
+                [req.session.user.id],
+                (err, materias) => {
+                  if (err) {
+                    console.error("Erro ao buscar matérias:", err);
+                    materias = [];
+                  }
+                  res.render("questao", {
+                    message: "",
+                    questoes,
+                    currentPage: page,
+                    totalPages,
+                    totalRows,
+                    cursos,
+                    materias,
+                  });
+                }
+              );
+            }
+          );
+        }
+      );
+    }
+  );
 });
+
+app.get("/cadastrar-questao", verificarAutenticacao, (req, res) => {
+  // Supondo que você precise passar os cursos e matérias do professor para os selects:
+  db.query(
+    "SELECT c.id, c.nome FROM curso c INNER JOIN professor_curso pc ON c.id = pc.curso_id WHERE pc.professor_id = ?",
+    [req.session.user.id],
+    (err, cursos) => {
+      if (err) {
+        console.error("Erro ao buscar cursos:", err);
+        cursos = [];
+      }
+      db.query(
+        "SELECT m.id, m.nome FROM materia m WHERE m.professor_id = ?",
+        [req.session.user.id],
+        (err, materias) => {
+          if (err) {
+            console.error("Erro ao buscar matérias:", err);
+            materias = [];
+          }
+          res.render("questaoCadastrar", { cursos, materias, message: "" });
+        }
+      );
+    }
+  );
+});
+
+app.post("/cadastrar-questao", verificarAutenticacao, (req, res) => {
+  const {
+    curso_id,
+    materia_id,
+    titulo,
+    enunciado,
+    alternativa_a,
+    alternativa_b,
+    alternativa_c,
+    alternativa_d,
+    resposta_correta,
+  } = req.body;
+  if (
+    !curso_id ||
+    !materia_id ||
+    !titulo ||
+    !enunciado ||
+    !alternativa_a ||
+    !alternativa_b ||
+    !alternativa_c ||
+    !alternativa_d ||
+    !resposta_correta
+  ) {
+    return res.status(400).json({ error: "Todos os campos são obrigatórios." });
+  }
+  db.query(
+    "INSERT INTO questao (curso_id, materia_id, titulo, enunciado, alternativa_a, alternativa_b, alternativa_c, alternativa_d, resposta_correta) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+    [
+      curso_id,
+      materia_id,
+      titulo,
+      enunciado,
+      alternativa_a,
+      alternativa_b,
+      alternativa_c,
+      alternativa_d,
+      resposta_correta,
+    ],
+    (err, result) => {
+      if (err) {
+        console.error("Erro ao cadastrar questão:", err);
+        return res.status(500).json({ error: "Erro ao cadastrar questão." });
+      }
+      return res.json({ message: "Questão cadastrada com sucesso!" });
+    }
+  );
+});
+
+app.get("/deletar-questao/:id", verificarAutenticacao, (req, res) => {
+  const questaoId = req.params.id;
+  // Garante que a questão pertence ao professor, verificando por meio da junção com matéria
+  db.query(
+    "DELETE q FROM questao q INNER JOIN materia m ON q.materia_id = m.id WHERE q.id = ? AND m.professor_id = ?",
+    [questaoId, req.session.user.id],
+    (err, result) => {
+      if (err) {
+        console.error("Erro ao excluir questão:", err);
+        return res.status(500).json({ error: "Erro ao excluir questão." });
+      }
+      if (result.affectedRows === 0) {
+        return res
+          .status(403)
+          .json({ error: "Acesso negado ou questão inexistente." });
+      }
+      return res.json({ message: "Questão excluída com sucesso!" });
+    }
+  );
+});
+
+app.post("/editar-questao", verificarAutenticacao, (req, res) => {
+  const {
+    id,
+    curso_id,
+    materia_id,
+    titulo,
+    enunciado,
+    alternativa_a,
+    alternativa_b,
+    alternativa_c,
+    alternativa_d,
+    resposta_correta,
+  } = req.body;
+  if (
+    !id ||
+    !curso_id ||
+    !materia_id ||
+    !titulo ||
+    !enunciado ||
+    !alternativa_a ||
+    !alternativa_b ||
+    !alternativa_c ||
+    !alternativa_d ||
+    !resposta_correta
+  ) {
+    return res.status(400).json({ error: "Todos os campos são obrigatórios." });
+  }
+  db.query(
+    `UPDATE questao q 
+     INNER JOIN materia m ON q.materia_id = m.id 
+     SET q.curso_id = ?, q.materia_id = ?, q.titulo = ?, q.enunciado = ?, q.alternativa_a = ?, q.alternativa_b = ?, q.alternativa_c = ?, q.alternativa_d = ?, q.resposta_correta = ? 
+     WHERE q.id = ? AND m.professor_id = ?`,
+    [
+      curso_id,
+      materia_id,
+      titulo,
+      enunciado,
+      alternativa_a,
+      alternativa_b,
+      alternativa_c,
+      alternativa_d,
+      resposta_correta,
+      id,
+      req.session.user.id,
+    ],
+    (err, result) => {
+      if (err) {
+        console.error("Erro ao atualizar questão:", err);
+        return res.status(500).json({ error: "Erro ao atualizar questão." });
+      }
+      if (result.affectedRows === 0) {
+        return res
+          .status(403)
+          .json({ error: "Acesso negado ou questão inexistente." });
+      }
+      return res.json({ message: "Questão editada com sucesso!" });
+    }
+  );
+});
+
+// ==========================
+// Fim da rota de Questões
+// ==========================
 
 // Inicializa o servidor
 const PORT = process.env.PORT || 3000;

@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Adicionar questão - Simulação Saep</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta content="Cadastro de questões no Simulação Saep" name="description" />
+    <meta content="coderthemes" name="author" />
+    <link rel="shortcut icon" href="assets/favicon-8fd74f43.ico" />
+    <link rel="stylesheet" href="assets/theme-d32f8eb8.css" />
+    <!-- SweetAlert2 CSS -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css"
+    />
+  </head>
+  <body class="bg-primary/10">
+    <%- include('partials/sidebar') %>
+    <div class="min-h-screen flex flex-col lg:ps-64 w-full">
+      <%- include('partials/header') %>
+
+      <div class="p-6 space-y-6">
+        <!-- Cabeçalho com breadcrumb -->
+        <div class="flex items-center justify-between w-full print:hidden">
+          <h4 class="text-lg font-semibold text-default-900">
+            Adicionar questão
+          </h4>
+          <ol
+            aria-label="Breadcrumb"
+            class="hidden md:flex items-center whitespace-nowrap min-w-0 gap-2"
+          ></ol>
+        </div>
+
+        <!-- Formulário de cadastro de questão -->
+        <div class="shadow rounded-lg bg-white dark:bg-default-50 h-fit">
+          <div class="flex items-center justify-between py-4 px-5">
+            <h4 class="text-lg font-medium text-default-950 capitalize">
+              Questão
+            </h4>
+          </div>
+          <div class="p-5 border-t border-dashed border-default-200">
+            <form
+              id="form-cadastrar-questao"
+              action="/cadastrar-questao"
+              method="POST"
+            >
+              <div class="grid md:grid-cols-2 gap-4">
+                <!-- Select de Curso -->
+                <div class="space-y-1">
+                  <label
+                    for="questao_curso_id"
+                    class="text-sm font-medium text-default-900"
+                    >Curso</label
+                  >
+                  <select
+                    name="curso_id"
+                    id="questao_curso_id"
+                    class="block w-full rounded py-2.5 px-4 border"
+                    required
+                  >
+                    <% cursos.forEach(curso => { %>
+                    <option value="<%= curso.id %>"><%= curso.nome %></option>
+                    <% }); %>
+                  </select>
+                </div>
+                <!-- Select de Matéria -->
+                <div class="space-y-1">
+                  <label
+                    for="questao_materia_id"
+                    class="text-sm font-medium text-default-900"
+                    >Matéria</label
+                  >
+                  <select
+                    name="materia_id"
+                    id="questao_materia_id"
+                    class="block w-full rounded py-2.5 px-4 border"
+                    required
+                  >
+                    <% materias.forEach(materia => { %>
+                    <option value="<%= materia.id %>">
+                      <%= materia.nome %>
+                    </option>
+                    <% }); %>
+                  </select>
+                </div>
+                <!-- Título -->
+                <div class="space-y-1 md:col-span-2">
+                  <label
+                    for="questao_titulo"
+                    class="text-sm font-medium text-default-900"
+                    >Titulo</label
+                  >
+                  <input
+                    type="text"
+                    name="titulo"
+                    id="questao_titulo"
+                    placeholder="Informe o título"
+                    class="block w-full rounded py-2.5 px-4 border"
+                    required
+                  />
+                </div>
+                <!-- Enunciado -->
+                <div class="space-y-1 md:col-span-2">
+                  <label
+                    for="questao_enunciado"
+                    class="text-sm font-medium text-default-900"
+                    >Enunciado</label
+                  >
+                  <textarea
+                    name="enunciado"
+                    id="questao_enunciado"
+                    placeholder="Informe o enunciado da questão"
+                    class="block w-full rounded py-2.5 px-4 border"
+                    required
+                  ></textarea>
+                </div>
+                <!-- Alternativas -->
+                <div class="space-y-1">
+                  <label
+                    for="questao_alternativa_a"
+                    class="text-sm font-medium text-default-900"
+                    >Alternativa A</label
+                  >
+                  <input
+                    type="text"
+                    name="alternativa_a"
+                    id="questao_alternativa_a"
+                    placeholder="Informe a alternativa A"
+                    class="block w-full rounded py-2.5 px-4 border"
+                    required
+                  />
+                </div>
+                <div class="space-y-1">
+                  <label
+                    for="questao_alternativa_b"
+                    class="text-sm font-medium text-default-900"
+                    >Alternativa B</label
+                  >
+                  <input
+                    type="text"
+                    name="alternativa_b"
+                    id="questao_alternativa_b"
+                    placeholder="Informe a alternativa B"
+                    class="block w-full rounded py-2.5 px-4 border"
+                    required
+                  />
+                </div>
+                <div class="space-y-1">
+                  <label
+                    for="questao_alternativa_c"
+                    class="text-sm font-medium text-default-900"
+                    >Alternativa C</label
+                  >
+                  <input
+                    type="text"
+                    name="alternativa_c"
+                    id="questao_alternativa_c"
+                    placeholder="Informe a alternativa C"
+                    class="block w-full rounded py-2.5 px-4 border"
+                    required
+                  />
+                </div>
+                <div class="space-y-1">
+                  <label
+                    for="questao_alternativa_d"
+                    class="text-sm font-medium text-default-900"
+                    >Alternativa D</label
+                  >
+                  <input
+                    type="text"
+                    name="alternativa_d"
+                    id="questao_alternativa_d"
+                    placeholder="Informe a alternativa D"
+                    class="block w-full rounded py-2.5 px-4 border"
+                    required
+                  />
+                </div>
+                <!-- Resposta Correta -->
+                <div class="space-y-1 md:col-span-2">
+                  <label
+                    for="questao_resposta_correta"
+                    class="text-sm font-medium text-default-900"
+                    >Selecione a alternativa correta (A, B, C ou D)</label
+                  >
+                  <input
+                    type="text"
+                    name="resposta_correta"
+                    id="questao_resposta_correta"
+                    placeholder="Selecione a alternativa correta"
+                    maxlength="1"
+                    class="block w-full rounded py-2.5 px-4 border"
+                    required
+                  />
+                </div>
+              </div>
+              <div class="flex items-center gap-2 justify-end mt-4">
+                <button
+                  type="reset"
+                  class="py-2 px-5 inline-flex items-center justify-center gap-2 font-semibold tracking-wide border border-transparent text-sm text-red-600 hover:border-red-500/20 hover:bg-red-500/20 rounded transition-all"
+                >
+                  <i class="ph-bold ph-x text-lg"></i> Cancelar
+                </button>
+                <button
+                  type="submit"
+                  class="py-2 px-5 inline-flex items-center justify-center gap-2 font-semibold tracking-wide border align-middle text-sm bg-default-800 hover:bg-default-950 border-default-800 hover:border-default-950 text-default-50 rounded"
+                >
+                  <i class="ph-duotone ph-cloud-arrow-up text-lg"></i> Salvar
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <footer
+        class="p-6 border-t border-default-200 w-full bg-white dark:bg-default-50 mt-auto print:hidden"
+      >
+        <div class="flex flex-wrap items-center justify-between gap-6">
+          <p class="text-default-600 font-semibold lg:text-start text-center">
+            <script>
+              document.write(new Date().getFullYear());
+            </script>
+            Design & Crafted With 💙 by Coderthemes
+          </p>
+          <div class="flex justify-end text-center gap-6">
+            <a href="javascript:void(0)" class="text-default-500 font-semibold"
+              >Terms</a
+            >
+            <a href="javascript:void(0)" class="text-default-500 font-semibold"
+              >Privacy</a
+            >
+            <a href="javascript:void(0)" class="text-default-500 font-semibold"
+              >Cookies</a
+            >
+          </div>
+        </div>
+      </footer>
+    </div>
+
+    <!-- SweetAlert2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+      $(document).ready(function () {
+        $("#form-cadastrar-questao").submit(function (e) {
+          e.preventDefault();
+          $.ajax({
+            url: "/cadastrar-questao",
+            type: "POST",
+            data: $(this).serialize(),
+            success: function (response) {
+              Swal.fire({
+                title: response.message.includes("sucesso")
+                  ? "Sucesso!"
+                  : "Erro!",
+                text: response.message.includes("sucesso")
+                  ? "Questão cadastrada com sucesso!"
+                  : response.message,
+                icon: response.message.includes("sucesso")
+                  ? "success"
+                  : "error",
+                confirmButtonText: "OK",
+                timer: 5000,
+                timerProgressBar: true,
+              }).then(() => {
+                // Redireciona para a mesma página para continuar lançando questões
+                window.location.href = "/cadastrar-questao";
+              });
+            },
+            error: function (xhr) {
+              let errorMsg =
+                (xhr.responseJSON && xhr.responseJSON.error) ||
+                "Erro ao cadastrar questão.";
+              Swal.fire({
+                title: "Erro!",
+                text: errorMsg,
+                icon: "error",
+                confirmButtonText: "OK",
+                timer: 5000,
+                timerProgressBar: true,
+              });
+            },
+          });
+        });
+      });
+    </script>
+  </body>
+</html>
