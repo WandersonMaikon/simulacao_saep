@@ -2,17 +2,33 @@
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
-    <title>Adicionar questão - Simulação Saep</title>
+    <title>Add Question - Simulação Saep</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta content="Cadastro de questões no Simulação Saep" name="description" />
-    <meta content="coderthemes" name="author" />
     <link rel="shortcut icon" href="assets/favicon-8fd74f43.ico" />
     <link rel="stylesheet" href="assets/theme-d32f8eb8.css" />
+    <!-- Choices.js CSS -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css"
+    />
     <!-- SweetAlert2 CSS -->
     <link
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css"
     />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- SweetAlert2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Choices.js JS -->
+    <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+    <style>
+      .modal-overlay {
+        z-index: 9999;
+      }
+      .swal2-container {
+        z-index: 100000 !important;
+      }
+    </style>
   </head>
   <body class="bg-primary/10">
     <%- include('partials/sidebar') %>
@@ -20,22 +36,45 @@
       <%- include('partials/header') %>
 
       <div class="p-6 space-y-6">
-        <!-- Cabeçalho com breadcrumb -->
+        <!-- Cabeçalho e breadcrumb (opcional) -->
         <div class="flex items-center justify-between w-full print:hidden">
-          <h4 class="text-lg font-semibold text-default-900">
-            Adicionar questão
-          </h4>
+          <h4 class="text-lg font-semibold text-default-900">Questões</h4>
           <ol
             aria-label="Breadcrumb"
             class="hidden md:flex items-center whitespace-nowrap min-w-0 gap-2"
-          ></ol>
+          >
+            <li class="text-sm">
+              <a
+                class="flex items-center gap-2 text-default-800 font-medium transition-all hover:text-primary-500"
+                href="javascript:void(0)"
+              >
+                Simulação Saep
+                <i class="w-4 h-4" data-lucide="chevron-right"></i>
+              </a>
+            </li>
+            <li class="text-sm">
+              <a
+                class="flex items-center gap-2 text-default-800 font-medium transition-all hover:text-primary-500"
+                href="javascript:void(0)"
+              >
+                Questions
+                <i class="w-4 h-4" data-lucide="chevron-right"></i>
+              </a>
+            </li>
+            <li
+              aria-current="page"
+              class="text-sm font-medium text-primary-600 truncate hover:text-primary-500"
+            >
+              Add Question
+            </li>
+          </ol>
         </div>
 
         <!-- Formulário de cadastro de questão -->
         <div class="shadow rounded-lg bg-white dark:bg-default-50 h-fit">
           <div class="flex items-center justify-between py-4 px-5">
             <h4 class="text-lg font-medium text-default-950 capitalize">
-              Questão
+              Question Information
             </h4>
           </div>
           <div class="p-5 border-t border-dashed border-default-200">
@@ -45,42 +84,47 @@
               method="POST"
             >
               <div class="grid md:grid-cols-2 gap-4">
-                <!-- Select de Curso -->
-                <div class="space-y-1">
-                  <label
-                    for="questao_curso_id"
-                    class="text-sm font-medium text-default-900"
-                    >Curso</label
-                  >
+                <!-- Select de Curso usando Choices.js com remoção -->
+                <div class="w-full">
+                  <div class="mb-2">
+                    <label
+                      for="choices-multiple-remove-button"
+                      class="form-label font-medium text-13 text-gray-500 dark:text-zinc-100"
+                    >
+                      Selecione o curso
+                    </label>
+                  </div>
                   <select
                     name="curso_id"
-                    id="questao_curso_id"
-                    class="block w-full rounded py-2.5 px-4 border"
+                    id="choices-multiple-remove-button"
+                    placeholder="Selecione o curso"
                     required
                   >
-                    <% cursos.forEach(curso => { %>
+                    <% if (typeof cursos !== 'undefined' && cursos.length > 0) {
+                    %> <% cursos.forEach(curso => { %>
                     <option value="<%= curso.id %>"><%= curso.nome %></option>
-                    <% }); %>
+                    <% }); %> <% } else { %>
+                    <option value="">No course available</option>
+                    <% } %>
                   </select>
                 </div>
-                <!-- Select de Matéria -->
-                <div class="space-y-1">
-                  <label
-                    for="questao_materia_id"
-                    class="text-sm font-medium text-default-900"
-                    >Matéria</label
-                  >
+                <!-- Select de Matéria, que será atualizado com base no curso selecionado -->
+                <div class="w-full">
+                  <div class="mb-2">
+                    <label
+                      for="select-materia"
+                      class="form-label font-medium text-13 text-gray-500 dark:text-zinc-100"
+                    >
+                      Selecione a matéria
+                    </label>
+                  </div>
                   <select
                     name="materia_id"
-                    id="questao_materia_id"
-                    class="block w-full rounded py-2.5 px-4 border"
+                    id="select-materia"
+                    placeholder="Select Subject"
                     required
                   >
-                    <% materias.forEach(materia => { %>
-                    <option value="<%= materia.id %>">
-                      <%= materia.nome %>
-                    </option>
-                    <% }); %>
+                    <!-- Inicialmente vazio; será preenchido via AJAX -->
                   </select>
                 </div>
                 <!-- Título -->
@@ -88,13 +132,13 @@
                   <label
                     for="questao_titulo"
                     class="text-sm font-medium text-default-900"
-                    >Titulo</label
+                    >Titúlo</label
                   >
                   <input
                     type="text"
                     name="titulo"
                     id="questao_titulo"
-                    placeholder="Informe o título"
+                    placeholder="Enter question title"
                     class="block w-full rounded py-2.5 px-4 border"
                     required
                   />
@@ -104,12 +148,12 @@
                   <label
                     for="questao_enunciado"
                     class="text-sm font-medium text-default-900"
-                    >Enunciado</label
+                    >Question Statement</label
                   >
                   <textarea
                     name="enunciado"
                     id="questao_enunciado"
-                    placeholder="Informe o enunciado da questão"
+                    placeholder="Enter question statement"
                     class="block w-full rounded py-2.5 px-4 border"
                     required
                   ></textarea>
@@ -125,7 +169,7 @@
                     type="text"
                     name="alternativa_a"
                     id="questao_alternativa_a"
-                    placeholder="Informe a alternativa A"
+                    placeholder="Enter option A"
                     class="block w-full rounded py-2.5 px-4 border"
                     required
                   />
@@ -140,7 +184,7 @@
                     type="text"
                     name="alternativa_b"
                     id="questao_alternativa_b"
-                    placeholder="Informe a alternativa B"
+                    placeholder="Enter option B"
                     class="block w-full rounded py-2.5 px-4 border"
                     required
                   />
@@ -155,7 +199,7 @@
                     type="text"
                     name="alternativa_c"
                     id="questao_alternativa_c"
-                    placeholder="Informe a alternativa C"
+                    placeholder="Enter option C"
                     class="block w-full rounded py-2.5 px-4 border"
                     required
                   />
@@ -164,13 +208,13 @@
                   <label
                     for="questao_alternativa_d"
                     class="text-sm font-medium text-default-900"
-                    >Alternativa D</label
-                  >
+                    >Alternativa D
+                  </label>
                   <input
                     type="text"
                     name="alternativa_d"
                     id="questao_alternativa_d"
-                    placeholder="Informe a alternativa D"
+                    placeholder="Enter option D"
                     class="block w-full rounded py-2.5 px-4 border"
                     required
                   />
@@ -180,13 +224,13 @@
                   <label
                     for="questao_resposta_correta"
                     class="text-sm font-medium text-default-900"
-                    >Selecione a alternativa correta (A, B, C ou D)</label
+                    >Correct Answer (A, B, C or D)</label
                   >
                   <input
                     type="text"
                     name="resposta_correta"
                     id="questao_resposta_correta"
-                    placeholder="Selecione a alternativa correta"
+                    placeholder="Enter correct option"
                     maxlength="1"
                     class="block w-full rounded py-2.5 px-4 border"
                     required
@@ -198,88 +242,104 @@
                   type="reset"
                   class="py-2 px-5 inline-flex items-center justify-center gap-2 font-semibold tracking-wide border border-transparent text-sm text-red-600 hover:border-red-500/20 hover:bg-red-500/20 rounded transition-all"
                 >
-                  <i class="ph-bold ph-x text-lg"></i> Cancelar
+                  <i class="ph-bold ph-x text-lg"></i> Cancel
                 </button>
                 <button
                   type="submit"
-                  class="py-2 px-5 inline-flex items-center justify-center gap-2 font-semibold tracking-wide border align-middle text-sm bg-default-800 hover:bg-default-950 border-default-800 hover:border-default-950 text-default-50 rounded"
+                  class="py-2 px-5 inline-flex items-center justify-center gap-2 font-semibold tracking-wide border text-sm bg-default-800 hover:bg-default-950 border-default-800 hover:border-default-950 text-default-50 rounded"
                 >
-                  <i class="ph-duotone ph-cloud-arrow-up text-lg"></i> Salvar
+                  <i class="ph-duotone ph-cloud-arrow-up text-lg"></i> Submit
                 </button>
               </div>
             </form>
           </div>
         </div>
       </div>
-
-      <footer
-        class="p-6 border-t border-default-200 w-full bg-white dark:bg-default-50 mt-auto print:hidden"
-      >
-        <div class="flex flex-wrap items-center justify-between gap-6">
-          <p class="text-default-600 font-semibold lg:text-start text-center">
-            <script>
-              document.write(new Date().getFullYear());
-            </script>
-            Design & Crafted With 💙 by Coderthemes
-          </p>
-          <div class="flex justify-end text-center gap-6">
-            <a href="javascript:void(0)" class="text-default-500 font-semibold"
-              >Terms</a
-            >
-            <a href="javascript:void(0)" class="text-default-500 font-semibold"
-              >Privacy</a
-            >
-            <a href="javascript:void(0)" class="text-default-500 font-semibold"
-              >Cookies</a
-            >
-          </div>
-        </div>
-      </footer>
+      <%- include('partials/footer') %>
     </div>
 
-    <!-- SweetAlert2 JS -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
-      $(document).ready(function () {
-        $("#form-cadastrar-questao").submit(function (e) {
-          e.preventDefault();
+      // Inicializa Choices para o select de cursos
+      const courseChoices = new Choices("#choices-multiple-remove-button", {
+        removeItemButton: true,
+        placeholder: true,
+        placeholderValue: "Select Course",
+      });
+
+      // Se você estiver usando o mesmo select para curso na página de cadastro de questão, ajuste:
+      new Choices("#choices-multiple-remove-button");
+
+      // Quando o curso é alterado, busca as matérias daquele curso
+      $("#choices-multiple-remove-button").on("change", function () {
+        // Obtenha o valor selecionado (se for múltiplo, escolha o primeiro, por exemplo)
+        let selectedCourses = $(this).val();
+        // Se houver pelo menos um curso selecionado, use o primeiro para filtrar as matérias
+        if (selectedCourses && selectedCourses.length > 0) {
+          const cursoId = selectedCourses[0];
           $.ajax({
-            url: "/cadastrar-questao",
-            type: "POST",
-            data: $(this).serialize(),
-            success: function (response) {
-              Swal.fire({
-                title: response.message.includes("sucesso")
-                  ? "Sucesso!"
-                  : "Erro!",
-                text: response.message.includes("sucesso")
-                  ? "Questão cadastrada com sucesso!"
-                  : response.message,
-                icon: response.message.includes("sucesso")
-                  ? "success"
-                  : "error",
-                confirmButtonText: "OK",
-                timer: 5000,
-                timerProgressBar: true,
-              }).then(() => {
-                // Redireciona para a mesma página para continuar lançando questões
-                window.location.href = "/cadastrar-questao";
-              });
+            url: "/materias-por-curso/" + cursoId,
+            type: "GET",
+            success: function (data) {
+              // Limpa e atualiza o select de matérias
+              const materiaSelect = $("#select-materia");
+              materiaSelect.empty();
+              if (data.length > 0) {
+                data.forEach(function (materia) {
+                  materiaSelect.append(
+                    `<option value="${materia.id}">${materia.nome}</option>`
+                  );
+                });
+              } else {
+                materiaSelect.append(
+                  `<option value="">Nenhuma matéria encontrada</option>`
+                );
+              }
+              // Se desejar, reinicialize o Choices.js para o select de matéria
+              new Choices("#select-materia");
             },
-            error: function (xhr) {
-              let errorMsg =
-                (xhr.responseJSON && xhr.responseJSON.error) ||
-                "Erro ao cadastrar questão.";
-              Swal.fire({
-                title: "Erro!",
-                text: errorMsg,
-                icon: "error",
-                confirmButtonText: "OK",
-                timer: 5000,
-                timerProgressBar: true,
-              });
+            error: function () {
+              console.error("Erro ao buscar matérias.");
             },
           });
+        }
+      });
+
+      // Envio do formulário de cadastro de questão via AJAX
+      $("#form-cadastrar-questao").submit(function (e) {
+        e.preventDefault();
+        $.ajax({
+          url: "/cadastrar-questao",
+          type: "POST",
+          data: $(this).serialize(),
+          success: function (response) {
+            Swal.fire({
+              title: response.message.includes("sucesso")
+                ? "Sucesso!"
+                : "Erro!",
+              text: response.message.includes("sucesso")
+                ? "Question added successfully!"
+                : response.message,
+              icon: response.message.includes("sucesso") ? "success" : "error",
+              confirmButtonText: "OK",
+              timer: 5000,
+              timerProgressBar: true,
+            }).then(() => {
+              window.location.href = "/questoes?page=1";
+            });
+          },
+          error: function (xhr) {
+            let errorMsg =
+              (xhr.responseJSON && xhr.responseJSON.error) ||
+              "Error adding question.";
+            Swal.fire({
+              title: "Error!",
+              text: errorMsg,
+              icon: "error",
+              confirmButtonText: "OK",
+              timer: 5000,
+              timerProgressBar: true,
+            });
+          },
         });
       });
     </script>

@@ -641,7 +641,7 @@ app.get("/aluno/cadastrar", verificarAutenticacao, (req, res) => {
 
           // Busca os alunos da turma, paginando os resultados
           db.query(
-            "SELECT id, nome, usuario, senha, DATE_FORMAT(data_cadastro, '%d/%m/%Y %H:%i:%s') AS data_cadastro FROM aluno WHERE turma_id = ? LIMIT ? OFFSET ?",
+            "SELECT id, nome, usuario, senha, DATE_FORMAT(data_cadastro, '%D/%M/%Y %H:%i:%s') AS data_cadastro FROM aluno WHERE turma_id = ? LIMIT ? OFFSET ?",
             [turmaId, limit, offset],
             (err, alunos) => {
               if (err) {
@@ -866,6 +866,22 @@ app.get("/cadastrar-questao", verificarAutenticacao, (req, res) => {
           res.render("questaoCadastrar", { cursos, materias, message: "" });
         }
       );
+    }
+  );
+});
+
+app.get("/materias-por-curso/:curso_id", verificarAutenticacao, (req, res) => {
+  const cursoId = req.params.curso_id;
+  const professorId = req.session.user.id;
+  db.query(
+    "SELECT id, nome FROM materia WHERE curso_id = ? AND professor_id = ?",
+    [cursoId, professorId],
+    (err, results) => {
+      if (err) {
+        console.error("Erro ao buscar matérias:", err);
+        return res.status(500).json({ error: "Erro ao buscar matérias." });
+      }
+      return res.json(results);
     }
   );
 });
