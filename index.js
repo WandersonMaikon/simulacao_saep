@@ -788,12 +788,23 @@ app.get("/questoes", verificarAutenticacao, (req, res) => {
       const totalPages = Math.ceil(totalRows / limit);
       // Busca as questões com junção para obter nomes dos cursos e matérias
       db.query(
-        `SELECT q.id, q.titulo, q.enunciado, q.alternativa_a, q.alternativa_b, q.alternativa_c, q.alternativa_d, q.resposta_correta, q.curso_id, q.materia_id, c.nome AS curso, m.nome AS materia 
-         FROM questao q 
-         INNER JOIN curso c ON q.curso_id = c.id 
-         INNER JOIN materia m ON q.materia_id = m.id 
-         WHERE m.professor_id = ? 
-         LIMIT ? OFFSET ?`,
+        `SELECT q.id, 
+       q.titulo, 
+       IF(LENGTH(q.enunciado) > 10, CONCAT(LEFT(q.enunciado, 25), '...'), q.enunciado) AS enunciado, 
+       q.alternativa_a, 
+       q.alternativa_b, 
+       q.alternativa_c, 
+       q.alternativa_d, 
+       q.resposta_correta, 
+       q.curso_id, 
+       q.materia_id, 
+       c.nome AS curso, 
+       m.nome AS materia 
+FROM questao q 
+INNER JOIN curso c ON q.curso_id = c.id 
+INNER JOIN materia m ON q.materia_id = m.id 
+WHERE m.professor_id = ? 
+LIMIT ? OFFSET ?`,
         [req.session.user.id, limit, offset],
         (err, questoes) => {
           if (err) {

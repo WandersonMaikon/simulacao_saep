@@ -2,7 +2,7 @@
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
-    <title>Add Question - Simulação Saep</title>
+    <title>Adicionar Questão - Simulação Saep</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="shortcut icon" href="assets/favicon-8fd74f43.ico" />
     <link rel="stylesheet" href="assets/theme-d32f8eb8.css" />
@@ -38,45 +38,13 @@
       <div class="p-6 space-y-6">
         <!-- Cabeçalho e breadcrumb (opcional) -->
         <div class="flex items-center justify-between w-full print:hidden">
-          <h4 class="text-lg font-semibold text-default-900">Questões</h4>
-          <ol
-            aria-label="Breadcrumb"
-            class="hidden md:flex items-center whitespace-nowrap min-w-0 gap-2"
-          >
-            <li class="text-sm">
-              <a
-                class="flex items-center gap-2 text-default-800 font-medium transition-all hover:text-primary-500"
-                href="javascript:void(0)"
-              >
-                Simulação Saep
-                <i class="w-4 h-4" data-lucide="chevron-right"></i>
-              </a>
-            </li>
-            <li class="text-sm">
-              <a
-                class="flex items-center gap-2 text-default-800 font-medium transition-all hover:text-primary-500"
-                href="javascript:void(0)"
-              >
-                Questions
-                <i class="w-4 h-4" data-lucide="chevron-right"></i>
-              </a>
-            </li>
-            <li
-              aria-current="page"
-              class="text-sm font-medium text-primary-600 truncate hover:text-primary-500"
-            >
-              Add Question
-            </li>
-          </ol>
+          <h4 class="text-lg font-semibold text-default-900">
+            Adicionar Questão
+          </h4>
         </div>
 
         <!-- Formulário de cadastro de questão -->
         <div class="shadow rounded-lg bg-white dark:bg-default-50 h-fit">
-          <div class="flex items-center justify-between py-4 px-5">
-            <h4 class="text-lg font-medium text-default-950 capitalize">
-              Question Information
-            </h4>
-          </div>
           <div class="p-5 border-t border-dashed border-default-200">
             <form
               id="form-cadastrar-questao"
@@ -84,7 +52,7 @@
               method="POST"
             >
               <div class="grid md:grid-cols-2 gap-4">
-                <!-- Select de Curso usando Choices.js com remoção -->
+                <!-- Select de Curso (usando Choices.js) -->
                 <div class="w-full">
                   <div class="mb-2">
                     <label
@@ -108,7 +76,7 @@
                     <% } %>
                   </select>
                 </div>
-                <!-- Select de Matéria, que será atualizado com base no curso selecionado -->
+                <!-- Select de Matéria, será atualizado via AJAX -->
                 <div class="w-full">
                   <div class="mb-2">
                     <label
@@ -121,10 +89,10 @@
                   <select
                     name="materia_id"
                     id="select-materia"
-                    placeholder="Select Subject"
+                    placeholder="Selecione a matéria"
                     required
                   >
-                    <!-- Inicialmente vazio; será preenchido via AJAX -->
+                    <!-- Inicialmente vazio -->
                   </select>
                 </div>
                 <!-- Título -->
@@ -132,13 +100,13 @@
                   <label
                     for="questao_titulo"
                     class="text-sm font-medium text-default-900"
-                    >Titúlo</label
+                    >Título</label
                   >
                   <input
                     type="text"
                     name="titulo"
                     id="questao_titulo"
-                    placeholder="Enter question title"
+                    placeholder="Informe o título da questão"
                     class="block w-full rounded py-2.5 px-4 border"
                     required
                   />
@@ -148,12 +116,12 @@
                   <label
                     for="questao_enunciado"
                     class="text-sm font-medium text-default-900"
-                    >Question Statement</label
+                    >Enunciado</label
                   >
                   <textarea
                     name="enunciado"
                     id="questao_enunciado"
-                    placeholder="Enter question statement"
+                    placeholder="Informe o enunciado da questão"
                     class="block w-full rounded py-2.5 px-4 border"
                     required
                   ></textarea>
@@ -169,7 +137,7 @@
                     type="text"
                     name="alternativa_a"
                     id="questao_alternativa_a"
-                    placeholder="Enter option A"
+                    placeholder="Informe a alternativa A"
                     class="block w-full rounded py-2.5 px-4 border"
                     required
                   />
@@ -184,7 +152,7 @@
                     type="text"
                     name="alternativa_b"
                     id="questao_alternativa_b"
-                    placeholder="Enter option B"
+                    placeholder="Informe a alternativa B"
                     class="block w-full rounded py-2.5 px-4 border"
                     required
                   />
@@ -199,7 +167,7 @@
                     type="text"
                     name="alternativa_c"
                     id="questao_alternativa_c"
-                    placeholder="Enter option C"
+                    placeholder="Informe a alternativa C"
                     class="block w-full rounded py-2.5 px-4 border"
                     required
                   />
@@ -208,53 +176,61 @@
                   <label
                     for="questao_alternativa_d"
                     class="text-sm font-medium text-default-900"
-                    >Alternativa D
-                  </label>
+                    >Alternativa D</label
+                  >
                   <input
                     type="text"
                     name="alternativa_d"
                     id="questao_alternativa_d"
-                    placeholder="Enter option D"
+                    placeholder="Informe a alternativa D"
                     class="block w-full rounded py-2.5 px-4 border"
                     required
                   />
                 </div>
-                <!-- Resposta Correta -->
+                <!-- Resposta Correta - Agora um select -->
                 <div class="space-y-1 md:col-span-2">
                   <label
                     for="questao_resposta_correta"
                     class="text-sm font-medium text-default-900"
-                    >Correct Answer (A, B, C or D)</label
                   >
-                  <input
-                    type="text"
+                    Selecione a alternativa correta (A, B, C ou D)
+                  </label>
+                  <select
                     name="resposta_correta"
                     id="questao_resposta_correta"
-                    placeholder="Enter correct option"
-                    maxlength="1"
                     class="block w-full rounded py-2.5 px-4 border"
                     required
-                  />
+                  >
+                    <option value="">Selecione</option>
+                    <option value="A">A</option>
+                    <option value="B">B</option>
+                    <option value="C">C</option>
+                    <option value="D">D</option>
+                  </select>
                 </div>
               </div>
               <div class="flex items-center gap-2 justify-end mt-4">
+                <!-- Botão de Cancelar -->
                 <button
-                  type="reset"
+                  type="button"
+                  id="cancel-btn"
                   class="py-2 px-5 inline-flex items-center justify-center gap-2 font-semibold tracking-wide border border-transparent text-sm text-red-600 hover:border-red-500/20 hover:bg-red-500/20 rounded transition-all"
                 >
-                  <i class="ph-bold ph-x text-lg"></i> Cancel
+                  <i class="ph-bold ph-x text-lg"></i> Cancelar
                 </button>
+                <!-- Botão de Salvar -->
                 <button
                   type="submit"
                   class="py-2 px-5 inline-flex items-center justify-center gap-2 font-semibold tracking-wide border text-sm bg-default-800 hover:bg-default-950 border-default-800 hover:border-default-950 text-default-50 rounded"
                 >
-                  <i class="ph-duotone ph-cloud-arrow-up text-lg"></i> Submit
+                  <i class="ph-duotone ph-cloud-arrow-up text-lg"></i> Salvar
                 </button>
               </div>
             </form>
           </div>
         </div>
       </div>
+
       <%- include('partials/footer') %>
     </div>
 
@@ -263,24 +239,21 @@
       const courseChoices = new Choices("#choices-multiple-remove-button", {
         removeItemButton: true,
         placeholder: true,
-        placeholderValue: "Select Course",
+        placeholderValue: "Selecione o curso",
       });
-
-      // Se você estiver usando o mesmo select para curso na página de cadastro de questão, ajuste:
+      // Se o select de curso é o mesmo, certifique-se de usar o id correto; caso contrário, remova essa linha
       new Choices("#choices-multiple-remove-button");
 
-      // Quando o curso é alterado, busca as matérias daquele curso
+      // Quando o curso for alterado, usa o valor selecionado para buscar matérias via AJAX
       $("#choices-multiple-remove-button").on("change", function () {
-        // Obtenha o valor selecionado (se for múltiplo, escolha o primeiro, por exemplo)
         let selectedCourses = $(this).val();
-        // Se houver pelo menos um curso selecionado, use o primeiro para filtrar as matérias
         if (selectedCourses && selectedCourses.length > 0) {
+          // Aqui, usamos o primeiro curso selecionado para filtrar as matérias
           const cursoId = selectedCourses[0];
           $.ajax({
             url: "/materias-por-curso/" + cursoId,
             type: "GET",
             success: function (data) {
-              // Limpa e atualiza o select de matérias
               const materiaSelect = $("#select-materia");
               materiaSelect.empty();
               if (data.length > 0) {
@@ -294,13 +267,49 @@
                   `<option value="">Nenhuma matéria encontrada</option>`
                 );
               }
-              // Se desejar, reinicialize o Choices.js para o select de matéria
+              // Opcional: reinicialize o Choices.js para o select de matéria, se desejar
               new Choices("#select-materia");
             },
             error: function () {
               console.error("Erro ao buscar matérias.");
             },
           });
+        }
+      });
+
+      // Botão Cancelar: Se houver algum campo preenchido, avisa que os dados serão perdidos
+      $("#cancel-btn").click(function () {
+        // Verifica se algum input ou textarea não está vazio
+        let hasData = false;
+        $("#form-cadastrar-questao")
+          .find("input[type='text'], textarea")
+          .each(function () {
+            if ($(this).val().trim() !== "") {
+              hasData = true;
+              return false; // interrompe o loop
+            }
+          });
+        if (hasData) {
+          Swal.fire({
+            title: "Tem certeza?",
+            text: "Ao cancelar, todas as informações preenchidas serão perdidas.",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonText: "Sim, cancelar",
+            cancelButtonText: "Voltar",
+            confirmButtonColor: "#3085d6",
+            cancelButtonColor: "#d33",
+          }).then((result) => {
+            if (result.isConfirmed) {
+              // Limpa apenas os campos de texto e textarea, mantendo os selects
+              $("#form-cadastrar-questao")
+                .find("input[type='text'], textarea")
+                .val("");
+            }
+          });
+        } else {
+          // Se não houver dados, apenas limpa os campos (ou faz outra ação)
+          $("#form-cadastrar-questao")[0].reset();
         }
       });
 
@@ -313,26 +322,32 @@
           data: $(this).serialize(),
           success: function (response) {
             Swal.fire({
-              title: response.message.includes("sucesso")
-                ? "Sucesso!"
-                : "Erro!",
-              text: response.message.includes("sucesso")
-                ? "Question added successfully!"
-                : response.message,
-              icon: response.message.includes("sucesso") ? "success" : "error",
-              confirmButtonText: "OK",
-              timer: 5000,
-              timerProgressBar: true,
-            }).then(() => {
-              window.location.href = "/questoes?page=1";
+              title: "Questão adicionada!",
+              text: "Deseja cadastrar outra questão?",
+              icon: "success",
+              showCancelButton: true,
+              confirmButtonText: "Sim, continuar",
+              cancelButtonText: "Não, ir para a listagem",
+              confirmButtonColor: "#3085d6",
+              cancelButtonColor: "#d33",
+            }).then((result) => {
+              if (result.isConfirmed) {
+                // Limpa somente os inputs de texto e textarea para continuar no mesmo formulário,
+                // mantendo os selects com os valores atuais.
+                $("#form-cadastrar-questao")
+                  .find("input[type='text'], textarea")
+                  .val("");
+              } else {
+                window.location.href = "/questoes?page=1";
+              }
             });
           },
           error: function (xhr) {
             let errorMsg =
               (xhr.responseJSON && xhr.responseJSON.error) ||
-              "Error adding question.";
+              "Erro ao cadastrar questão.";
             Swal.fire({
-              title: "Error!",
+              title: "Erro!",
               text: errorMsg,
               icon: "error",
               confirmButtonText: "OK",
