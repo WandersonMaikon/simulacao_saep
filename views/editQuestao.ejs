@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Editar Questão - Simulação Saep</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="shortcut icon" href="assets/favicon-8fd74f43.ico" />
+    <link rel="stylesheet" href="assets/theme-d32f8eb8.css" />
+    <!-- SweetAlert2 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- SweetAlert2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+      .swal2-container {
+        z-index: 100000 !important;
+      }
+    </style>
+  </head>
+  <body class="bg-primary/10">
+    <%- include('partials/sidebar') %>
+    <div class="min-h-screen flex flex-col lg:ps-64 w-full">
+      <%- include('partials/header') %>
+      <div class="p-6 space-y-6">
+        <h4 class="text-lg font-semibold text-default-900">Editar Questão</h4>
+        <% if(message) { %>
+          <div class="alert alert-danger text-center"><%= message %></div>
+        <% } %>
+        <form id="form-editar-questao" action="/editar-questao" method="POST" class="space-y-4">
+          <!-- Campo oculto para o ID da questão -->
+          <input type="hidden" name="id" value="<%= questao.id %>" />
+          <div class="grid md:grid-cols-2 gap-4">
+            <!-- Select de Curso -->
+            <div>
+              <label for="curso_id" class="block text-sm font-medium text-default-900">Curso</label>
+              <select name="curso_id" id="curso_id" class="block w-full rounded py-2.5 px-4 border" required>
+                <% cursos.forEach(function(curso) { %>
+                  <option value="<%= curso.id %>" <%= curso.id == questao.curso_id ? "selected" : "" %>><%= curso.nome %></option>
+                <% }); %>
+              </select>
+            </div>
+            <!-- Select de Matéria -->
+            <div>
+              <label for="materia_id" class="block text-sm font-medium text-default-900">Matéria</label>
+              <select name="materia_id" id="materia_id" class="block w-full rounded py-2.5 px-4 border" required>
+                <% materias.forEach(function(materia) { %>
+                  <option value="<%= materia.id %>" <%= materia.id == questao.materia_id ? "selected" : "" %>><%= materia.nome %></option>
+                <% }); %>
+              </select>
+            </div>
+            <!-- Título -->
+            <div class="md:col-span-2">
+              <label for="titulo" class="block text-sm font-medium text-default-900">Título</label>
+              <input type="text" name="titulo" id="titulo" value="<%= questao.titulo %>" class="block w-full rounded py-2.5 px-4 border" required>
+            </div>
+            <!-- Enunciado -->
+            <div class="md:col-span-2">
+              <label for="enunciado" class="block text-sm font-medium text-default-900">Enunciado</label>
+              <textarea name="enunciado" id="enunciado" class="block w-full rounded py-2.5 px-4 border" required><%= questao.enunciado %></textarea>
+            </div>
+            <!-- Alternativas -->
+            <div>
+              <label for="alternativa_a" class="block text-sm font-medium text-default-900">Alternativa A</label>
+              <input type="text" name="alternativa_a" id="alternativa_a" value="<%= questao.alternativa_a %>" class="block w-full rounded py-2.5 px-4 border" required>
+            </div>
+            <div>
+              <label for="alternativa_b" class="block text-sm font-medium text-default-900">Alternativa B</label>
+              <input type="text" name="alternativa_b" id="alternativa_b" value="<%= questao.alternativa_b %>" class="block w-full rounded py-2.5 px-4 border" required>
+            </div>
+            <div>
+              <label for="alternativa_c" class="block text-sm font-medium text-default-900">Alternativa C</label>
+              <input type="text" name="alternativa_c" id="alternativa_c" value="<%= questao.alternativa_c %>" class="block w-full rounded py-2.5 px-4 border" required>
+            </div>
+            <div>
+              <label for="alternativa_d" class="block text-sm font-medium text-default-900">Alternativa D</label>
+              <input type="text" name="alternativa_d" id="alternativa_d" value="<%= questao.alternativa_d %>" class="block w-full rounded py-2.5 px-4 border" required>
+            </div>
+            <!-- Resposta Correta como Select -->
+            <div class="md:col-span-2">
+              <label for="resposta_correta" class="block text-sm font-medium text-default-900">
+                Selecione a alternativa correta (A, B, C ou D)
+              </label>
+              <select name="resposta_correta" id="resposta_correta" class="block w-full rounded py-2.5 px-4 border" required>
+                <option value="">Selecione</option>
+                <option value="A" <%= questao.resposta_correta === 'A' ? 'selected' : '' %>>A</option>
+                <option value="B" <%= questao.resposta_correta === 'B' ? 'selected' : '' %>>B</option>
+                <option value="C" <%= questao.resposta_correta === 'C' ? 'selected' : '' %>>C</option>
+                <option value="D" <%= questao.resposta_correta === 'D' ? 'selected' : '' %>>D</option>
+              </select>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 justify-end mt-4">
+            <button type="button" id="cancel-edit-btn" class="py-2 px-5 inline-flex items-center justify-center gap-2 font-semibold tracking-wide border border-transparent text-sm text-red-600 hover:border-red-500/20 hover:bg-red-500/20 rounded transition-all">
+              <i class="ph-bold ph-x text-lg"></i> Cancelar
+            </button>
+            <button type="submit" class="py-2 px-5 inline-flex items-center justify-center gap-2 font-semibold tracking-wide border text-sm bg-default-800 hover:bg-default-950 border-default-800 hover:border-default-950 text-default-50 rounded">
+              <i class="ph-duotone ph-cloud-arrow-up text-lg"></i> Salvar Alterações
+            </button>
+          </div>
+        </form>
+        <button id="close-edit-section" class="mt-4 text-red-500 block text-center">Fechar</button>
+      </div>
+
+      <%- include('partials/footer') %>
+    </div>
+
+    <script>
+      $(document).ready(function () {
+        // Botão Cancelar na edição: se houver dados preenchidos, alerta que serão perdidos
+        $("#cancel-edit-btn").click(function () {
+          let hasData = false;
+          $("#form-editar-questao")
+            .find("input[type='text'], textarea")
+            .each(function () {
+              if ($(this).val().trim() !== "") {
+                hasData = true;
+                return false;
+              }
+            });
+          if (hasData) {
+            Swal.fire({
+              title: "Tem certeza?",
+              text: "Ao cancelar, as informações preenchidas serão perdidas.",
+              icon: "warning",
+              showCancelButton: true,
+              confirmButtonText: "Sim, cancelar",
+              cancelButtonText: "Voltar",
+              confirmButtonColor: "#3085d6",
+              cancelButtonColor: "#d33",
+            }).then((result) => {
+              if (result.isConfirmed) {
+                $("#form-editar-questao")
+                  .find("input[type='text'], textarea")
+                  .val("");
+                $("#edit-section").addClass("hidden");
+                window.location.href = "/questoes?page=1";
+              }
+            });
+          } else {
+            $("#form-editar-questao")[0].reset();
+            $("#edit-section").addClass("hidden");
+            window.location.href = "/questoes?page=1";
+          }
+        });
+
+        // Envio do formulário de edição via AJAX
+        $("#form-editar-questao").submit(function (e) {
+          e.preventDefault();
+          Swal.fire({
+            title: "Tem certeza?",
+            text: "Deseja salvar as alterações nesta questão?",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonText: "Sim, editar!",
+            cancelButtonText: "Cancelar",
+            confirmButtonColor: "#3085d6",
+            cancelButtonColor: "#d33",
+          }).then((result) => {
+            if (result.isConfirmed) {
+              $.ajax({
+                url: "/editar-questao",
+                type: "POST",
+                data: $("#form-editar-questao").serialize(),
+                success: function (response) {
+                  Swal.fire("Editada!", "Questão editada com sucesso!", "success")
+                    .then(() => {
+                      window.location.href = "/questoes?page=1";
+                    });
+                },
+                error: function (xhr) {
+                  let errorMsg =
+                    (xhr.responseJSON && xhr.responseJSON.error) ||
+                    "Erro ao editar questão.";
+                  Swal.fire("Erro!", errorMsg, "error");
+                },
+              });
+            }
+          });
+        });
+      });
+    </script>
+  </body>
+</html>

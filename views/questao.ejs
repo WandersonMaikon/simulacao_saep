@@ -8,6 +8,10 @@
     <script type="module" crossorigin src="assets/theme-e4584917.js"></script>
     <link rel="stylesheet" href="assets/theme-d32f8eb8.css" />
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script type="module" crossorigin src="assets/theme-e4584917.js"></script>
+    <link rel="stylesheet" href="assets/theme-d32f8eb8.css" />
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
@@ -17,6 +21,10 @@
       .swal2-container {
         z-index: 100000 !important;
       }
+      /* Bloco de edição inline oculto */
+      #edit-section {
+        display: none;
+      }
     </style>
   </head>
   <body>
@@ -24,7 +32,7 @@
     <div class="min-h-screen flex flex-col lg:ps-64 w-full">
       <%- include('partials/header') %>
       <div class="p-6 space-y-6">
-        <!-- Título -->
+        <!-- Título e Área de busca -->
         <div class="flex items-center justify-between w-full print:hidden">
           <h4 class="text-lg font-semibold text-default-900">
             Lista de Questões
@@ -52,7 +60,7 @@
             </div>
           </div>
         </div>
-        <!-- Área de busca e botão de cadastro -->
+        <!-- Área de busca e link para cadastrar questão -->
         <div class="flex flex-wrap items-center justify-between py-4 px-5">
           <div class="relative flex">
             <input
@@ -66,7 +74,6 @@
               ></i>
             </span>
           </div>
-          <!-- Link para a página de cadastro de questão -->
           <a
             href="/cadastrar-questao"
             class="py-2 px-4 inline-flex items-center justify-center font-semibold tracking-wide text-xs bg-primary hover:bg-primary-500 text-white rounded"
@@ -113,7 +120,6 @@
                   <td class="px-6 py-3"><%= questao.enunciado %></td>
                   <td class="px-3 py-3 text-center">
                     <div class="flex items-center justify-center gap-2">
-                      <!-- Botão para abrir modal de edição -->
                       <a
                         href="#"
                         class="edit-questao inline-flex items-center justify-center h-8 w-8 rounded-md bg-cyan-500/20 text-cyan-500 transition-all duration-200 hover:bg-cyan-500 hover:text-white"
@@ -132,10 +138,9 @@
                           class="ph-duotone ph-pencil-simple-line text-base"
                         ></i>
                       </a>
-                      <!-- Botão para exclusão -->
                       <button
-                        class="delete-questao inline-flex items-center justify-center h-8 w-8 rounded-md bg-red-500/20 text-red-500 transition-all duration-200 hover:bg-red-500 hover:text-white"
-                        data-id="<%= questao.id %>"
+                        class="deletar-questao inline-flex items-center justify-center h-8 w-8 rounded-md bg-red-500/20 text-red-500 transition-all duration-200 hover:bg-red-500 hover:text-white"
+                        data-identificador="<%= questao.id %>"
                       >
                         <i class="ph-duotone ph-trash text-base"></i>
                       </button>
@@ -187,161 +192,233 @@
             </nav>
           </div>
         </div>
+
+        <!-- Seção de Edição Inline (inicialmente oculta) -->
+        <div
+          id="edit-section"
+          class="shadow rounded-lg bg-white dark:bg-default-50 p-5 hidden"
+        >
+          <h4 class="text-lg font-semibold text-default-900 mb-4">
+            Editar Questão
+          </h4>
+          <form id="form-editar-questao" action="/editar-questao" method="POST">
+            <!-- Campo oculto para o ID da questão -->
+            <input type="hidden" name="id" id="edit_questao_id" value="" />
+            <div class="grid md:grid-cols-2 gap-4">
+              <!-- Select de Curso -->
+              <div class="w-full">
+                <label
+                  for="edit_questao_curso_id"
+                  class="block text-sm font-medium text-default-900"
+                  >Curso</label
+                >
+                <select
+                  name="curso_id"
+                  id="edit_questao_curso_id"
+                  class="block w-full rounded py-2.5 px-4 border"
+                  required
+                >
+                  <% cursos.forEach(curso => { %>
+                  <option value="<%= curso.id %>"><%= curso.nome %></option>
+                  <% }); %>
+                </select>
+              </div>
+              <!-- Select de Matéria -->
+              <div class="w-full">
+                <label
+                  for="edit_questao_materia_id"
+                  class="block text-sm font-medium text-default-900"
+                  >Matéria</label
+                >
+                <select
+                  name="materia_id"
+                  id="edit_questao_materia_id"
+                  class="block w-full rounded py-2.5 px-4 border"
+                  required
+                >
+                  <% materias.forEach(materia => { %>
+                  <option value="<%= materia.id %>"><%= materia.nome %></option>
+                  <% }); %>
+                </select>
+              </div>
+              <!-- Título -->
+              <div class="space-y-1 md:col-span-2">
+                <label
+                  for="edit_questao_titulo"
+                  class="text-sm font-medium text-default-900"
+                  >Título</label
+                >
+                <input
+                  type="text"
+                  name="titulo"
+                  id="edit_questao_titulo"
+                  placeholder="Informe o título da questão"
+                  class="block w-full rounded py-2.5 px-4 border"
+                  required
+                />
+              </div>
+              <!-- Enunciado -->
+              <div class="space-y-1 md:col-span-2">
+                <label
+                  for="edit_questao_enunciado"
+                  class="text-sm font-medium text-default-900"
+                  >Enunciado</label
+                >
+                <textarea
+                  name="enunciado"
+                  id="edit_questao_enunciado"
+                  placeholder="Informe o enunciado da questão"
+                  class="block w-full rounded py-2.5 px-4 border"
+                  required
+                ></textarea>
+              </div>
+              <!-- Alternativas -->
+              <div class="space-y-1">
+                <label
+                  for="edit_questao_alternativa_a"
+                  class="text-sm font-medium text-default-900"
+                  >Alternativa A</label
+                >
+                <input
+                  type="text"
+                  name="alternativa_a"
+                  id="edit_questao_alternativa_a"
+                  placeholder="Informe a alternativa A"
+                  class="block w-full rounded py-2.5 px-4 border"
+                  required
+                />
+              </div>
+              <div class="space-y-1">
+                <label
+                  for="edit_questao_alternativa_b"
+                  class="text-sm font-medium text-default-900"
+                  >Alternativa B</label
+                >
+                <input
+                  type="text"
+                  name="alternativa_b"
+                  id="edit_questao_alternativa_b"
+                  placeholder="Informe a alternativa B"
+                  class="block w-full rounded py-2.5 px-4 border"
+                  required
+                />
+              </div>
+              <div class="space-y-1">
+                <label
+                  for="edit_questao_alternativa_c"
+                  class="text-sm font-medium text-default-900"
+                  >Alternativa C</label
+                >
+                <input
+                  type="text"
+                  name="alternativa_c"
+                  id="edit_questao_alternativa_c"
+                  placeholder="Informe a alternativa C"
+                  class="block w-full rounded py-2.5 px-4 border"
+                  required
+                />
+              </div>
+              <div class="space-y-1">
+                <label
+                  for="edit_questao_alternativa_d"
+                  class="text-sm font-medium text-default-900"
+                  >Alternativa D</label
+                >
+                <input
+                  type="text"
+                  name="alternativa_d"
+                  id="edit_questao_alternativa_d"
+                  placeholder="Informe a alternativa D"
+                  class="block w-full rounded py-2.5 px-4 border"
+                  required
+                />
+              </div>
+              <!-- Resposta Correta como Select -->
+              <div class="space-y-1 md:col-span-2">
+                <label
+                  for="edit_questao_resposta_correta"
+                  class="text-sm font-medium text-default-900"
+                >
+                  Selecione a alternativa correta (A, B, C ou D)
+                </label>
+                <select
+                  name="resposta_correta"
+                  id="edit_questao_resposta_correta"
+                  class="block w-full rounded py-2.5 px-4 border"
+                  required
+                >
+                  <option value="">Selecione</option>
+                  <option value="A">A</option>
+                  <option value="B">B</option>
+                  <option value="C">C</option>
+                  <option value="D">D</option>
+                </select>
+              </div>
+            </div>
+            <div class="flex items-center gap-2 justify-end mt-4">
+              <button
+                type="button"
+                id="cancel-edit-btn"
+                class="py-2 px-5 inline-flex items-center justify-center gap-2 font-semibold tracking-wide border border-transparent text-sm text-red-600 hover:border-red-500/20 hover:bg-red-500/20 rounded transition-all"
+              >
+                <i class="ph-bold ph-x text-lg"></i> Cancelar
+              </button>
+              <button
+                type="submit"
+                class="py-2 px-5 inline-flex items-center justify-center gap-2 font-semibold tracking-wide border text-sm bg-default-800 hover:bg-default-950 border-default-800 hover:border-default-950 text-default-50 rounded"
+              >
+                <i class="ph-duotone ph-cloud-arrow-up text-lg"></i> Salvar
+                Alterações
+              </button>
+            </div>
+          </form>
+          <button
+            id="close-edit-section"
+            class="mt-4 text-red-500 block text-center"
+          >
+            Fechar
+          </button>
+        </div>
       </div>
       <%- include('partials/footer') %>
     </div>
 
-    <!-- Modal para Edição de Questão -->
-
     <script>
       $(document).ready(function () {
-        // Cadastro de Questão: abrir e fechar modal
-        $("#open-modal-questao").click(function () {
-          $("#modal-questao").removeClass("hidden");
-        });
-        $("#close-modal-questao").click(function () {
-          $("#modal-questao").addClass("hidden");
-        });
-        $("#form-cadastrar-questao").submit(function (event) {
-          event.preventDefault();
-          $.ajax({
-            url: "/cadastrar-questao",
-            type: "POST",
-            data: $(this).serialize(),
-            success: function (response) {
-              $("#modal-questao").addClass("hidden");
-              Swal.fire({
-                title: response.message.includes("sucesso")
-                  ? "Sucesso!"
-                  : "Erro!",
-                text: response.message.includes("sucesso")
-                  ? "Questão cadastrada com sucesso!"
-                  : response.message,
-                icon: response.message.includes("sucesso")
-                  ? "success"
-                  : "error",
-                confirmButtonText: "OK",
-                timer: 5000,
-                timerProgressBar: true,
-              }).then(() => {
-                window.location.href = "/questoes?page=1";
-              });
-            },
-            error: function (xhr) {
-              $("#modal-questao").addClass("hidden");
-              let errorMsg =
-                (xhr.responseJSON && xhr.responseJSON.error) ||
-                "Erro ao cadastrar questão.";
-              Swal.fire({
-                title: "Erro!",
-                text: errorMsg,
-                icon: "error",
-                confirmButtonText: "OK",
-                timer: 5000,
-                timerProgressBar: true,
-              });
-            },
-          });
-        });
-
-        // Exclusão de Questão
-        $(document).on("click", ".delete-questao", function (e) {
+        // Excluir questão
+        $(document).on("click", ".deletar-questao", function (e) {
           e.preventDefault();
-          const questaoId = $(this).data("id");
+          const identificador = $(this).data("identificador");
+
           Swal.fire({
             title: "Tem certeza?",
-            text: "Esta ação não pode ser desfeita.",
+            text: "Essa ação não pode ser desfeita!",
             icon: "warning",
             showCancelButton: true,
             confirmButtonText: "Sim, excluir!",
             cancelButtonText: "Cancelar",
-            confirmButtonColor: "#3085d6",
-            cancelButtonColor: "#d33",
+            confirmButtonColor: "#d33",
+            cancelButtonColor: "#3085d6",
           }).then((result) => {
             if (result.isConfirmed) {
               $.ajax({
-                url: "/deletar-questao/" + questaoId,
-                type: "GET", // ou "DELETE" se configurado
-                success: function (response) {
+                url: `/deletar-questao/${identificador}`,
+                type: "DELETE",
+                success: function (resposta) {
                   Swal.fire(
-                    "Excluída!",
-                    "A questão foi excluída com sucesso.",
+                    "Excluído!",
+                    "A questão foi removida.",
                     "success"
                   ).then(() => {
-                    window.location.reload();
+                    location.reload();
                   });
                 },
-                error: function (xhr) {
+                error: function () {
                   Swal.fire(
                     "Erro!",
                     "Não foi possível excluir a questão.",
                     "error"
                   );
-                },
-              });
-            }
-          });
-        });
-
-        // Edição de Questão: abrir modal com dados preenchidos
-        $(document).on("click", ".edit-questao", function (e) {
-          e.preventDefault();
-          const id = $(this).data("id");
-          const titulo = $(this).data("titulo");
-          const curso_id = $(this).data("curso_id");
-          const materia_id = $(this).data("materia_id");
-          const enunciado = $(this).data("enunciado");
-          const alternativa_a = $(this).data("alternativa_a");
-          const alternativa_b = $(this).data("alternativa_b");
-          const alternativa_c = $(this).data("alternativa_c");
-          const alternativa_d = $(this).data("alternativa_d");
-          const resposta_correta = $(this).data("resposta_correta");
-          $("#edit_questao_id").val(id);
-          $("#edit_questao_titulo").val(titulo);
-          $("#edit_questao_curso_id").val(curso_id);
-          $("#edit_questao_materia_id").val(materia_id);
-          $("#edit_questao_enunciado").val(enunciado);
-          $("#edit_questao_alternativa_a").val(alternativa_a);
-          $("#edit_questao_alternativa_b").val(alternativa_b);
-          $("#edit_questao_alternativa_c").val(alternativa_c);
-          $("#edit_questao_alternativa_d").val(alternativa_d);
-          $("#edit_questao_resposta_correta").val(resposta_correta);
-          $("#modal-editar-questao").removeClass("hidden");
-        });
-        $("#close-edit-modal-questao").click(function () {
-          $("#modal-editar-questao").addClass("hidden");
-        });
-        $("#form-editar-questao").submit(function (e) {
-          e.preventDefault();
-          Swal.fire({
-            title: "Tem certeza?",
-            text: "Deseja salvar as alterações nesta questão?",
-            icon: "warning",
-            showCancelButton: true,
-            confirmButtonText: "Sim, editar!",
-            cancelButtonText: "Cancelar",
-            confirmButtonColor: "#3085d6",
-            cancelButtonColor: "#d33",
-          }).then((result) => {
-            if (result.isConfirmed) {
-              $.ajax({
-                url: "/editar-questao",
-                type: "POST",
-                data: $("#form-editar-questao").serialize(),
-                success: function (response) {
-                  Swal.fire(
-                    "Editada!",
-                    "Questão editada com sucesso!",
-                    "success"
-                  ).then(() => {
-                    window.location.reload();
-                  });
-                },
-                error: function (xhr) {
-                  let errorMsg =
-                    (xhr.responseJSON && xhr.responseJSON.error) ||
-                    "Erro ao editar questão.";
-                  Swal.fire("Erro!", errorMsg, "error");
                 },
               });
             }

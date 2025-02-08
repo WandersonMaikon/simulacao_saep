@@ -800,11 +800,11 @@ app.get("/questoes", verificarAutenticacao, (req, res) => {
        q.materia_id, 
        c.nome AS curso, 
        m.nome AS materia 
-FROM questao q 
-INNER JOIN curso c ON q.curso_id = c.id 
-INNER JOIN materia m ON q.materia_id = m.id 
-WHERE m.professor_id = ? 
-LIMIT ? OFFSET ?`,
+       FROM questao q 
+       INNER JOIN curso c ON q.curso_id = c.id 
+       INNER JOIN materia m ON q.materia_id = m.id 
+       WHERE m.professor_id = ? 
+       LIMIT ? OFFSET ?`,
         [req.session.user.id, limit, offset],
         (err, questoes) => {
           if (err) {
@@ -945,28 +945,92 @@ app.post("/cadastrar-questao", verificarAutenticacao, (req, res) => {
   );
 });
 
-app.get("/deletar-questao/:id", verificarAutenticacao, (req, res) => {
-  const questaoId = req.params.id;
-  // Garante que a questão pertence ao professor, verificando por meio da junção com matéria
-  db.query(
-    "DELETE q FROM questao q INNER JOIN materia m ON q.materia_id = m.id WHERE q.id = ? AND m.professor_id = ?",
-    [questaoId, req.session.user.id],
-    (err, result) => {
-      if (err) {
-        console.error("Erro ao excluir questão:", err);
-        return res.status(500).json({ error: "Erro ao excluir questão." });
+// Rota para deletar uma questão
+app.delete(
+  "/deletar-questao/:identificador",
+  verificarAutenticacao,
+  (requisicao, resposta) => {
+    const identificadorDaQuestao = requisicao.params.identificador;
+    // Garantir que a questão pertence ao professor, verificando por meio da junção com a tabela matéria
+    db.query(
+      "DELETE questao FROM questao INNER JOIN materia ON questao.materia_id = materia.id WHERE questao.id = ? AND materia.professor_id = ?",
+      [identificadorDaQuestao, requisicao.session.user.id],
+      (erro, resultado) => {
+        if (erro) {
+          console.error("Erro ao excluir a questão:", erro);
+          return resposta
+            .status(500)
+            .json({ erro: "Erro ao excluir a questão." });
+        }
+        if (resultado.affectedRows === 0) {
+          return resposta
+            .status(403)
+            .json({ erro: "Acesso negado ou questão inexistente." });
+        }
+        return resposta.json({ mensagem: "Questão excluída com sucesso!" });
       }
-      if (result.affectedRows === 0) {
-        return res
-          .status(403)
-          .json({ error: "Acesso negado ou questão inexistente." });
-      }
-      return res.json({ message: "Questão excluída com sucesso!" });
-    }
-  );
-});
+    );
+  }
+);
 
-app.post("/editar-questao", verificarAutenticacao, (req, res) => {
+// Rota para carregar a página de edição de uma questão
+app.get(
+  "/editar-questao/:identificador",
+  verificarAutenticacao,
+  (requisicao, resposta) => {
+    const identificadorDaQuestao = requisicao.params.identificador;
+    const identificadorDoProfessor = requisicao.session.user.id;
+
+    // Buscar os dados da questão (garantindo que pertence ao professor, por meio da junção com a tabela matéria)
+    db.query(
+      `SELECT questao.*, curso.nome AS curso, materia.nome AS materia 
+     FROM questao 
+     INNER JOIN materia ON questao.materia_id = materia.id 
+     INNER JOIN curso ON questao.curso_id = curso.id 
+     WHERE questao.id = ? AND materia.professor_id = ?`,
+      [identificadorDaQuestao, identificadorDoProfessor],
+      (erro, resultados) => {
+        if (erro || resultados.length === 0) {
+          console.error("Erro ao buscar a questão:", erro);
+          return resposta.redirect("/questoes?page=1");
+        }
+        const questao = resultados[0];
+
+        // Buscar os cursos vinculados ao professor para preencher o seletor
+        db.query(
+          "SELECT curso.id, curso.nome FROM curso INNER JOIN professor_curso ON curso.id = professor_curso.curso_id WHERE professor_curso.professor_id = ?",
+          [identificadorDoProfessor],
+          (erro, cursos) => {
+            if (erro) {
+              console.error("Erro ao buscar cursos:", erro);
+              cursos = [];
+            }
+            // Buscar as matérias do professor para preencher o seletor
+            db.query(
+              "SELECT id, nome FROM materia WHERE professor_id = ?",
+              [identificadorDoProfessor],
+              (erro, materias) => {
+                if (erro) {
+                  console.error("Erro ao buscar matérias:", erro);
+                  materias = [];
+                }
+                resposta.render("editQuestao", {
+                  questao,
+                  cursos,
+                  materias,
+                  mensagem: "",
+                });
+              }
+            );
+          }
+        );
+      }
+    );
+  }
+);
+
+// Rota para salvar as alterações de uma questão editada
+app.post("/editar-questao", verificarAutenticacao, (requisicao, resposta) => {
   const {
     id,
     curso_id,
@@ -978,7 +1042,8 @@ app.post("/editar-questao", verificarAutenticacao, (req, res) => {
     alternativa_c,
     alternativa_d,
     resposta_correta,
-  } = req.body;
+  } = requisicao.body;
+
   if (
     !id ||
     !curso_id ||
@@ -991,13 +1056,18 @@ app.post("/editar-questao", verificarAutenticacao, (req, res) => {
     !alternativa_d ||
     !resposta_correta
   ) {
-    return res.status(400).json({ error: "Todos os campos são obrigatórios." });
+    return resposta
+      .status(400)
+      .json({ erro: "Todos os campos são obrigatórios." });
   }
+
   db.query(
-    `UPDATE questao q 
-     INNER JOIN materia m ON q.materia_id = m.id 
-     SET q.curso_id = ?, q.materia_id = ?, q.titulo = ?, q.enunciado = ?, q.alternativa_a = ?, q.alternativa_b = ?, q.alternativa_c = ?, q.alternativa_d = ?, q.resposta_correta = ? 
-     WHERE q.id = ? AND m.professor_id = ?`,
+    `UPDATE questao 
+     INNER JOIN materia ON questao.materia_id = materia.id 
+     SET questao.curso_id = ?, questao.materia_id = ?, questao.titulo = ?, questao.enunciado = ?, 
+         questao.alternativa_a = ?, questao.alternativa_b = ?, questao.alternativa_c = ?, 
+         questao.alternativa_d = ?, questao.resposta_correta = ? 
+     WHERE questao.id = ? AND materia.professor_id = ?`,
     [
       curso_id,
       materia_id,
@@ -1009,19 +1079,21 @@ app.post("/editar-questao", verificarAutenticacao, (req, res) => {
       alternativa_d,
       resposta_correta,
       id,
-      req.session.user.id,
+      requisicao.session.user.id,
     ],
-    (err, result) => {
-      if (err) {
-        console.error("Erro ao atualizar questão:", err);
-        return res.status(500).json({ error: "Erro ao atualizar questão." });
+    (erro, resultado) => {
+      if (erro) {
+        console.error("Erro ao atualizar a questão:", erro);
+        return resposta
+          .status(500)
+          .json({ erro: "Erro ao atualizar a questão." });
       }
-      if (result.affectedRows === 0) {
-        return res
+      if (resultado.affectedRows === 0) {
+        return resposta
           .status(403)
-          .json({ error: "Acesso negado ou questão inexistente." });
+          .json({ erro: "Acesso negado ou questão inexistente." });
       }
-      return res.json({ message: "Questão editada com sucesso!" });
+      return resposta.json({ mensagem: "Questão editada com sucesso!" });
     }
   );
 });
