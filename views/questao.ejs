@@ -121,23 +121,15 @@
                   <td class="px-3 py-3 text-center">
                     <div class="flex items-center justify-center gap-2">
                       <a
-                        href="#"
-                        class="edit-questao inline-flex items-center justify-center h-8 w-8 rounded-md bg-cyan-500/20 text-cyan-500 transition-all duration-200 hover:bg-cyan-500 hover:text-white"
-                        data-id="<%= questao.id %>"
-                        data-titulo="<%= questao.titulo %>"
-                        data-curso_id="<%= questao.curso_id %>"
-                        data-materia_id="<%= questao.materia_id %>"
-                        data-enunciado="<%= questao.enunciado %>"
-                        data-alternativa_a="<%= questao.alternativa_a %>"
-                        data-alternativa_b="<%= questao.alternativa_b %>"
-                        data-alternativa_c="<%= questao.alternativa_c %>"
-                        data-alternativa_d="<%= questao.alternativa_d %>"
-                        data-resposta_correta="<%= questao.resposta_correta %>"
+                        href="/editar-questao/<%= questao.id %>"
+                        data-identificador="<%= questao.id %>"
+                        class="editar-questao inline-flex items-center justify-center h-8 w-8 rounded-md bg-cyan-500/20 text-cyan-500 transition-all duration-200 hover:bg-cyan-500 hover:text-white"
                       >
                         <i
                           class="ph-duotone ph-pencil-simple-line text-base"
                         ></i>
                       </a>
+
                       <button
                         class="deletar-questao inline-flex items-center justify-center h-8 w-8 rounded-md bg-red-500/20 text-red-500 transition-all duration-200 hover:bg-red-500 hover:text-white"
                         data-identificador="<%= questao.id %>"
@@ -424,6 +416,11 @@
             }
           });
         });
+      });
+      $(document).on("click", ".editar-questao", function (e) {
+        e.preventDefault();
+        const identificador = $(this).data("identificador");
+        window.location.href = `/editar-questao/${identificador}`;
       });
     </script>
   </body>

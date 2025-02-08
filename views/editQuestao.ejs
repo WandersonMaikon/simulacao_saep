@@ -1,17 +1,25 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
   <head>
-    <meta charset="UTF-8" />
-    <title>Editar Questão - Simulação Saep</title>
+    <meta charset="utf-8" />
+    <title>Gerenciar Alunos</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta content="" name="description" />
+    <meta content="coderthemes" name="author" />
     <link rel="shortcut icon" href="assets/favicon-8fd74f43.ico" />
+    <script type="module" crossorigin src="assets/theme-e4584917.js"></script>
     <link rel="stylesheet" href="assets/theme-d32f8eb8.css" />
-    <!-- SweetAlert2 CSS -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" />
+
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <!-- SweetAlert2 JS -->
+    <!-- Biblioteca SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="/assets/theme-d32f8eb8.css" />
+    <script type="module" crossorigin src="/assets/theme-e4584917.js"></script>
+
     <style>
+      .modal-overlay {
+        z-index: 9999;
+      }
       .swal2-container {
         z-index: 100000 !important;
       }
@@ -23,8 +31,8 @@
       <%- include('partials/header') %>
       <div class="p-6 space-y-6">
         <h4 class="text-lg font-semibold text-default-900">Editar Questão</h4>
-        <% if(message) { %>
-          <div class="alert alert-danger text-center"><%= message %></div>
+        <% if(mensagem) { %>
+          <div class="alert alert-danger text-center"><%= mensagem %></div>
         <% } %>
         <form id="form-editar-questao" action="/editar-questao" method="POST" class="space-y-4">
           <!-- Campo oculto para o ID da questão -->
@@ -98,7 +106,7 @@
             </button>
           </div>
         </form>
-        <button id="close-edit-section" class="mt-4 text-red-500 block text-center">Fechar</button>
+        
       </div>
 
       <%- include('partials/footer') %>
