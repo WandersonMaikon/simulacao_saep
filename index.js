@@ -766,14 +766,64 @@ app.get("/questoes", verificarAutenticacao, (req, res) => {
   const page = parseInt(req.query.page) || 1;
   const limit = 10;
   const offset = (page - 1) * limit;
+  const searchTerm = req.query.search ? req.query.search.trim() : "";
 
-  // Conta as questões que pertencem ao professor (através da matéria)
-  db.query(
-    "SELECT COUNT(*) AS count FROM questao q INNER JOIN materia m ON q.materia_id = m.id WHERE m.professor_id = ?",
-    [req.session.user.id],
-    (err, countResult) => {
+  // Começa a construir a cláusula WHERE
+  let baseWhere = "WHERE m.professor_id = ?";
+  let queryParams = [req.session.user.id];
+
+  // Se houver termo de pesquisa, adiciona condições para os campos
+  if (searchTerm) {
+    baseWhere += " AND (q.titulo LIKE ? OR c.nome LIKE ? OR m.nome LIKE ? OR q.enunciado LIKE ?)";
+    const wildcard = "%" + searchTerm + "%";
+    queryParams.push(wildcard, wildcard, wildcard, wildcard);
+  }
+
+  // Query para contar registros
+  const countQuery = `
+    SELECT COUNT(*) AS count
+    FROM questao q
+    INNER JOIN materia m ON q.materia_id = m.id
+    INNER JOIN curso c ON q.curso_id = c.id
+    ${baseWhere}
+  `;
+  db.query(countQuery, queryParams, (err, countResult) => {
+    if (err) {
+      console.error("Erro ao contar questões:", err);
+      return res.render("questao", {
+        message: "Erro ao buscar questões",
+        questoes: [],
+        currentPage: page,
+        totalPages: 0,
+        totalRows: 0,
+        cursos: [],
+        materias: [],
+        search: searchTerm
+      });
+    }
+    const totalRows = countResult[0].count;
+    const totalPages = Math.ceil(totalRows / limit);
+
+    // Query para buscar os dados das questões, com LIMIT e OFFSET
+    const dataQuery = `
+      SELECT q.id, q.titulo,
+             IF(LENGTH(q.enunciado) > 10, CONCAT(LEFT(q.enunciado, 25), '...'), q.enunciado) AS enunciado,
+             q.alternativa_a, q.alternativa_b, q.alternativa_c, q.alternativa_d,
+             q.resposta_correta, q.curso_id, q.materia_id,
+             c.nome AS curso, m.nome AS materia
+      FROM questao q
+      INNER JOIN curso c ON q.curso_id = c.id
+      INNER JOIN materia m ON q.materia_id = m.id
+      ${baseWhere}
+      LIMIT ? OFFSET ?
+    `;
+    // Clone os parâmetros da query e acrescente os de paginação
+    let dataParams = queryParams.slice();
+    dataParams.push(limit, offset);
+
+    db.query(dataQuery, dataParams, (err, questoes) => {
       if (err) {
-        console.error("Erro ao contar questões:", err);
+        console.error("Erro ao buscar questões:", err);
         return res.render("questao", {
           message: "Erro ao buscar questões",
           questoes: [],
@@ -782,79 +832,45 @@ app.get("/questoes", verificarAutenticacao, (req, res) => {
           totalRows: 0,
           cursos: [],
           materias: [],
+          search: searchTerm
         });
       }
-      const totalRows = countResult[0].count;
-      const totalPages = Math.ceil(totalRows / limit);
-      // Busca as questões com junção para obter nomes dos cursos e matérias
+      // Busca os cursos vinculados ao professor (para os selects dos formulários, por exemplo)
       db.query(
-        `SELECT q.id, 
-       q.titulo, 
-       IF(LENGTH(q.enunciado) > 10, CONCAT(LEFT(q.enunciado, 25), '...'), q.enunciado) AS enunciado, 
-       q.alternativa_a, 
-       q.alternativa_b, 
-       q.alternativa_c, 
-       q.alternativa_d, 
-       q.resposta_correta, 
-       q.curso_id, 
-       q.materia_id, 
-       c.nome AS curso, 
-       m.nome AS materia 
-       FROM questao q 
-       INNER JOIN curso c ON q.curso_id = c.id 
-       INNER JOIN materia m ON q.materia_id = m.id 
-       WHERE m.professor_id = ? 
-       LIMIT ? OFFSET ?`,
-        [req.session.user.id, limit, offset],
-        (err, questoes) => {
+        "SELECT c.id, c.nome FROM curso c INNER JOIN professor_curso pc ON c.id = pc.curso_id WHERE pc.professor_id = ?",
+        [req.session.user.id],
+        (err, cursos) => {
           if (err) {
-            console.error("Erro ao buscar questões:", err);
-            return res.render("questao", {
-              message: "Erro ao buscar questões",
-              questoes: [],
-              currentPage: page,
-              totalPages: 0,
-              totalRows: 0,
-              cursos: [],
-              materias: [],
-            });
+            console.error("Erro ao buscar cursos:", err);
+            cursos = [];
           }
-          // Busca os cursos vinculados ao professor (para os selects dos modais)
+          // Busca as matérias do professor
           db.query(
-            "SELECT c.id, c.nome FROM curso c INNER JOIN professor_curso pc ON c.id = pc.curso_id WHERE pc.professor_id = ?",
+            "SELECT m.id, m.nome FROM materia m WHERE m.professor_id = ?",
             [req.session.user.id],
-            (err, cursos) => {
+            (err, materias) => {
               if (err) {
-                console.error("Erro ao buscar cursos:", err);
-                cursos = [];
+                console.error("Erro ao buscar matérias:", err);
+                materias = [];
               }
-              // Busca as matérias do professor
-              db.query(
-                "SELECT m.id, m.nome FROM materia m WHERE m.professor_id = ?",
-                [req.session.user.id],
-                (err, materias) => {
-                  if (err) {
-                    console.error("Erro ao buscar matérias:", err);
-                    materias = [];
-                  }
-                  res.render("questao", {
-                    message: "",
-                    questoes,
-                    currentPage: page,
-                    totalPages,
-                    totalRows,
-                    cursos,
-                    materias,
-                  });
-                }
-              );
+              res.render("questao", {
+                message: "",
+                questoes,
+                currentPage: page,
+                totalPages,
+                totalRows,
+                cursos,
+                materias,
+                search: searchTerm
+              });
             }
           );
         }
       );
-    }
-  );
+    });
+  });
 });
+
 
 app.get("/cadastrar-questao", verificarAutenticacao, (req, res) => {
   // Supondo que você precise passar os cursos e matérias do professor para os selects:

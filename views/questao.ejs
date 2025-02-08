@@ -422,6 +422,17 @@
         const identificador = $(this).data("identificador");
         window.location.href = `/editar-questao/${identificador}`;
       });
+      $(document).ready(function () {
+        // Filtro em tempo real: sempre que o usuário digitar no input de search,
+        // filtra as linhas da tabela
+        $("input[type='search']").on("keyup", function () {
+          var termo = $(this).val().toLowerCase();
+          $("table tbody tr").filter(function () {
+            // Verifica se o texto da linha (de todas as células) contém o termo de pesquisa (case-insensitive)
+            $(this).toggle($(this).text().toLowerCase().indexOf(termo) > -1);
+          });
+        });
+      });
     </script>
   </body>
 </html>
