@@ -774,7 +774,8 @@ app.get("/questoes", verificarAutenticacao, (req, res) => {
 
   // Se houver termo de pesquisa, adiciona condições para os campos
   if (searchTerm) {
-    baseWhere += " AND (q.titulo LIKE ? OR c.nome LIKE ? OR m.nome LIKE ? OR q.enunciado LIKE ?)";
+    baseWhere +=
+      " AND (q.titulo LIKE ? OR c.nome LIKE ? OR m.nome LIKE ? OR q.enunciado LIKE ?)";
     const wildcard = "%" + searchTerm + "%";
     queryParams.push(wildcard, wildcard, wildcard, wildcard);
   }
@@ -798,7 +799,7 @@ app.get("/questoes", verificarAutenticacao, (req, res) => {
         totalRows: 0,
         cursos: [],
         materias: [],
-        search: searchTerm
+        search: searchTerm,
       });
     }
     const totalRows = countResult[0].count;
@@ -832,7 +833,7 @@ app.get("/questoes", verificarAutenticacao, (req, res) => {
           totalRows: 0,
           cursos: [],
           materias: [],
-          search: searchTerm
+          search: searchTerm,
         });
       }
       // Busca os cursos vinculados ao professor (para os selects dos formulários, por exemplo)
@@ -861,7 +862,7 @@ app.get("/questoes", verificarAutenticacao, (req, res) => {
                 totalRows,
                 cursos,
                 materias,
-                search: searchTerm
+                search: searchTerm,
               });
             }
           );
@@ -870,7 +871,6 @@ app.get("/questoes", verificarAutenticacao, (req, res) => {
     });
   });
 });
-
 
 app.get("/cadastrar-questao", verificarAutenticacao, (req, res) => {
   // Supondo que você precise passar os cursos e matérias do professor para os selects:
@@ -1114,6 +1114,227 @@ app.post("/editar-questao", verificarAutenticacao, (requisicao, resposta) => {
 // ==========================
 // Fim da rota de Questões
 // ==========================
+
+// ==========================
+// Inicio da rota de Simulados
+// ==========================
+app.get("/simulados", verificarAutenticacao, (req, res) => {
+  const page = parseInt(req.query.page) || 1;
+  const limit = 10;
+  const offset = (page - 1) * limit;
+  const searchTerm = req.query.search ? req.query.search.trim() : "";
+
+  // Monta a cláusula WHERE para filtrar os simulados do professor logado
+  let baseWhere = "WHERE s.professor_id = ?";
+  let queryParams = [req.session.user.id];
+
+  // Se houver termo de pesquisa, adiciona condições para título, nome do curso ou descrição
+  if (searchTerm) {
+    baseWhere +=
+      " AND (s.titulo LIKE ? OR c.nome LIKE ? OR s.descricao LIKE ?)";
+    const wildcard = "%" + searchTerm + "%";
+    queryParams.push(wildcard, wildcard, wildcard);
+  }
+
+  // Query para contar o total de simulados
+  const countQuery = `
+    SELECT COUNT(*) AS count
+    FROM simulado s
+    INNER JOIN curso c ON s.curso_id = c.id
+    ${baseWhere}
+  `;
+  db.query(countQuery, queryParams, (err, countResult) => {
+    if (err) {
+      console.error("Erro ao contar simulados:", err);
+      return res.render("simulados", {
+        message: "Erro ao buscar simulados",
+        simulados: [],
+        currentPage: page,
+        totalPages: 0,
+        totalRows: 0,
+        cursos: [],
+        search: searchTerm,
+      });
+    }
+    const totalRows = countResult[0].count;
+    const totalPages = Math.ceil(totalRows / limit);
+
+    // Query para buscar os dados dos simulados com LIMIT e OFFSET
+    const dataQuery = `
+      SELECT s.id, s.titulo, s.descricao,
+             DATE_FORMAT(s.data_simulacao, '%Y-%m-%d') AS data_simulacao,
+             TIME_FORMAT(s.tempo_simulado, '%H:%i') AS tempo_simulado,
+             c.nome AS curso
+      FROM simulado s
+      INNER JOIN curso c ON s.curso_id = c.id
+      ${baseWhere}
+      ORDER BY s.data_simulacao DESC
+      LIMIT ? OFFSET ?
+    `;
+    let dataParams = queryParams.slice();
+    dataParams.push(limit, offset);
+
+    db.query(dataQuery, dataParams, (err, simulados) => {
+      if (err) {
+        console.error("Erro ao buscar simulados:", err);
+        return res.render("simulados", {
+          message: "Erro ao buscar simulados",
+          simulados: [],
+          currentPage: page,
+          totalPages: 0,
+          totalRows: 0,
+          cursos: [],
+          search: searchTerm,
+        });
+      }
+      // Busca os cursos vinculados ao professor (para preencher selects no formulário, por exemplo)
+      db.query(
+        "SELECT c.id, c.nome FROM curso c INNER JOIN professor_curso pc ON c.id = pc.curso_id WHERE pc.professor_id = ?",
+        [req.session.user.id],
+        (err, cursos) => {
+          if (err) {
+            console.error("Erro ao buscar cursos:", err);
+            cursos = [];
+          }
+          res.render("simulados", {
+            message: "",
+            simulados,
+            currentPage: page,
+            totalPages,
+            totalRows,
+            cursos,
+            search: searchTerm,
+          });
+        }
+      );
+    });
+  });
+});
+
+/**
+ * Rota: GET /cadastrar-simulado
+ * Renderiza o formulário para cadastrar um novo simulado.
+ */
+app.get("/cadastrar-simulado", async (req, res) => {
+  try {
+    // Busca os cursos para popular o select do formulário
+    const [cursos] = await promisePool.query("SELECT * FROM curso");
+    res.render("cadastrar-simulado", { cursos });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Erro interno do servidor");
+  }
+});
+
+/**
+ * Rota: POST /cadastrar-simulado
+ * Realiza o cadastro de um novo simulado.
+ */
+app.post("/cadastrar-simulado", async (req, res) => {
+  try {
+    // Exemplo: professor_id pode ser obtido da sessão (aqui está vindo via form)
+    const {
+      professor_id,
+      curso_id,
+      titulo,
+      descricao,
+      data_simulacao,
+      tempo_simulado,
+    } = req.body;
+    await promisePool.query(
+      `INSERT INTO simulado (professor_id, curso_id, titulo, descricao, data_simulacao, tempo_simulado)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [
+        professor_id,
+        curso_id,
+        titulo,
+        descricao,
+        data_simulacao,
+        tempo_simulado,
+      ]
+    );
+    res.redirect("/simulados");
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Erro interno do servidor");
+  }
+});
+
+/**
+ * Rota: GET /editar-simulado/:id
+ * Renderiza o formulário de edição para um simulado existente.
+ */
+app.get("/editar-simulado/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    // Busca o simulado pelo id
+    const [simuladoResult] = await promisePool.query(
+      "SELECT * FROM simulado WHERE id = ?",
+      [id]
+    );
+    if (simuladoResult.length === 0) {
+      return res.status(404).send("Simulado não encontrado");
+    }
+    const simulado = simuladoResult[0];
+    // Busca os cursos para o select
+    const [cursos] = await promisePool.query("SELECT * FROM curso");
+    res.render("editar-simulado", { simulado, cursos });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Erro interno do servidor");
+  }
+});
+
+/**
+ * Rota: POST /editar-simulado
+ * Atualiza os dados de um simulado.
+ */
+app.post("/editar-simulado", async (req, res) => {
+  try {
+    const {
+      id,
+      professor_id,
+      curso_id,
+      titulo,
+      descricao,
+      data_simulacao,
+      tempo_simulado,
+    } = req.body;
+    await promisePool.query(
+      `UPDATE simulado 
+       SET professor_id = ?, curso_id = ?, titulo = ?, descricao = ?, data_simulacao = ?, tempo_simulado = ?
+       WHERE id = ?`,
+      [
+        professor_id,
+        curso_id,
+        titulo,
+        descricao,
+        data_simulacao,
+        tempo_simulado,
+        id,
+      ]
+    );
+    res.redirect("/simulados");
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Erro interno do servidor");
+  }
+});
+
+/**
+ * Rota: DELETE /deletar-simulado/:id
+ * Remove um simulado do banco de dados.
+ */
+app.delete("/deletar-simulado/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    await promisePool.query("DELETE FROM simulado WHERE id = ?", [id]);
+    res.status(200).send({ message: "Simulado excluído com sucesso" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Erro interno do servidor");
+  }
+});
 
 // Inicializa o servidor
 const PORT = process.env.PORT || 3000;

@@ -2,17 +2,12 @@
 <html lang="pt-BR">
   <head>
     <meta charset="utf-8" />
-    <title>Cadastrar Questões</title>
+    <title>Lista de Simulados</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="shortcut icon" href="assets/favicon-8fd74f43.ico" />
     <script type="module" crossorigin src="assets/theme-e4584917.js"></script>
     <link rel="stylesheet" href="assets/theme-d32f8eb8.css" />
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script type="module" crossorigin src="assets/theme-e4584917.js"></script>
-    <link rel="stylesheet" href="assets/theme-d32f8eb8.css" />
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
-    <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
       .modal-overlay {
@@ -35,17 +30,17 @@
         <!-- Título e Área de busca -->
         <div class="flex items-center justify-between w-full print:hidden">
           <h4 class="text-lg font-semibold text-default-900">
-            Lista de Questões
+            Lista de Simulados
           </h4>
         </div>
-        <!-- Cartão com total de Questões -->
+        <!-- Cartão com total de Simulados -->
         <div class="grid lg:grid-cols-4 md:grid-cols-2 grid-cols-1 gap-6">
           <div class="shadow rounded-lg bg-white dark:bg-default-50">
             <div class="p-5">
               <div class="flex items-center justify-between">
                 <div>
                   <p class="text-base font-semibold text-default-600">
-                    Total de Questões
+                    Total de Simulados
                   </p>
                   <h4 class="text-2xl font-semibold text-default-900 mt-4">
                     <%= totalRows %>
@@ -54,19 +49,19 @@
                 <span
                   class="shrink h-18 w-18 inline-flex items-center justify-center rounded-lg bg-primary/20 text-primary"
                 >
-                  <i class="ph ph-question text-4xl"></i>
+                  <i class="ph ph-calendar text-4xl"></i>
                 </span>
               </div>
             </div>
           </div>
         </div>
-        <!-- Área de busca e link para cadastrar questão -->
+        <!-- Área de busca e link para cadastrar simulado -->
         <div class="flex flex-wrap items-center justify-between py-4 px-5">
           <div class="relative flex">
             <input
               type="search"
               class="ps-12 pe-4 py-2.5 block lg:w-64 border-none bg-default-100 text-default-700 rounded-lg text-sm focus:border-primary focus:ring-primary"
-              placeholder="Procurar questão..."
+              placeholder="Procurar simulado..."
             />
             <span class="absolute start-4 top-2.5">
               <i
@@ -75,15 +70,15 @@
             </span>
           </div>
           <a
-            href="/cadastrar-questao"
+            href="/cadastrar-simulado"
             class="py-2 px-4 inline-flex items-center justify-center font-semibold tracking-wide text-xs bg-primary hover:bg-primary-500 text-white rounded"
           >
             <i class="ph-duotone ph-plus-circle text-lg/none me-3"></i>
-            Adicionar Questão
+            Adicionar Simulado
           </a>
         </div>
 
-        <!-- Tabela de Questões -->
+        <!-- Tabela de Simulados -->
         <div class="shadow rounded-lg bg-white dark:bg-default-50 h-fit">
           <div
             class="border-t border-dashed border-default-200 relative overflow-x-auto"
@@ -99,10 +94,10 @@
                     Curso
                   </th>
                   <th class="px-6 py-3 text-left text-sm font-semibold">
-                    Matéria
+                    Data Simulação
                   </th>
                   <th class="px-6 py-3 text-left text-sm font-semibold">
-                    Enunciado
+                    Tempo Prova
                   </th>
                   <th class="px-3 py-3 text-center text-sm font-semibold">
                     Ação
@@ -110,29 +105,28 @@
                 </tr>
               </thead>
               <tbody class="divide-y divide-dashed divide-default-200">
-                <% if (questoes && questoes.length > 0) { %> <%
-                questoes.forEach(function(questao) { %>
+                <% if (simulados && simulados.length > 0) { %> <%
+                simulados.forEach(function(simulado) { %>
                 <tr>
-                  <td class="px-6 py-3"><%= questao.id %></td>
-                  <td class="px-6 py-3"><%= questao.titulo %></td>
-                  <td class="px-6 py-3"><%= questao.curso %></td>
-                  <td class="px-6 py-3"><%= questao.materia %></td>
-                  <td class="px-6 py-3"><%= questao.enunciado %></td>
+                  <td class="px-6 py-3"><%= simulado.id %></td>
+                  <td class="px-6 py-3"><%= simulado.titulo %></td>
+                  <td class="px-6 py-3"><%= simulado.curso %></td>
+                  <td class="px-6 py-3"><%= simulado.data_simulacao %></td>
+                  <td class="px-6 py-3"><%= simulado.tempo_simulado %></td>
                   <td class="px-3 py-3 text-center">
                     <div class="flex items-center justify-center gap-2">
                       <a
-                        href="/editar-questao/<%= questao.id %>"
-                        data-identificador="<%= questao.id %>"
-                        class="editar-questao inline-flex items-center justify-center h-8 w-8 rounded-md bg-cyan-500/20 text-cyan-500 transition-all duration-200 hover:bg-cyan-500 hover:text-white"
+                        href="/editar-simulado/<%= simulado.id %>"
+                        data-identificador="<%= simulado.id %>"
+                        class="editar-simulado inline-flex items-center justify-center h-8 w-8 rounded-md bg-cyan-500/20 text-cyan-500 transition-all duration-200 hover:bg-cyan-500 hover:text-white"
                       >
                         <i
                           class="ph-duotone ph-pencil-simple-line text-base"
                         ></i>
                       </a>
-
                       <button
-                        class="deletar-questao inline-flex items-center justify-center h-8 w-8 rounded-md bg-red-500/20 text-red-500 transition-all duration-200 hover:bg-red-500 hover:text-white"
-                        data-identificador="<%= questao.id %>"
+                        class="deletar-simulado inline-flex items-center justify-center h-8 w-8 rounded-md bg-red-500/20 text-red-500 transition-all duration-200 hover:bg-red-500 hover:text-white"
+                        data-identificador="<%= simulado.id %>"
                       >
                         <i class="ph-duotone ph-trash text-base"></i>
                       </button>
@@ -142,7 +136,7 @@
                 <% }); %> <% } else { %>
                 <tr>
                   <td colspan="6" class="text-center py-6">
-                    Nenhuma questão cadastrada.
+                    Nenhum simulado cadastrado.
                   </td>
                 </tr>
                 <% } %>
@@ -162,21 +156,21 @@
               <% if (currentPage > 1) { %>
               <a
                 class="inline-flex items-center justify-center h-8 w-8 border rounded-md transition-all duration-200 hover:bg-primary hover:text-white"
-                href="/questoes?page=<%= currentPage - 1 %>"
+                href="/simulados?page=<%= currentPage - 1 %>"
               >
                 <i class="ph ph-caret-left text-base"></i>
               </a>
               <% } %> <% for (let i = 1; i <= totalPages; i++) { %>
               <a
                 class="inline-flex items-center justify-center h-8 w-8 border rounded-md transition-all duration-200 <%= currentPage === i ? 'bg-primary text-white' : 'hover:bg-primary hover:text-white' %>"
-                href="/questoes?page=<%= i %>"
+                href="/simulados?page=<%= i %>"
               >
                 <%= i %>
               </a>
               <% } %> <% if (currentPage < totalPages) { %>
               <a
                 class="inline-flex items-center justify-center h-8 w-8 border rounded-md transition-all duration-200 hover:bg-primary hover:text-white"
-                href="/questoes?page=<%= currentPage + 1 %>"
+                href="/simulados?page=<%= currentPage + 1 %>"
               >
                 <i class="ph ph-caret-right text-base"></i>
               </a>
@@ -191,22 +185,26 @@
           class="shadow rounded-lg bg-white dark:bg-default-50 p-5 hidden"
         >
           <h4 class="text-lg font-semibold text-default-900 mb-4">
-            Editar Questão
+            Editar Simulado
           </h4>
-          <form id="form-editar-questao" action="/editar-questao" method="POST">
-            <!-- Campo oculto para o ID da questão -->
-            <input type="hidden" name="id" id="edit_questao_id" value="" />
+          <form
+            id="form-editar-simulado"
+            action="/editar-simulado"
+            method="POST"
+          >
+            <!-- Campo oculto para o ID do simulado -->
+            <input type="hidden" name="id" id="edit_simulado_id" value="" />
             <div class="grid md:grid-cols-2 gap-4">
               <!-- Select de Curso -->
               <div class="w-full">
                 <label
-                  for="edit_questao_curso_id"
+                  for="edit_simulado_curso_id"
                   class="block text-sm font-medium text-default-900"
                   >Curso</label
                 >
                 <select
                   name="curso_id"
-                  id="edit_questao_curso_id"
+                  id="edit_simulado_curso_id"
                   class="block w-full rounded py-2.5 px-4 border"
                   required
                 >
@@ -215,136 +213,65 @@
                   <% }); %>
                 </select>
               </div>
-              <!-- Select de Matéria -->
-              <div class="w-full">
-                <label
-                  for="edit_questao_materia_id"
-                  class="block text-sm font-medium text-default-900"
-                  >Matéria</label
-                >
-                <select
-                  name="materia_id"
-                  id="edit_questao_materia_id"
-                  class="block w-full rounded py-2.5 px-4 border"
-                  required
-                >
-                  <% materias.forEach(materia => { %>
-                  <option value="<%= materia.id %>"><%= materia.nome %></option>
-                  <% }); %>
-                </select>
-              </div>
               <!-- Título -->
               <div class="space-y-1 md:col-span-2">
                 <label
-                  for="edit_questao_titulo"
+                  for="edit_simulado_titulo"
                   class="text-sm font-medium text-default-900"
                   >Título</label
                 >
                 <input
                   type="text"
                   name="titulo"
-                  id="edit_questao_titulo"
-                  placeholder="Informe o título da questão"
+                  id="edit_simulado_titulo"
+                  placeholder="Informe o título do simulado"
                   class="block w-full rounded py-2.5 px-4 border"
                   required
                 />
               </div>
-              <!-- Enunciado -->
+              <!-- Descrição -->
               <div class="space-y-1 md:col-span-2">
                 <label
-                  for="edit_questao_enunciado"
+                  for="edit_simulado_descricao"
                   class="text-sm font-medium text-default-900"
-                  >Enunciado</label
+                  >Descrição</label
                 >
                 <textarea
-                  name="enunciado"
-                  id="edit_questao_enunciado"
-                  placeholder="Informe o enunciado da questão"
+                  name="descricao"
+                  id="edit_simulado_descricao"
+                  placeholder="Informe a descrição do simulado"
                   class="block w-full rounded py-2.5 px-4 border"
-                  required
                 ></textarea>
               </div>
-              <!-- Alternativas -->
+              <!-- Data da Simulação -->
               <div class="space-y-1">
                 <label
-                  for="edit_questao_alternativa_a"
+                  for="edit_simulado_data"
                   class="text-sm font-medium text-default-900"
-                  >Alternativa A</label
+                  >Data da Simulação</label
                 >
                 <input
-                  type="text"
-                  name="alternativa_a"
-                  id="edit_questao_alternativa_a"
-                  placeholder="Informe a alternativa A"
+                  type="date"
+                  name="data_simulacao"
+                  id="edit_simulado_data"
                   class="block w-full rounded py-2.5 px-4 border"
                   required
                 />
               </div>
+              <!-- Tempo de Prova -->
               <div class="space-y-1">
                 <label
-                  for="edit_questao_alternativa_b"
+                  for="edit_simulado_tempo"
                   class="text-sm font-medium text-default-900"
-                  >Alternativa B</label
+                  >Tempo de Prova</label
                 >
                 <input
-                  type="text"
-                  name="alternativa_b"
-                  id="edit_questao_alternativa_b"
-                  placeholder="Informe a alternativa B"
+                  type="time"
+                  name="tempo_simulado"
+                  id="edit_simulado_tempo"
                   class="block w-full rounded py-2.5 px-4 border"
                   required
                 />
-              </div>
-              <div class="space-y-1">
-                <label
-                  for="edit_questao_alternativa_c"
-                  class="text-sm font-medium text-default-900"
-                  >Alternativa C</label
-                >
-                <input
-                  type="text"
-                  name="alternativa_c"
-                  id="edit_questao_alternativa_c"
-                  placeholder="Informe a alternativa C"
-                  class="block w-full rounded py-2.5 px-4 border"
-                  required
-                />
-              </div>
-              <div class="space-y-1">
-                <label
-                  for="edit_questao_alternativa_d"
-                  class="text-sm font-medium text-default-900"
-                  >Alternativa D</label
-                >
-                <input
-                  type="text"
-                  name="alternativa_d"
-                  id="edit_questao_alternativa_d"
-                  placeholder="Informe a alternativa D"
-                  class="block w-full rounded py-2.5 px-4 border"
-                  required
-                />
-              </div>
-              <!-- Resposta Correta como Select -->
-              <div class="space-y-1 md:col-span-2">
-                <label
-                  for="edit_questao_resposta_correta"
-                  class="text-sm font-medium text-default-900"
-                >
-                  Selecione a alternativa correta (A, B, C ou D)
-                </label>
-                <select
-                  name="resposta_correta"
-                  id="edit_questao_resposta_correta"
-                  class="block w-full rounded py-2.5 px-4 border"
-                  required
-                >
-                  <option value="">Selecione</option>
-                  <option value="A">A</option>
-                  <option value="B">B</option>
-                  <option value="C">C</option>
-                  <option value="D">D</option>
-                </select>
               </div>
             </div>
             <div class="flex items-center gap-2 justify-end mt-4">
@@ -377,14 +304,14 @@
 
     <script>
       $(document).ready(function () {
-        // Excluir questão
-        $(document).on("click", ".deletar-questao", function (e) {
+        // Excluir simulado
+        $(document).on("click", ".deletar-simulado", function (e) {
           e.preventDefault();
           const identificador = $(this).data("identificador");
 
           Swal.fire({
             title: "Tem certeza?",
-            text: "Essa ação não pode ser desfeita!",
+            text: "Esta ação não pode ser desfeita!",
             icon: "warning",
             showCancelButton: true,
             confirmButtonText: "Sim, excluir!",
@@ -394,12 +321,12 @@
           }).then((result) => {
             if (result.isConfirmed) {
               $.ajax({
-                url: `/deletar-questao/${identificador}`,
+                url: `/deletar-simulado/${identificador}`,
                 type: "DELETE",
                 success: function (resposta) {
                   Swal.fire(
                     "Excluído!",
-                    "A questão foi removida.",
+                    "O simulado foi removido.",
                     "success"
                   ).then(() => {
                     location.reload();
@@ -408,7 +335,7 @@
                 error: function () {
                   Swal.fire(
                     "Erro!",
-                    "Não foi possível excluir a questão.",
+                    "Não foi possível excluir o simulado.",
                     "error"
                   );
                 },
@@ -417,13 +344,15 @@
           });
         });
       });
-      $(document).on("click", ".editar-questao", function (e) {
+
+      $(document).on("click", ".editar-simulado", function (e) {
         e.preventDefault();
         const identificador = $(this).data("identificador");
-        window.location.href = `/editar-questao/${identificador}`;
+        window.location.href = `/editar-simulado/${identificador}`;
       });
+
       $(document).ready(function () {
-        // filtra as linhas da tabela
+        // Filtrar as linhas da tabela
         $("input[type='search']").on("keyup", function () {
           var termo = $(this).val().toLowerCase();
           $("table tbody tr").filter(function () {
