@@ -1161,16 +1161,20 @@ app.get("/simulados", verificarAutenticacao, (req, res) => {
 
     // Query para buscar os dados dos simulados com LIMIT e OFFSET
     const dataQuery = `
-      SELECT s.id, s.titulo, s.descricao,
-             DATE_FORMAT(s.data_simulacao, '%Y-%m-%d') AS data_simulacao,
-             TIME_FORMAT(s.tempo_simulado, '%H:%i') AS tempo_simulado,
-             c.nome AS curso
-      FROM simulado s
-      INNER JOIN curso c ON s.curso_id = c.id
-      ${baseWhere}
-      ORDER BY s.data_simulacao DESC
-      LIMIT ? OFFSET ?
+    SELECT s.id, s.titulo, s.descricao,
+         DATE_FORMAT(s.data_simulacao, '%Y-%m-%d') AS data_simulacao,
+         TIME_FORMAT(s.tempo_simulado, '%H:%i') AS tempo_simulado,
+         c.nome AS curso,
+         t.nome AS turma
+    FROM simulado s
+    INNER JOIN curso c ON s.curso_id = c.id
+    LEFT JOIN simulado_turma st ON st.simulado_id = s.id AND st.agendada = 1
+    LEFT JOIN turma t ON st.turma_id = t.id
+    ${baseWhere}
+    ORDER BY s.data_simulacao DESC
+    LIMIT ? OFFSET ?
     `;
+
     let dataParams = queryParams.slice();
     dataParams.push(limit, offset);
 
