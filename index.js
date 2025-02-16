@@ -1329,6 +1329,25 @@ app.get("/cadastrar-simulado-steps", verificarAutenticacao, (req, res) => {
   );
 });
 
+app.get("/alunos-por-turma/:turmaId", verificarAutenticacao, (req, res) => {
+  const turmaId = Number(req.params.turmaId);
+  console.log("Buscando alunos para turma:", turmaId);
+  db.query(
+    "SELECT id, nome FROM aluno WHERE turma_id = ?",
+    [turmaId],
+    (err, alunos) => {
+      if (err) {
+        console.error("Erro ao buscar alunos:", err);
+        return res
+          .status(500)
+          .json({ error: "Erro ao buscar alunos", details: err });
+      }
+
+      res.json(alunos);
+    }
+  );
+});
+
 // Rota POST para cadastrar o simulado via multi-step
 app.post("/cadastrar-simulado-steps", verificarAutenticacao, (req, res) => {
   const { turma, alunos, questoes } = req.body;
