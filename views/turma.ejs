@@ -216,20 +216,6 @@
         <form id="form-cadastrar-turma" action="/cadastrar-turma" method="POST">
           <div class="mb-8">
             <label
-              for="turma_nome"
-              class="block text-base font-semibold text-default-900 mb-2"
-              >Nome da Turma</label
-            >
-            <input
-              type="text"
-              name="nome_turma"
-              id="turma_nome"
-              required
-              class="border border-gray-300 rounded-md w-full p-2"
-            />
-          </div>
-          <div class="mb-8">
-            <label
               for="turma_curso_id"
               class="block text-base font-semibold text-default-900 mb-2"
               >Curso</label
@@ -244,6 +230,20 @@
               <option value="<%= curso.id %>"><%= curso.nome %></option>
               <% }); %>
             </select>
+          </div>
+          <div class="mb-8">
+            <label
+              for="turma_nome"
+              class="block text-base font-semibold text-default-900 mb-2"
+              >Nome da Turma</label
+            >
+            <input
+              type="text"
+              name="nome_turma"
+              id="turma_nome"
+              required
+              class="border border-gray-300 rounded-md w-full p-2"
+            />
           </div>
           <div class="text-center mt-8">
             <button
@@ -267,20 +267,7 @@
         <h3 class="text-lg font-semibold text-gray-900 mb-4">Editar Turma</h3>
         <form id="form-editar-turma" action="/editar-turma" method="POST">
           <input type="hidden" id="edit_turma_id" name="id" value="" />
-          <div class="mb-8">
-            <label
-              for="edit_turma_nome"
-              class="block text-base font-semibold text-default-900 mb-2"
-              >Nome da Turma</label
-            >
-            <input
-              type="text"
-              id="edit_turma_nome"
-              name="nome_turma"
-              required
-              class="border border-gray-300 rounded-md w-full p-2"
-            />
-          </div>
+
           <div class="mb-8">
             <label
               for="edit_turma_curso_id"
@@ -297,6 +284,20 @@
               <option value="<%= curso.id %>"><%= curso.nome %></option>
               <% }); %>
             </select>
+          </div>
+          <div class="mb-8">
+            <label
+              for="edit_turma_nome"
+              class="block text-base font-semibold text-default-900 mb-2"
+              >Nome da Turma</label
+            >
+            <input
+              type="text"
+              id="edit_turma_nome"
+              name="nome_turma"
+              required
+              class="border border-gray-300 rounded-md w-full p-2"
+            />
           </div>
           <div class="text-center mt-8">
             <button
@@ -381,7 +382,7 @@
             if (result.isConfirmed) {
               $.ajax({
                 url: "/deletar-turma/" + turmaId,
-                type: "GET", // ou "DELETE", se configurado
+                type: "GET",
                 success: function (response) {
                   Swal.fire(
                     "Excluída!",

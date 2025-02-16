@@ -252,26 +252,31 @@ app.get("/turmas", verificarAutenticacao, (req, res) => {
 
 app.post("/cadastrar-turma", verificarAutenticacao, (req, res) => {
   const { nome_turma, curso_id } = req.body;
+
   if (!nome_turma || !curso_id) {
     return res.status(400).json({ error: "Todos os campos são obrigatórios!" });
   }
 
-  // Verifica se já existe uma turma para o curso para o professor logado
+  // Verifica se já existe uma turma com o mesmo nome para o mesmo curso e professor
   db.query(
-    "SELECT * FROM turma WHERE curso_id = ? AND professor_id = ?",
-    [curso_id, req.session.user.id],
+    "SELECT * FROM turma WHERE curso_id = ? AND professor_id = ? AND nome = ?",
+    [curso_id, req.session.user.id, nome_turma],
     (err, results) => {
       if (err) {
         console.error("Erro ao verificar turma:", err);
         return res.status(500).json({ error: "Erro ao verificar turma." });
       }
-      if (nome_turma == nome_turma) {
-        console.error("Erro ao verificar turma:", nome_turma);
+
+      if (results.length > 0) {
+        // Se já existir uma turma com o mesmo nome para o mesmo curso, retorna erro
         return res
           .status(400)
-          .json({ error: "Já existe uma mesma decrição de turma neste curso." });
+          .json({
+            error: "Já existe uma turma com essa descrição neste curso.",
+          });
       }
-      // Insere a nova turma
+
+      // Insere a nova turma, se não houver duplicata
       db.query(
         "INSERT INTO turma (nome, curso_id, professor_id) VALUES (?, ?, ?)",
         [nome_turma, curso_id, req.session.user.id],
@@ -280,7 +285,8 @@ app.post("/cadastrar-turma", verificarAutenticacao, (req, res) => {
             console.error("Erro ao cadastrar turma:", err);
             return res.status(500).json({ error: "Erro ao cadastrar turma." });
           }
-          // Retorna a lista atualizada para a página 1
+
+          // Retorna a lista atualizada de turmas para o professor
           db.query(
             "SELECT t.id, t.nome, t.curso_id, t.data_criacao, c.nome AS curso FROM turma t INNER JOIN curso c ON t.curso_id = c.id WHERE t.professor_id = ? LIMIT ? OFFSET ?",
             [req.session.user.id, 10, 0],
