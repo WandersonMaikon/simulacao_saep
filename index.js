@@ -265,10 +265,11 @@ app.post("/cadastrar-turma", verificarAutenticacao, (req, res) => {
         console.error("Erro ao verificar turma:", err);
         return res.status(500).json({ error: "Erro ao verificar turma." });
       }
-      if (results.length > 0) {
+      if (nome_turma == nome_turma) {
+        console.error("Erro ao verificar turma:", nome_turma);
         return res
           .status(400)
-          .json({ error: "Já existe uma turma cadastrada para este curso." });
+          .json({ error: "Já existe uma mesma decrição de turma neste curso." });
       }
       // Insere a nova turma
       db.query(
