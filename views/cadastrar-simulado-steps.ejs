@@ -16,7 +16,7 @@
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css"
     />
-    <!-- Bootstrap CSS (para estrutura e botões) -->
+    <!-- Bootstrap CSS -->
     <link
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
       rel="stylesheet"
@@ -27,41 +27,16 @@
     <!-- Choices.js JS -->
     <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
     <style>
-      .modal-overlay {
-        z-index: 9999;
-      }
-      .swal2-container {
-        z-index: 100000 !important;
-      }
+      .modal-overlay { z-index: 9999; }
+      .swal2-container { z-index: 100000 !important; }
       /* Estilos para o formulário multi‑etapas */
-      fieldset {
-        display: none;
-        border: 0;
-        padding: 0;
-        margin: 0;
-      }
-      fieldset.active {
-        display: block;
-      }
-      .step-header {
-        font-size: 1.25rem;
-        font-weight: 600;
-        margin-bottom: 1rem;
-      }
-      .btn-group-steps {
-        margin-top: 1.5rem;
-      }
-      /* Barra de progresso simples */
-      #progressbar {
-        height: 20px;
-        margin-bottom: 1.5rem;
-      }
-      #progress-step {
-        height: 100%;
-        background-color: #4f46e5; /* cor primária */
-        width: 25%; /* 4 etapas => 25% por etapa */
-        transition: width 0.4s ease;
-      }
+      fieldset { display: none; border: 0; padding: 0; margin: 0; }
+      fieldset.active { display: block; }
+      .step-header { font-size: 1.25rem; font-weight: 600; margin-bottom: 1rem; }
+      .btn-group-steps { margin-top: 1.5rem; }
+      /* Barra de progresso – 3 etapas: 33.33% cada */
+      #progressbar { height: 20px; margin-bottom: 1.5rem; }
+      #progress-step { height: 100%; background-color: #4f46e5; width: 33.33%; transition: width 0.4s ease; }
     </style>
   </head>
   <body class="bg-primary/10">
@@ -71,9 +46,7 @@
       <div class="p-6 space-y-6">
         <!-- Cabeçalho -->
         <div class="flex items-center justify-between w-full print:hidden">
-          <h4 class="text-lg font-semibold text-default-900">
-            Adicionar Simulado
-          </h4>
+          <h4 class="text-lg font-semibold text-default-900">Adicionar Simulado</h4>
         </div>
         <!-- Barra de Progresso -->
         <div id="progressbar" class="progress">
@@ -81,155 +54,90 @@
         </div>
         <!-- Formulário Multi‑Etapas -->
         <div class="shadow rounded-lg bg-white dark:bg-default-50 p-5">
-          <form
-            id="form-cadastrar-simulado"
-            action="/cadastrar-simulado-steps"
-            method="POST"
-          >
-            <!-- Etapa 1: Selecionar Turma -->
+          <form id="form-cadastrar-simulado" action="/cadastrar-simulado-steps" method="POST">
+            <!-- Etapa 1: Selecionar Curso e Turma -->
             <fieldset class="active">
-              <div class="step-header">Etapa 1: Selecione a Turma</div>
+              <div class="step-header">Etapa 1: Selecione o Curso e a Turma</div>
               <div class="mb-3">
-                <label for="select-turma" class="form-label">Turma</label>
-                <select
-                  name="turma"
-                  id="select-turma"
-                  class="form-select"
-                  required
-                >
-                  <option value="">Selecione uma turma</option>
-                  <% if (typeof turmas !== 'undefined' && turmas.length > 0) {
-                  %> <% turmas.forEach(function(turma) { %>
-                  <option value="<%= turma.id %>"><%= turma.nome %></option>
-                  <% }); %> <% } else { %>
-                  <option value="">Nenhuma turma disponível</option>
+                <label for="select-curso" class="form-label">Curso</label>
+                <select name="curso" id="select-curso" class="form-select" required>
+                  <option value="">Selecione um curso</option>
+                  <% if (typeof cursos !== 'undefined' && cursos.length > 0) { %>
+                    <% cursos.forEach(function(curso) { %>
+                      <option value="<%= curso.id %>"><%= curso.nome %></option>
+                    <% }); %>
+                  <% } else { %>
+                    <option value="">Nenhum curso disponível</option>
                   <% } %>
                 </select>
               </div>
+              <div class="mb-3">
+                <label for="select-turma" class="form-label">Turma</label>
+                <select name="turma" id="select-turma" class="form-select" required>
+                  <option value="">Selecione uma turma</option>
+                  <!-- Esse select será atualizado via AJAX -->
+                </select>
+              </div>
               <div class="btn-group-steps d-flex justify-content-end">
-                <button type="button" class="btn btn-primary next">
-                  Próximo
-                </button>
+                <button type="button" class="btn btn-primary next">Próximo</button>
               </div>
             </fieldset>
 
             <!-- Etapa 2: Selecionar Alunos -->
             <fieldset>
               <div class="step-header">Etapa 2: Selecione os Alunos</div>
-              <!-- Aqui será exibida a tabela com os alunos da turma selecionada -->
               <div id="aluno-table-container" class="mb-3">
-                <div
-                  class="border-t border-dashed border-default-200 relative overflow-x-auto"
-                >
+                <div class="border-t border-dashed border-default-200 relative overflow-x-auto">
                   <table class="min-w-full">
                     <thead class="border-b border-dashed border-default-200">
                       <tr>
                         <td class="px-6 py-3 w-10 font-medium text-default-900">
-                          <input
-                            type="checkbox"
-                            id="select-all-alunos"
-                            class="form-checkbox"
-                          />
+                          <input type="checkbox" id="select-all-alunos" class="form-checkbox">
                         </td>
-                        <th
-                          class="px-6 py-3 text-start text-sm capitalize font-semibold text-default-900 min-w-32"
-                        >
-                          Id
-                        </th>
-                        <th
-                          class="px-6 py-3 text-start text-sm capitalize font-semibold text-default-900 min-w-32"
-                        >
-                          Nome
-                        </th>
-                        <th
-                          class="px-6 py-3 text-start text-sm capitalize font-semibold text-default-900 min-w-32"
-                        >
-                          Usuário
-                        </th>
-                        <th
-                          class="px-6 py-3 text-start text-sm capitalize font-semibold text-default-900 min-w-32"
-                        >
-                          Senha
-                        </th>
-                        <th
-                          class="px-6 py-3 text-start text-sm capitalize font-semibold text-default-900 min-w-32"
-                        >
-                          Data cadastro
-                        </th>
-                        <th
-                          class="px-3 py-3 text-center text-sm capitalize font-semibold text-default-900 min-w-32"
-                        >
-                          Ação
-                        </th>
+                        <th class="px-6 py-3 text-start text-sm capitalize font-semibold text-default-900 min-w-32">Id</th>
+                        <th class="px-6 py-3 text-start text-sm capitalize font-semibold text-default-900 min-w-32">Nome</th>
+                        <th class="px-6 py-3 text-start text-sm capitalize font-semibold text-default-900 min-w-32">Usuário</th>
+                        <th class="px-6 py-3 text-start text-sm capitalize font-semibold text-default-900 min-w-32">Senha</th>
+                        <th class="px-6 py-3 text-start text-sm capitalize font-semibold text-default-900 min-w-32">Data cadastro</th>
+                        <th class="px-3 py-3 text-center text-sm capitalize font-semibold text-default-900 min-w-32">Ação</th>
                       </tr>
                     </thead>
-                    <tbody
-                      class="divide-y divide-dashed divide-default-200"
-                      id="aluno-table-body"
-                    >
+                    <tbody class="divide-y divide-dashed divide-default-200" id="aluno-table-body">
                       <tr>
-                        <td colspan="6" class="text-center py-6">
-                          Nenhum aluno cadastrado nesta turma.
-                        </td>
+                        <td colspan="6" class="text-center py-6">Nenhum aluno cadastrado nesta turma.</td>
                       </tr>
                     </tbody>
                   </table>
                 </div>
               </div>
               <div class="btn-group-steps d-flex justify-content-between">
-                <button type="button" class="btn btn-secondary prev">
-                  Voltar
-                </button>
-                <button type="button" class="btn btn-primary next">
-                  Próximo
-                </button>
+                <button type="button" class="btn btn-secondary prev">Voltar</button>
+                <button type="button" class="btn btn-primary next">Próximo</button>
               </div>
             </fieldset>
 
-            <!-- Etapa 3: Selecionar Questões -->
+            <!-- Etapa 3: Selecionar Questões e Revisão -->
             <fieldset>
-              <div class="step-header">Etapa 3: Selecione as Questões</div>
+              <div class="step-header">Etapa 3: Selecione as Questões e Revisão</div>
               <div class="mb-3">
                 <label for="select-questoes" class="form-label">Questões</label>
-                <select
-                  name="questoes[]"
-                  id="select-questoes"
-                  class="form-select"
-                  multiple
-                  required
-                >
-                  <!-- Exemplo: as opções podem ser carregadas via AJAX ou inseridas aqui -->
+                <select name="questoes[]" id="select-questoes" class="form-select" multiple required>
                   <option value="1">Questão 1</option>
                   <option value="2">Questão 2</option>
                   <option value="3">Questão 3</option>
                   <option value="4">Questão 4</option>
                 </select>
               </div>
-              <div class="btn-group-steps d-flex justify-content-between">
-                <button type="button" class="btn btn-secondary prev">
-                  Voltar
-                </button>
-                <button type="button" class="btn btn-primary next">
-                  Próximo
-                </button>
-              </div>
-            </fieldset>
-
-            <!-- Etapa 4: Revisão e Confirmação -->
-            <fieldset>
-              <div class="step-header">Etapa 4: Revisão e Confirmação</div>
               <div class="mb-3">
+                <h5>Revisão</h5>
+                <p id="resumo-curso"><strong>Curso:</strong></p>
                 <p id="resumo-turma"><strong>Turma:</strong></p>
                 <p id="resumo-alunos"><strong>Alunos:</strong></p>
                 <p id="resumo-questoes"><strong>Questões:</strong></p>
               </div>
               <div class="btn-group-steps d-flex justify-content-between">
-                <button type="button" class="btn btn-secondary prev">
-                  Voltar
-                </button>
-                <button type="submit" class="btn btn-success">
-                  Confirmar Cadastro
-                </button>
+                <button type="button" class="btn btn-secondary prev">Voltar</button>
+                <button type="submit" class="btn btn-success">Confirmar Cadastro</button>
               </div>
             </fieldset>
           </form>
@@ -246,7 +154,6 @@
         var fieldsets = $("form fieldset");
         var totalSteps = fieldsets.length;
 
-        // Função para mostrar a etapa atual e atualizar a barra de progresso
         function showStep(index) {
           fieldsets.removeClass("active");
           fieldsets.eq(index).addClass("active");
@@ -255,7 +162,8 @@
 
           // Se for a última etapa, atualiza o resumo
           if (index === totalSteps - 1) {
-            var turma = $("#select-turma option:selected").text();
+            var cursoText = $("#select-curso option:selected").text();
+            var turmaText = $("#select-turma option:selected").text();
             var alunos = $("#aluno-table-body input[type='checkbox']:checked")
               .map(function () {
                 return $(this).closest("tr").find("td:nth-child(2)").text();
@@ -268,83 +176,18 @@
               })
               .get()
               .join(", ");
-            $("#resumo-turma").html("<strong>Turma:</strong> " + turma);
-            $("#resumo-alunos").html(
-              "<strong>Alunos:</strong> " +
-                (alunos || "Nenhum aluno selecionado")
-            );
-            $("#resumo-questoes").html(
-              "<strong>Questões:</strong> " + questoes
-            );
+            $("#resumo-curso").html("<strong>Curso:</strong> " + cursoText);
+            $("#resumo-turma").html("<strong>Turma:</strong> " + turmaText);
+            $("#resumo-alunos").html("<strong>Alunos:</strong> " + (alunos || "Nenhum aluno selecionado"));
+            $("#resumo-questoes").html("<strong>Questões:</strong> " + questoes);
           }
         }
 
         $(".next").click(function () {
-          // Se estiver saindo da etapa 1, buscar os alunos da turma selecionada
-          if (currentIndex === 0) {
-            var turmaId = $("#select-turma").val();
-            if (!turmaId) {
-              Swal.fire({
-                icon: "warning",
-                title: "Atenção",
-                text: "Selecione a turma!",
-              });
-              return false;
-            }
-            // Faz a consulta via AJAX para obter os alunos da turma
-            $.ajax({
-              url: "/alunos-por-turma/" + turmaId,
-              type: "GET",
-              success: function (data) {
-                var tbody = $("#aluno-table-body");
-                tbody.empty();
-                if (data.length > 0) {
-                  data.forEach(function (aluno) {
-                    tbody.append(`
-                      <tr>
-                        <td class="px-6 py-3">
-                          <input type="checkbox" name="alunos[]" value="${
-                            aluno.id
-                          }" class="form-checkbox">
-                        </td>
-                        <td class="px-6 py-3">${aluno.id}</td>
-                        <td class="px-6 py-3">${aluno.nome}</td>
-                        <td class="px-6 py-3">${aluno.usuario || ""}</td>
-                        <td class="px-6 py-3">${aluno.senha || ""}</td>
-                        <td class="px-6 py-3">${aluno.data_cadastro || ""}</td>
-                        <td class="px-3 py-3 text-center">
-                          <!-- Ações, se necessário -->
-                        </td>
-                      </tr>
-                    `);
-                  });
-                } else {
-                  tbody.append(`
-                    <tr>
-                      <td colspan="6" class="text-center py-6">
-                        Nenhum aluno cadastrado nesta turma.
-                      </td>
-                    </tr>
-                  `);
-                }
-              },
-              error: function () {
-                Swal.fire({
-                  icon: "error",
-                  title: "Erro",
-                  text: "Erro ao buscar alunos.",
-                });
-              },
-            });
-          }
-          // Validação simples dos campos obrigatórios na etapa atual
           var valid = true;
           var currentFieldset = fieldsets.eq(currentIndex);
           currentFieldset.find("select[required]").each(function () {
-            if (
-              !$(this).val() ||
-              ($(this).attr("multiple") && $(this).val().length === 0)
-            ) {
+            if (!$(this).val() || ($(this).attr("multiple") && $(this).val().length === 0)) {
               valid = false;
               Swal.fire({
                 icon: "warning",
@@ -369,10 +212,106 @@
         // Inicializa a primeira etapa
         showStep(currentIndex);
 
-        // Inicializa Choices.js para os selects
-        new Choices("#select-turma", { removeItemButton: false });
+        // Inicializa Choices.js para os selects de curso e questões (não inicializamos para select-turma)
+        new Choices("#select-curso", { removeItemButton: false });
         new Choices("#select-questoes", { removeItemButton: true });
-        // Não inicializamos Choices para a tabela de alunos, pois ela será atualizada via AJAX
+
+        // Manipulador para atualizar o select de turmas com base no curso selecionado
+        $("#select-curso").on("change", function () {
+          var cursoId = $(this).val();
+          console.log("Curso selecionado:", cursoId);
+          if (!cursoId) {
+            $("#select-turma").empty().append('<option value="">Selecione uma turma</option>');
+            return;
+          }
+          $.ajax({
+            url: "/turmas-por-curso/" + cursoId,
+            type: "GET",
+            dataType: "json",
+            success: function (data) {
+              console.log("Resposta de turmas:", data);
+              var $turmaSelect = $("#select-turma");
+              $turmaSelect.empty();
+              if (data.length > 0) {
+                $turmaSelect.append('<option value="">Selecione uma turma</option>');
+                data.forEach(function (turma) {
+                  $turmaSelect.append(`<option value="${turma.id}">${turma.nome}</option>`);
+                });
+              } else {
+                $turmaSelect.append('<option value="">Nenhuma turma disponível</option>');
+              }
+              // Se já existir uma instância do Choices para esse select, destrua-a e remova o dado
+              var instance = $turmaSelect.data("choices");
+              if (instance) {
+                instance.destroy();
+                $turmaSelect.removeData("choices");
+              }
+              // Inicializa o Choices para o select de turma usando o elemento DOM real
+              new Choices($turmaSelect[0], { removeItemButton: false });
+            },
+            error: function () {
+              Swal.fire({
+                icon: "error",
+                title: "Erro",
+                text: "Erro ao buscar turmas.",
+              });
+            },
+          });
+        });
+
+        // Quando a turma for alterada, buscar os alunos desta turma
+        $("#select-turma").on("change", function () {
+          var turmaId = $(this).val();
+          console.log("Turma selecionada:", turmaId);
+          if (!turmaId) {
+            $("#aluno-table-body").html(`
+              <tr>
+                <td colspan="6" class="text-center py-6">Nenhum aluno cadastrado nesta turma.</td>
+              </tr>
+            `);
+            return;
+          }
+          $.ajax({
+            url: "/alunos-por-turma/" + turmaId,
+            type: "GET",
+            dataType: "json",
+            success: function (data) {
+              console.log("Resposta de alunos:", data);
+              var tbody = $("#aluno-table-body");
+              tbody.empty();
+              if (data.length > 0) {
+                data.forEach(function (aluno) {
+                  tbody.append(`
+                    <tr>
+                      <td class="px-6 py-3">
+                        <input type="checkbox" name="alunos[]" value="${aluno.id}" class="form-checkbox">
+                      </td>
+                      <td class="px-6 py-3">${aluno.id}</td>
+                      <td class="px-6 py-3">${aluno.nome}</td>
+                      <td class="px-6 py-3">${aluno.usuario || ""}</td>
+                      <td class="px-6 py-3">${aluno.senha || ""}</td>
+                      <td class="px-6 py-3">${aluno.data_cadastro || ""}</td>
+                      <td class="px-3 py-3 text-center"><!-- Ações, se necessário --></td>
+                    </tr>
+                  `);
+                });
+              } else {
+                tbody.append(`
+                  <tr>
+                    <td colspan="6" class="text-center py-6">Nenhum aluno cadastrado nesta turma.</td>
+                  </tr>
+                `);
+              }
+            },
+            error: function () {
+              Swal.fire({
+                icon: "error",
+                title: "Erro",
+                text: "Erro ao buscar alunos.",
+              });
+            },
+          });
+        });
       });
     </script>
   </body>

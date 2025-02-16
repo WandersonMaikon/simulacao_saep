@@ -1313,27 +1313,55 @@ app.delete("/deletar-simulado/:id", async (req, res) => {
 app.use(express.json()); // Para processar JSON no req.body
 app.use(express.urlencoded({ extended: true })); // Para processar formulários
 
-// Rota GET para renderizar a página de cadastro multi-step de simulado
+// Rota GET para renderizar a página de cadastro multi‑etapas de simulado (passa cursos)
 app.get("/cadastrar-simulado-steps", verificarAutenticacao, (req, res) => {
   const professorId = req.session.user.id;
+  // Busca os cursos vinculados ao professor (via professor_curso)
   db.query(
-    "SELECT id, nome FROM turma WHERE professor_id = ?",
+    "SELECT c.id, c.nome FROM curso c INNER JOIN professor_curso pc ON c.id = pc.curso_id WHERE pc.professor_id = ?",
     [professorId],
     (err, results) => {
       if (err) {
         console.error("Erro ao carregar a página de cadastro multi-step:", err);
         return res.status(500).send("Erro interno do servidor");
       }
-      res.render("cadastrar-simulado-steps", { turmas: results });
+      // Renderiza a view, passando os cursos para o select da Etapa 1
+      res.render("cadastrar-simulado-steps", { cursos: results });
     }
   );
 });
 
+// Rota GET para buscar turmas com base no curso selecionado
+app.get("/turmas-por-curso/:cursoId", verificarAutenticacao, (req, res) => {
+  const cursoId = Number(req.params.cursoId);
+  const professorId = req.session.user.id;
+  console.log(
+    "Buscando turmas para cursoId:",
+    cursoId,
+    "professorId:",
+    professorId
+  );
+  db.query(
+    "SELECT id, nome FROM turma WHERE curso_id = ? AND professor_id = ?",
+    [cursoId, professorId],
+    (err, results) => {
+      if (err) {
+        console.error("Erro ao buscar turmas por curso:", err);
+        return res
+          .status(500)
+          .json({ error: "Erro ao buscar turmas por curso", details: err });
+      }
+      console.log("Turmas retornadas:", results);
+      res.json(results);
+    }
+  );
+});
+
+// Rota GET para buscar alunos de uma turma específica
 app.get("/alunos-por-turma/:turmaId", verificarAutenticacao, (req, res) => {
   const turmaId = Number(req.params.turmaId);
-  console.log("Buscando alunos para turma:", turmaId);
   db.query(
-    "SELECT id, nome FROM aluno WHERE turma_id = ?",
+    "SELECT id, nome, usuario, senha, data_cadastro FROM aluno WHERE turma_id = ?",
     [turmaId],
     (err, alunos) => {
       if (err) {
@@ -1342,22 +1370,26 @@ app.get("/alunos-por-turma/:turmaId", verificarAutenticacao, (req, res) => {
           .status(500)
           .json({ error: "Erro ao buscar alunos", details: err });
       }
-
       res.json(alunos);
     }
   );
 });
 
-// Rota POST para cadastrar o simulado via multi-step
+// Rota POST para cadastrar o simulado via multi‑etapas
 app.post("/cadastrar-simulado-steps", verificarAutenticacao, (req, res) => {
-  const { turma, alunos, questoes } = req.body;
+  // Espera receber:
+  //   curso: id do curso selecionado (na Etapa 1)
+  //   turma: id da turma selecionada (na Etapa 2)
+  //   alunos: array (ou único valor) de ids dos alunos (na Etapa 3)
+  //   questoes: array (ou único valor) de ids das questões (na Etapa 4)
+  const { curso, turma, alunos, questoes } = req.body;
   const professorId = req.session.user.id;
 
   if (!turma) {
     return res.status(400).json({ error: "Turma é obrigatória." });
   }
 
-  // Insere o simulado (supondo que a tabela "simulado" possui a coluna "turma_id")
+  // Insere o simulado na tabela (supondo que a tabela "simulado" possua as colunas turma_id, professor_id, data_criacao)
   db.query(
     "INSERT INTO simulado (turma_id, professor_id, data_criacao) VALUES (?, ?, NOW())",
     [turma, professorId],
@@ -1366,16 +1398,13 @@ app.post("/cadastrar-simulado-steps", verificarAutenticacao, (req, res) => {
         console.error("Erro ao cadastrar simulado:", err);
         return res.status(500).json({ error: "Erro ao cadastrar simulado." });
       }
-
       const simuladoId = result.insertId;
 
       // Assegura que os campos alunos e questoes sejam arrays
       const alunosArray = Array.isArray(alunos) ? alunos : [alunos];
       const questoesArray = Array.isArray(questoes) ? questoes : [questoes];
 
-      // Contabiliza o total de inserções a realizar
       let totalQueries = alunosArray.length + questoesArray.length;
-      // Se não houver associações, responde imediatamente
       if (totalQueries === 0) {
         return res.json({
           success: true,
@@ -1385,7 +1414,6 @@ app.post("/cadastrar-simulado-steps", verificarAutenticacao, (req, res) => {
       let completed = 0;
       let responded = false;
 
-      // Função auxiliar para verificar se todas as inserções foram concluídas
       function checkFinished() {
         completed++;
         if (completed === totalQueries && !responded) {
@@ -1397,7 +1425,7 @@ app.post("/cadastrar-simulado-steps", verificarAutenticacao, (req, res) => {
         }
       }
 
-      // Insere cada associação de aluno
+      // Associa alunos ao simulado
       alunosArray.forEach((alunoId) => {
         db.query(
           "INSERT INTO simulado_aluno (simulado_id, aluno_id) VALUES (?, ?)",
@@ -1415,7 +1443,7 @@ app.post("/cadastrar-simulado-steps", verificarAutenticacao, (req, res) => {
         );
       });
 
-      // Insere cada associação de questão
+      // Associa questões ao simulado
       questoesArray.forEach((questaoId) => {
         db.query(
           "INSERT INTO simulado_questao (simulado_id, questao_id) VALUES (?, ?)",
