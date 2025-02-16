@@ -1118,63 +1118,50 @@ app.post("/editar-questao", verificarAutenticacao, (requisicao, resposta) => {
 // ==========================
 // Inicio da rota de Simulados
 // ==========================
+// Rota GET para listar simulados (removendo o join com "curso" que usava s.curso_id)
 app.get("/simulados", verificarAutenticacao, (req, res) => {
   const page = parseInt(req.query.page) || 1;
   const limit = 10;
   const offset = (page - 1) * limit;
   const searchTerm = req.query.search ? req.query.search.trim() : "";
 
-  // Monta a cláusula WHERE para filtrar os simulados do professor logado
+  // Constrói a cláusula WHERE para filtrar os simulados do professor autenticado
   let baseWhere = "WHERE s.professor_id = ?";
   let queryParams = [req.session.user.id];
-
-  // Se houver termo de pesquisa, adiciona condições para título, nome do curso ou descrição
   if (searchTerm) {
-    baseWhere +=
-      " AND (s.titulo LIKE ? OR c.nome LIKE ? OR s.descricao LIKE ?)";
+    baseWhere += " AND (s.titulo LIKE ? OR s.descricao LIKE ?)";
     const wildcard = "%" + searchTerm + "%";
-    queryParams.push(wildcard, wildcard, wildcard);
+    queryParams.push(wildcard, wildcard);
   }
 
-  // Query para contar o total de simulados
-  const countQuery = `
-    SELECT COUNT(*) AS count
-    FROM simulado s
-    INNER JOIN curso c ON s.curso_id = c.id
-    ${baseWhere}
-  `;
+  // Query para contar simulados
+  const countQuery = `SELECT COUNT(*) AS count FROM simulado s ${baseWhere}`;
   db.query(countQuery, queryParams, (err, countResult) => {
     if (err) {
       console.error("Erro ao contar simulados:", err);
       return res.render("simulados", {
         message: "Erro ao buscar simulados",
         simulados: [],
-        currentPage: page,
+        currentPage: 1,
         totalPages: 0,
         totalRows: 0,
-        cursos: [],
-        search: searchTerm,
+        search: "",
       });
     }
     const totalRows = countResult[0].count;
     const totalPages = Math.ceil(totalRows / limit);
 
-    // Query para buscar os dados dos simulados com LIMIT e OFFSET
+    // Query para buscar os dados dos simulados, agora usando "s.turma_id" para associar à tabela "turma"
     const dataQuery = `
-    SELECT s.id, s.titulo, s.descricao,
-         DATE_FORMAT(s.data_simulacao, '%Y-%m-%d') AS data_simulacao,
-         TIME_FORMAT(s.tempo_simulado, '%H:%i') AS tempo_simulado,
-         c.nome AS curso,
-         t.nome AS turma
-    FROM simulado s
-    INNER JOIN curso c ON s.curso_id = c.id
-    LEFT JOIN simulado_turma st ON st.simulado_id = s.id AND st.agendada = 1
-    LEFT JOIN turma t ON st.turma_id = t.id
-    ${baseWhere}
-    ORDER BY s.data_simulacao DESC
-    LIMIT ? OFFSET ?
+      SELECT s.id, s.titulo, s.descricao,
+             DATE_FORMAT(s.data_criacao, '%Y-%m-%d') AS data_criacao,
+             t.nome AS turma
+      FROM simulado s
+      LEFT JOIN turma t ON s.turma_id = t.id
+      ${baseWhere}
+      ORDER BY s.data_criacao DESC
+      LIMIT ? OFFSET ?
     `;
-
     let dataParams = queryParams.slice();
     dataParams.push(limit, offset);
 
@@ -1184,33 +1171,20 @@ app.get("/simulados", verificarAutenticacao, (req, res) => {
         return res.render("simulados", {
           message: "Erro ao buscar simulados",
           simulados: [],
-          currentPage: page,
+          currentPage: 1,
           totalPages: 0,
           totalRows: 0,
-          cursos: [],
           search: searchTerm,
         });
       }
-      // Busca os cursos vinculados ao professor (para preencher selects no formulário, por exemplo)
-      db.query(
-        "SELECT c.id, c.nome FROM curso c INNER JOIN professor_curso pc ON c.id = pc.curso_id WHERE pc.professor_id = ?",
-        [req.session.user.id],
-        (err, cursos) => {
-          if (err) {
-            console.error("Erro ao buscar cursos:", err);
-            cursos = [];
-          }
-          res.render("simulados", {
-            message: "",
-            simulados,
-            currentPage: page,
-            totalPages,
-            totalRows,
-            cursos,
-            search: searchTerm,
-          });
-        }
-      );
+      res.render("simulados", {
+        message: "",
+        simulados,
+        currentPage: page,
+        totalPages,
+        totalRows,
+        search: searchTerm,
+      });
     });
   });
 });
@@ -1325,10 +1299,6 @@ app.post("/editar-simulado", async (req, res) => {
   }
 });
 
-/**
- * Rota: DELETE /deletar-simulado/:id
- * Remove um simulado do banco de dados.
- */
 app.delete("/deletar-simulado/:id", async (req, res) => {
   try {
     const { id } = req.params;
@@ -1343,9 +1313,110 @@ app.delete("/deletar-simulado/:id", async (req, res) => {
 app.use(express.json()); // Para processar JSON no req.body
 app.use(express.urlencoded({ extended: true })); // Para processar formulários
 
-// 📌 Rota para exibir o formulário de cadastro de simulado (GET)
+// Rota GET para renderizar a página de cadastro multi-step de simulado
+app.get("/cadastrar-simulado-steps", verificarAutenticacao, (req, res) => {
+  const professorId = req.session.user.id;
+  db.query(
+    "SELECT id, nome FROM turma WHERE professor_id = ?",
+    [professorId],
+    (err, results) => {
+      if (err) {
+        console.error("Erro ao carregar a página de cadastro multi-step:", err);
+        return res.status(500).send("Erro interno do servidor");
+      }
+      res.render("cadastrar-simulado-steps", { turmas: results });
+    }
+  );
+});
 
-// Rota para cadastrar um novo simulado via multi‑step (POST)
+// Rota POST para cadastrar o simulado via multi-step
+app.post("/cadastrar-simulado-steps", verificarAutenticacao, (req, res) => {
+  const { turma, alunos, questoes } = req.body;
+  const professorId = req.session.user.id;
+
+  if (!turma) {
+    return res.status(400).json({ error: "Turma é obrigatória." });
+  }
+
+  // Insere o simulado (supondo que a tabela "simulado" possui a coluna "turma_id")
+  db.query(
+    "INSERT INTO simulado (turma_id, professor_id, data_criacao) VALUES (?, ?, NOW())",
+    [turma, professorId],
+    (err, result) => {
+      if (err) {
+        console.error("Erro ao cadastrar simulado:", err);
+        return res.status(500).json({ error: "Erro ao cadastrar simulado." });
+      }
+
+      const simuladoId = result.insertId;
+
+      // Assegura que os campos alunos e questoes sejam arrays
+      const alunosArray = Array.isArray(alunos) ? alunos : [alunos];
+      const questoesArray = Array.isArray(questoes) ? questoes : [questoes];
+
+      // Contabiliza o total de inserções a realizar
+      let totalQueries = alunosArray.length + questoesArray.length;
+      // Se não houver associações, responde imediatamente
+      if (totalQueries === 0) {
+        return res.json({
+          success: true,
+          message: "Simulado cadastrado com sucesso!",
+        });
+      }
+      let completed = 0;
+      let responded = false;
+
+      // Função auxiliar para verificar se todas as inserções foram concluídas
+      function checkFinished() {
+        completed++;
+        if (completed === totalQueries && !responded) {
+          responded = true;
+          res.json({
+            success: true,
+            message: "Simulado cadastrado com sucesso!",
+          });
+        }
+      }
+
+      // Insere cada associação de aluno
+      alunosArray.forEach((alunoId) => {
+        db.query(
+          "INSERT INTO simulado_aluno (simulado_id, aluno_id) VALUES (?, ?)",
+          [simuladoId, alunoId],
+          (err, result) => {
+            if (err && !responded) {
+              responded = true;
+              console.error("Erro ao associar alunos:", err);
+              return res
+                .status(500)
+                .json({ error: "Erro ao associar alunos." });
+            }
+            checkFinished();
+          }
+        );
+      });
+
+      // Insere cada associação de questão
+      questoesArray.forEach((questaoId) => {
+        db.query(
+          "INSERT INTO simulado_questao (simulado_id, questao_id) VALUES (?, ?)",
+          [simuladoId, questaoId],
+          (err, result) => {
+            if (err && !responded) {
+              responded = true;
+              console.error("Erro ao associar questões:", err);
+              return res
+                .status(500)
+                .json({ error: "Erro ao associar questões." });
+            }
+            checkFinished();
+          }
+        );
+      });
+    }
+  );
+});
+
 // Inicializa o servidor
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));

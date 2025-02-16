@@ -206,16 +206,6 @@
                   class="block text-sm font-medium text-default-900"
                   >Curso</label
                 >
-                <select
-                  name="curso_id"
-                  id="edit_simulado_curso_id"
-                  class="block w-full rounded py-2.5 px-4 border"
-                  required
-                >
-                  <% cursos.forEach(curso => { %>
-                  <option value="<%= curso.id %>"><%= curso.nome %></option>
-                  <% }); %>
-                </select>
               </div>
               <!-- Título -->
               <div class="space-y-1 md:col-span-2">
