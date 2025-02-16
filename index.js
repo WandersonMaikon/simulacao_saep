@@ -269,11 +269,9 @@ app.post("/cadastrar-turma", verificarAutenticacao, (req, res) => {
 
       if (results.length > 0) {
         // Se já existir uma turma com o mesmo nome para o mesmo curso, retorna erro
-        return res
-          .status(400)
-          .json({
-            error: "Já existe uma turma com essa descrição neste curso.",
-          });
+        return res.status(400).json({
+          error: "Já existe uma turma com essa descrição neste curso.",
+        });
       }
 
       // Insere a nova turma, se não houver duplicata
@@ -608,8 +606,8 @@ app.get("/aluno", verificarAutenticacao, (req, res) => {
 // Rota para exibir o formulário de cadastro de aluno para uma turma específica
 app.get("/aluno/cadastrar", verificarAutenticacao, (req, res) => {
   const turmaId = req.query.turma_id;
-  const page = parseInt(req.query.page) || 1; // Obtém o número da página ou usa 1 por padrão
-  const limit = 10; // Defina o limite de alunos por página
+  const page = parseInt(req.query.page) || 1; // Usa página 1 por padrão
+  const limit = 10; // Limite de alunos por página
   const offset = (page - 1) * limit;
 
   if (!turmaId) {
@@ -625,10 +623,9 @@ app.get("/aluno/cadastrar", verificarAutenticacao, (req, res) => {
         console.error("Erro ao verificar a turma:", err);
         return res.redirect("/aluno");
       }
-
       const turma = results[0];
 
-      // Busca todas as turmas do professor logado
+      // Busca todas as turmas do professor para, por exemplo, preencher um select no modal
       db.query(
         "SELECT id, nome FROM turma WHERE professor_id = ?",
         [req.session.user.id],
@@ -646,7 +643,7 @@ app.get("/aluno/cadastrar", verificarAutenticacao, (req, res) => {
             });
           }
 
-          // Busca os alunos da turma, paginando os resultados
+          // Busca os alunos cadastrados nesta turma, com paginação
           db.query(
             "SELECT id, nome, usuario, senha, DATE_FORMAT(data_cadastro, '%D/%M/%Y %H:%i:%s') AS data_cadastro FROM aluno WHERE turma_id = ? LIMIT ? OFFSET ?",
             [turmaId, limit, offset],
@@ -664,7 +661,7 @@ app.get("/aluno/cadastrar", verificarAutenticacao, (req, res) => {
                 });
               }
 
-              // Contagem total de alunos para paginação
+              // Conta o total de alunos para paginação
               db.query(
                 "SELECT COUNT(*) AS total FROM aluno WHERE turma_id = ?",
                 [turmaId],
@@ -681,10 +678,8 @@ app.get("/aluno/cadastrar", verificarAutenticacao, (req, res) => {
                       message: "Erro ao contar alunos",
                     });
                   }
-
                   const totalRows = countResult[0].total;
                   const totalPages = Math.ceil(totalRows / limit);
-
                   res.render("alunoCadastrar", {
                     turma,
                     turmas,
@@ -707,26 +702,23 @@ app.get("/aluno/cadastrar", verificarAutenticacao, (req, res) => {
 // Rota para processar o cadastro de aluno
 app.post("/aluno/cadastrar", verificarAutenticacao, (req, res) => {
   const { nome, usuario, senha, turma_id } = req.body;
+
+  // Verifica se todos os campos obrigatórios foram informados
   if (!nome || !usuario || !senha || !turma_id) {
-    return res.render("alunoCadastrar", {
-      turma: { id: turma_id },
-      message: "Todos os campos são obrigatórios.",
-    });
+    return res.status(400).json({ error: "Todos os campos são obrigatórios." });
   }
-  // Insere o aluno (observe que a senha não está criptografada; você pode adicionar criptografia se desejar)
+
+  // Insere o aluno na tabela
   db.query(
     "INSERT INTO aluno (nome, usuario, senha, turma_id) VALUES (?, ?, ?, ?)",
     [nome, usuario, senha, turma_id],
     (err, result) => {
       if (err) {
         console.error("Erro ao cadastrar aluno:", err);
-        return res.render("alunoCadastrar", {
-          turma: { id: turma_id },
-          message: "Erro ao cadastrar aluno.",
-        });
+        return res.status(500).json({ error: "Erro ao cadastrar aluno." });
       }
-      // Após o cadastro, redireciona para uma página de listagem de alunos daquela turma
-      res.redirect("/aluno/listar?turma_id=" + turma_id);
+      // Retorna uma resposta JSON de sucesso
+      return res.json({ message: "Aluno cadastrado com sucesso!" });
     }
   );
 });
@@ -739,13 +731,14 @@ app.get("/aluno/listar", verificarAutenticacao, (req, res) => {
   }
   // Verifica se a turma pertence ao professor logado
   db.query(
-    "SELECT * FROM aluno WHERE id = ? AND professor_id = ?",
+    "SELECT * FROM turma WHERE id = ? AND professor_id = ?",
     [turmaId, req.session.user.id],
     (err, results) => {
       if (err || results.length === 0) {
-        return res.redirect("/aluno");
+        return res.redirect("/alunoCadastrar");
       }
       const turma = results[0];
+      // Busca os alunos da turma
       db.query(
         "SELECT * FROM aluno WHERE turma_id = ?",
         [turmaId],
@@ -761,6 +754,61 @@ app.get("/aluno/listar", verificarAutenticacao, (req, res) => {
           res.render("alunoListar", { turma, alunos, message: "" });
         }
       );
+    }
+  );
+});
+
+app.post("/editar-aluno", verificarAutenticacao, (req, res) => {
+  const { id, turma_id, nome, usuario, senha } = req.body;
+
+  // Verifica se todos os campos obrigatórios foram informados
+  if (!id || !turma_id || !nome || !usuario || !senha) {
+    return res.status(400).json({ error: "Todos os campos são obrigatórios." });
+  }
+
+  // Atualiza o aluno somente se a turma à qual ele pertence for do professor autenticado
+  db.query(
+    `UPDATE aluno 
+     INNER JOIN turma ON aluno.turma_id = turma.id 
+     SET aluno.nome = ?, aluno.usuario = ?, aluno.senha = ?
+     WHERE aluno.id = ? AND aluno.turma_id = ? AND turma.professor_id = ?`,
+    [nome, usuario, senha, id, turma_id, req.session.user.id],
+    (err, result) => {
+      if (err) {
+        console.error("Erro ao editar aluno:", err);
+        return res.status(500).json({ error: "Erro ao editar aluno." });
+      }
+      if (result.affectedRows === 0) {
+        return res
+          .status(403)
+          .json({ error: "Acesso negado ou aluno inexistente." });
+      }
+      return res.json({ message: "Aluno editado com sucesso!" });
+    }
+  );
+});
+
+app.get("/deletar-aluno/:id", verificarAutenticacao, (req, res) => {
+  const alunoId = req.params.id;
+
+  // Deleta o aluno somente se ele pertencer a uma turma cujo professor é o usuário autenticado
+  db.query(
+    `DELETE aluno
+     FROM aluno
+     INNER JOIN turma ON aluno.turma_id = turma.id
+     WHERE aluno.id = ? AND turma.professor_id = ?`,
+    [alunoId, req.session.user.id],
+    (err, result) => {
+      if (err) {
+        console.error("Erro ao excluir aluno:", err);
+        return res.status(500).json({ error: "Erro ao excluir aluno." });
+      }
+      if (result.affectedRows === 0) {
+        return res
+          .status(403)
+          .json({ error: "Acesso negado ou aluno inexistente." });
+      }
+      return res.json({ message: "Aluno excluído com sucesso!" });
     }
   );
 });
