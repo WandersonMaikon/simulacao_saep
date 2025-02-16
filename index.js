@@ -1340,6 +1340,12 @@ app.delete("/deletar-simulado/:id", async (req, res) => {
   }
 });
 
+app.use(express.json()); // Para processar JSON no req.body
+app.use(express.urlencoded({ extended: true })); // Para processar formulários
+
+// 📌 Rota para exibir o formulário de cadastro de simulado (GET)
+
+// Rota para cadastrar um novo simulado via multi‑step (POST)
 // Inicializa o servidor
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
