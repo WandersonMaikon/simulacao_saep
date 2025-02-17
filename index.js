@@ -606,15 +606,17 @@ app.get("/aluno", verificarAutenticacao, (req, res) => {
 // Rota para exibir o formulário de cadastro de aluno para uma turma específica
 app.get("/aluno/cadastrar", verificarAutenticacao, (req, res) => {
   const turmaId = req.query.turma_id;
-  const page = parseInt(req.query.page) || 1; // Usa página 1 por padrão
-  const limit = 10; // Limite de alunos por página
+  const page = parseInt(req.query.page) || 1;
+  const limit = 10;
   const offset = (page - 1) * limit;
 
   if (!turmaId) {
     return res.redirect("/aluno");
   }
 
-  // Verifica se a turma pertence ao professor logado
+  console.log("Turma ID recebido:", turmaId);
+  console.log("Página recebida:", page);
+
   db.query(
     "SELECT * FROM turma WHERE id = ? AND professor_id = ?",
     [turmaId, req.session.user.id],
@@ -625,7 +627,6 @@ app.get("/aluno/cadastrar", verificarAutenticacao, (req, res) => {
       }
       const turma = results[0];
 
-      // Busca todas as turmas do professor para, por exemplo, preencher um select no modal
       db.query(
         "SELECT id, nome FROM turma WHERE professor_id = ?",
         [req.session.user.id],
@@ -643,9 +644,8 @@ app.get("/aluno/cadastrar", verificarAutenticacao, (req, res) => {
             });
           }
 
-          // Busca os alunos cadastrados nesta turma, com paginação
           db.query(
-            "SELECT id, nome, usuario, senha, DATE_FORMAT(data_cadastro, '%D/%M/%Y %H:%i:%s') AS data_cadastro FROM aluno WHERE turma_id = ? LIMIT ? OFFSET ?",
+            "SELECT id, nome, usuario, senha, DATE_FORMAT(data_cadastro, '%d/%m/%Y %H:%i:%s') AS data_cadastro FROM aluno WHERE turma_id = ? LIMIT ? OFFSET ?",
             [turmaId, limit, offset],
             (err, alunos) => {
               if (err) {
@@ -661,7 +661,6 @@ app.get("/aluno/cadastrar", verificarAutenticacao, (req, res) => {
                 });
               }
 
-              // Conta o total de alunos para paginação
               db.query(
                 "SELECT COUNT(*) AS total FROM aluno WHERE turma_id = ?",
                 [turmaId],
@@ -729,19 +728,22 @@ app.get("/aluno/listar", verificarAutenticacao, (req, res) => {
   if (!turmaId) {
     return res.redirect("/aluno");
   }
-  // Verifica se a turma pertence ao professor logado
+  // Verifica se a turma pertence ao professor logado (corrigido para usar a tabela turma)
   db.query(
     "SELECT * FROM turma WHERE id = ? AND professor_id = ?",
     [turmaId, req.session.user.id],
     (err, results) => {
       if (err || results.length === 0) {
-        return res.redirect("/alunoCadastrar");
+        return res.redirect("/aluno");
       }
       const turma = results[0];
-      // Busca os alunos da turma
+      const page = parseInt(req.query.page) || 1;
+      const limit = 10;
+      const offset = (page - 1) * limit;
+      // Busca os alunos da turma com paginação
       db.query(
-        "SELECT * FROM aluno WHERE turma_id = ?",
-        [turmaId],
+        "SELECT id, nome, usuario, senha, DATE_FORMAT(data_cadastro, '%d/%m/%Y %H:%i:%s') AS data_cadastro FROM aluno WHERE turma_id = ? LIMIT ? OFFSET ?",
+        [turmaId, limit, offset],
         (err, alunos) => {
           if (err) {
             console.error("Erro ao buscar alunos:", err);
@@ -751,7 +753,30 @@ app.get("/aluno/listar", verificarAutenticacao, (req, res) => {
               message: "Erro ao buscar alunos.",
             });
           }
-          res.render("alunoListar", { turma, alunos, message: "" });
+          // Conta o total de alunos para paginação
+          db.query(
+            "SELECT COUNT(*) AS total FROM aluno WHERE turma_id = ?",
+            [turmaId],
+            (err, countResult) => {
+              if (err) {
+                console.error("Erro ao contar alunos:", err);
+                return res.render("alunoListar", {
+                  turma,
+                  alunos: [],
+                  message: "Erro ao contar alunos.",
+                });
+              }
+              const totalRows = countResult[0].total;
+              res.render("alunoListar", {
+                turma,
+                alunos,
+                totalRows,
+                currentPage: page,
+                totalPages: Math.ceil(totalRows / limit),
+                message: "",
+              });
+            }
+          );
         }
       );
     }
