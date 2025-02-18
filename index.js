@@ -569,6 +569,7 @@ app.get("/aluno", verificarAutenticacao, (req, res) => {
           message: "Erro ao buscar turmas",
           turmas: [],
           totalRows: 0, // Garante que a variável é enviada
+          activeMenu: "aluno",
         });
       }
 
@@ -613,9 +614,6 @@ app.get("/aluno/cadastrar", verificarAutenticacao, (req, res) => {
   if (!turmaId) {
     return res.redirect("/aluno");
   }
-
-  console.log("Turma ID recebido:", turmaId);
-  console.log("Página recebida:", page);
 
   db.query(
     "SELECT * FROM turma WHERE id = ? AND professor_id = ?",
