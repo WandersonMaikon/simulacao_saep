@@ -1413,12 +1413,7 @@ app.get("/cadastrar-simulado-steps", verificarAutenticacao, (req, res) => {
 app.get("/turmas-por-curso/:cursoId", verificarAutenticacao, (req, res) => {
   const cursoId = Number(req.params.cursoId);
   const professorId = req.session.user.id;
-  console.log(
-    "Buscando turmas para cursoId:",
-    cursoId,
-    "professorId:",
-    professorId
-  );
+
   db.query(
     "SELECT id, nome FROM turma WHERE curso_id = ? AND professor_id = ?",
     [cursoId, professorId],
@@ -1429,7 +1424,7 @@ app.get("/turmas-por-curso/:cursoId", verificarAutenticacao, (req, res) => {
           .status(500)
           .json({ error: "Erro ao buscar turmas por curso", details: err });
       }
-      console.log("Turmas retornadas:", results);
+
       res.json(results);
     }
   );
