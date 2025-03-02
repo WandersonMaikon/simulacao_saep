@@ -46,7 +46,7 @@
       .btn-group-steps {
         margin-top: 1.5rem;
       }
-      /* Barra de progresso – 5 etapas: 20% cada */
+      /* Barra de progresso – 5 etapas: 20% cada (agora 5 etapas = 20% cada) */
       #progressbar {
         height: 20px;
         margin-bottom: 1.5rem;
@@ -79,6 +79,20 @@
       .btn-custom:hover {
         background-color: #4338ca;
         border-color: #4338ca;
+      }
+      /* Estilo para o resumo final na Etapa 5 */
+      .review-container {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+      .review-item {
+        background: #f3f4f6;
+        padding: 1rem;
+        border-radius: 0.5rem;
+      }
+      .review-item h5 {
+        margin-bottom: 0.5rem;
       }
     </style>
   </head>
@@ -237,11 +251,9 @@
                 <button type="button" class="btn-custom next">Próximo</button>
               </div>
             </fieldset>
-            <!-- Etapa 4: Selecionar Questões e Revisão -->
+            <!-- Etapa 4: Selecionar Questões -->
             <fieldset>
-              <div class="step-header">
-                Etapa 4: Selecione as Questões e Revisão
-              </div>
+              <div class="step-header">Etapa 4: Selecione as Questões</div>
               <!-- Área de busca para questões -->
               <div
                 class="flex flex-wrap items-center justify-between py-4 px-5"
@@ -320,15 +332,33 @@
                 id="questao-pagination"
                 class="flex items-center justify-center gap-2 my-4"
               ></div>
-              <!-- Seção de Revisão -->
-              <div class="mb-3">
-                <h5>Revisão</h5>
-                <p id="resumo-curso"><strong>Curso:</strong></p>
-                <p id="resumo-turma"><strong>Turma:</strong></p>
-                <p id="resumo-alunos"><strong>Alunos:</strong></p>
-                <p id="resumo-questoes"><strong>Questões:</strong></p>
+              <div class="flex items-center gap-2 justify-end">
+                <button type="button" class="btn-custom prev">Voltar</button>
+                <button type="button" class="btn-custom next">Próximo</button>
               </div>
-              <div class="flex items-center gap-2 justify-between">
+            </fieldset>
+            <!-- Etapa 5: Revisão Final -->
+            <fieldset>
+              <div class="step-header">Etapa 5: Revisão Final</div>
+              <div class="review-container">
+                <div class="review-item">
+                  <h5>Curso Selecionado</h5>
+                  <p id="resumo-final-curso"></p>
+                </div>
+                <div class="review-item">
+                  <h5>Turma Selecionada</h5>
+                  <p id="resumo-final-turma"></p>
+                </div>
+                <div class="review-item">
+                  <h5>Alunos Selecionados</h5>
+                  <p id="resumo-final-alunos"></p>
+                </div>
+                <div class="review-item">
+                  <h5>Questões Selecionadas</h5>
+                  <p id="resumo-final-questoes"></p>
+                </div>
+              </div>
+              <div class="flex items-center gap-2 justify-between mt-4">
                 <button type="button" class="btn-custom prev">Voltar</button>
                 <button
                   type="submit"
@@ -348,22 +378,21 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
       $(document).ready(function () {
-        // Variáveis globais para o formulário de alunos
+        // Variáveis globais para o formulário
         var currentIndex = 0;
         var fieldsets = $("form fieldset");
-        var totalSteps = fieldsets.length; // 4 etapas
-        var allAlunos = []; // Armazena os alunos via AJAX
+        var totalSteps = fieldsets.length; // Agora 5 etapas
+        var allAlunos = []; // Alunos via AJAX
         var currentPageAlunos = 1;
         var itemsPerPage = 10;
         var selectedAlunosIds = [];
 
-        // Variáveis globais para as questões
         var allQuestoes = [];
         var currentPageQuestoes = 1;
         var itemsPerPageQuestoes = 10;
         var selectedQuestoesIds = [];
 
-        // Função para renderizar os alunos na página atual
+        // Função para renderizar alunos
         function renderAlunosPage() {
           var tbody = $("#aluno-table-body");
           tbody.empty();
@@ -407,7 +436,6 @@
           renderPagination();
         }
 
-        // Função para renderizar a paginação dos alunos
         function renderPagination() {
           var totalPages = Math.ceil(allAlunos.length / itemsPerPage);
           var paginationHtml = "";
@@ -421,7 +449,6 @@
           $("#aluno-pagination").html(paginationHtml);
         }
 
-        // Eventos para paginação e seleção dos alunos
         $(document).on("click", ".pagination-link", function (e) {
           e.preventDefault();
           currentPageAlunos = parseInt($(this).data("page"));
@@ -450,7 +477,7 @@
           }
         });
 
-        // Evento para quando a turma for alterada: busca os alunos via AJAX
+        // Busca alunos via AJAX ao alterar a turma
         $("#select-turma").on("change", function () {
           var turmaId = $(this).val();
           console.log("Turma selecionada:", turmaId);
@@ -488,7 +515,7 @@
           });
         });
 
-        // Função para renderizar as questões na página atual
+        // Função para renderizar questões
         function renderQuestoesPage() {
           var tbody = $("#questao-table-body");
           tbody.empty();
@@ -524,7 +551,6 @@
           renderQuestoesPagination();
         }
 
-        // Função para renderizar a paginação das questões
         function renderQuestoesPagination() {
           var totalPages = Math.ceil(allQuestoes.length / itemsPerPageQuestoes);
           var paginationHtml = "";
@@ -538,7 +564,6 @@
           $("#questao-pagination").html(paginationHtml);
         }
 
-        // Eventos para paginação e seleção das questões
         $(document).on("click", ".pagination-link-questao", function (e) {
           e.preventDefault();
           currentPageQuestoes = parseInt($(this).data("page"));
@@ -567,7 +592,7 @@
           }
         });
 
-        // Função para buscar as questões via AJAX
+        // Busca questões via AJAX
         function fetchQuestoes() {
           var cursoId = $("#select-curso").val();
           if (!cursoId) {
@@ -594,7 +619,6 @@
           });
         }
 
-        // Evento de busca para questões
         $("#questao-search").on("keyup", function () {
           var query = $(this).val().toLowerCase();
           $("#questao-table-body tr").each(function () {
@@ -629,7 +653,38 @@
           });
         });
 
-        // Função para exibir a etapa atual e atualizar a barra de progresso
+        // Função para atualizar o resumo final na Etapa 5
+        function updateReviewFinal() {
+          var cursoText = $("#select-curso option:selected").text();
+          var turmaText = $("#select-turma option:selected").text();
+          var selectedAlunos = allAlunos.filter(function (aluno) {
+            return selectedAlunosIds.indexOf(aluno.id.toString()) !== -1;
+          });
+          var alunosText = selectedAlunos
+            .map(function (aluno) {
+              return aluno.nome;
+            })
+            .join(", ");
+          var selectedQuestoes = allQuestoes.filter(function (questao) {
+            return selectedQuestoesIds.indexOf(questao.id.toString()) !== -1;
+          });
+          var questoesText = selectedQuestoes
+            .map(function (questao) {
+              return questao.titulo;
+            })
+            .join(", ");
+
+          $("#resumo-final-curso").text(cursoText);
+          $("#resumo-final-turma").text(turmaText);
+          $("#resumo-final-alunos").text(
+            alunosText || "Nenhum aluno selecionado"
+          );
+          $("#resumo-final-questoes").text(
+            questoesText || "Nenhuma questão selecionada"
+          );
+        }
+
+        // Função para exibir a etapa atual
         function showStep(index) {
           fieldsets.removeClass("active");
           fieldsets.eq(index).addClass("active");
@@ -639,41 +694,13 @@
             .attr("aria-valuenow", percent)
             .text(Math.round(percent) + "%");
 
+          // Se estiver na Etapa 5 (última etapa), atualiza o resumo final
           if (index === totalSteps - 1) {
-            var cursoText = $("#select-curso option:selected").text();
-            var turmaText = $("#select-turma option:selected").text();
-            var selectedAlunos = allAlunos.filter(function (aluno) {
-              return selectedAlunosIds.indexOf(aluno.id.toString()) !== -1;
-            });
-            var alunosText = selectedAlunos
-              .map(function (aluno) {
-                return aluno.nome;
-              })
-              .join(", ");
-            var questoesText = allQuestoes
-              .filter(function (questao) {
-                return (
-                  selectedQuestoesIds.indexOf(questao.id.toString()) !== -1
-                );
-              })
-              .map(function (questao) {
-                return questao.titulo;
-              })
-              .join(", ");
-
-            $("#resumo-curso").html("<strong>Curso:</strong> " + cursoText);
-            $("#resumo-turma").html("<strong>Turma:</strong> " + turmaText);
-            $("#resumo-alunos").html(
-              "<strong>Alunos:</strong> " +
-                (alunosText || "Nenhum aluno selecionado")
-            );
-            $("#resumo-questoes").html(
-              "<strong>Questões:</strong> " +
-                (questoesText || "Nenhuma questão selecionada")
-            );
-
-            // Sempre tenta carregar as questões ao entrar na última etapa
-            fetchQuestoes();
+            // Tenta carregar as questões se ainda não estiverem
+            if (allQuestoes.length === 0) {
+              fetchQuestoes();
+            }
+            updateReviewFinal();
           }
         }
 
