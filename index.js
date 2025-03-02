@@ -1447,6 +1447,20 @@ app.get("/alunos-por-turma/:turmaId", verificarAutenticacao, (req, res) => {
     }
   );
 });
+app.get("/questoes-por-curso/:cursoId", verificarAutenticacao, (req, res) => {
+  const cursoId = Number(req.params.cursoId);
+  db.query(
+    "SELECT q.id, q.titulo, q.enunciado, c.nome AS curso, m.nome AS materia FROM questao q JOIN curso c ON q.curso_id = c.id JOIN materia m ON q.materia_id = m.id WHERE q.curso_id = ?",
+    [cursoId],
+    (err, results) => {
+      if (err) {
+        console.error("Erro ao buscar questões:", err);
+        return res.status(500).json({ error: "Erro ao buscar questões" });
+      }
+      res.json(results);
+    }
+  );
+});
 
 // Rota POST para cadastrar o simulado via multi‑etapas
 app.post("/cadastrar-simulado-steps", verificarAutenticacao, (req, res) => {

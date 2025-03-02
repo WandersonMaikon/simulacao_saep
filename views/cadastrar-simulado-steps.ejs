@@ -50,14 +50,14 @@
       #progressbar {
         height: 20px;
         margin-bottom: 1.5rem;
-        background-color: #e5e7eb; /* Cor de fundo padrão */
+        background-color: #e5e7eb;
         border-radius: 9999px;
         overflow: hidden;
       }
       #progress-step {
         height: 100%;
-        background-color: #4f46e5; /* Cor primária */
-        width: 20%; /* 1 de 5 etapas = 20% */
+        background-color: #4f46e5;
+        width: 20%;
         transition: width 0.4s ease;
         display: flex;
         align-items: center;
@@ -217,7 +217,6 @@
                       id="aluno-table-body"
                       class="divide-y divide-dashed divide-default-200"
                     >
-                      <!-- Aqui os alunos serão renderizados via AJAX -->
                       <tr>
                         <td colspan="6" class="text-center py-6">
                           Nenhum aluno cadastrado nesta turma.
@@ -227,7 +226,7 @@
                   </table>
                 </div>
               </div>
-              <!-- Container para os controles de paginação -->
+              <!-- Controles de paginação para alunos -->
               <div
                 id="aluno-pagination"
                 class="flex items-center justify-center gap-2 my-4"
@@ -238,27 +237,90 @@
                 <button type="button" class="btn-custom next">Próximo</button>
               </div>
             </fieldset>
-
             <!-- Etapa 4: Selecionar Questões e Revisão -->
             <fieldset>
               <div class="step-header">
                 Etapa 4: Selecione as Questões e Revisão
               </div>
-              <div class="mb-3">
-                <label for="select-questoes" class="form-label">Questões</label>
-                <select
-                  name="questoes[]"
-                  id="select-questoes"
-                  class="form-select"
-                  multiple
-                  required
-                >
-                  <option value="1">Questão 1</option>
-                  <option value="2">Questão 2</option>
-                  <option value="3">Questão 3</option>
-                  <option value="4">Questão 4</option>
-                </select>
+              <!-- Área de busca para questões -->
+              <div
+                class="flex flex-wrap items-center justify-between py-4 px-5"
+              >
+                <div class="relative flex">
+                  <input
+                    type="search"
+                    id="questao-search"
+                    class="ps-12 pe-4 py-2.5 block lg:w-64 border-none bg-default-100 text-default-700 rounded-lg text-sm focus:border-primary focus:ring-primary"
+                    placeholder="Procurar questão..."
+                  />
+                  <span class="absolute start-4 top-2.5">
+                    <i
+                      class="ph-duotone ph-magnifying-glass text-lg text-default-600"
+                    ></i>
+                  </span>
+                </div>
               </div>
+              <!-- Tabela de questões -->
+              <div id="questao-table-container" class="mb-3">
+                <div
+                  class="border-t border-dashed border-default-200 relative overflow-x-auto"
+                >
+                  <table class="min-w-full">
+                    <thead class="border-b border-dashed border-default-200">
+                      <tr>
+                        <td class="px-6 py-3 w-10 font-medium text-default-900">
+                          <input
+                            type="checkbox"
+                            class="form-checkbox"
+                            id="select-all-questoes"
+                          />
+                        </td>
+                        <th
+                          class="px-6 py-3 text-start text-sm capitalize font-semibold text-default-900"
+                        >
+                          Id
+                        </th>
+                        <th
+                          class="px-6 py-3 text-start text-sm capitalize font-semibold text-default-900"
+                        >
+                          Título
+                        </th>
+                        <th
+                          class="px-6 py-3 text-start text-sm capitalize font-semibold text-default-900"
+                        >
+                          Curso
+                        </th>
+                        <th
+                          class="px-6 py-3 text-start text-sm capitalize font-semibold text-default-900"
+                        >
+                          Matéria
+                        </th>
+                        <th
+                          class="px-6 py-3 text-start text-sm capitalize font-semibold text-default-900"
+                        >
+                          Enunciado
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody
+                      id="questao-table-body"
+                      class="divide-y divide-dashed divide-default-200"
+                    >
+                      <tr>
+                        <td colspan="6" class="text-center py-6">
+                          Nenhuma questão encontrada.
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <!-- Controles de paginação para questões -->
+              <div
+                id="questao-pagination"
+                class="flex items-center justify-center gap-2 my-4"
+              ></div>
+              <!-- Seção de Revisão -->
               <div class="mb-3">
                 <h5>Revisão</h5>
                 <p id="resumo-curso"><strong>Curso:</strong></p>
@@ -289,13 +351,19 @@
         // Variáveis globais para o formulário de alunos
         var currentIndex = 0;
         var fieldsets = $("form fieldset");
-        var totalSteps = fieldsets.length; // Neste caso, 4 etapas
-        var allAlunos = []; // Armazena todos os alunos retornados via AJAX
+        var totalSteps = fieldsets.length; // 4 etapas
+        var allAlunos = []; // Armazena os alunos via AJAX
         var currentPageAlunos = 1;
         var itemsPerPage = 10;
-        var selectedAlunosIds = []; // Armazena os IDs dos alunos selecionados globalmente
+        var selectedAlunosIds = [];
 
-        // Função para renderizar os alunos da página corrente
+        // Variáveis globais para as questões
+        var allQuestoes = [];
+        var currentPageQuestoes = 1;
+        var itemsPerPageQuestoes = 10;
+        var selectedQuestoesIds = [];
+
+        // Função para renderizar os alunos na página atual
         function renderAlunosPage() {
           var tbody = $("#aluno-table-body");
           tbody.empty();
@@ -304,7 +372,6 @@
           var alunosPage = allAlunos.slice(startIndex, endIndex);
           if (alunosPage.length > 0) {
             alunosPage.forEach(function (aluno) {
-              // Tratamento da data
               var dataStr = aluno.data_cadastro || "";
               var dataObj = new Date(dataStr);
               if (isNaN(dataObj.getTime())) {
@@ -313,7 +380,6 @@
               var dataFormatada = dataObj.getTime()
                 ? dataObj.toLocaleString("pt-BR")
                 : "";
-              // Verifica se este aluno está selecionado
               var checked =
                 selectedAlunosIds.indexOf(aluno.id.toString()) !== -1
                   ? "checked"
@@ -341,7 +407,7 @@
           renderPagination();
         }
 
-        // Função para renderizar os controles de paginação
+        // Função para renderizar a paginação dos alunos
         function renderPagination() {
           var totalPages = Math.ceil(allAlunos.length / itemsPerPage);
           var paginationHtml = "";
@@ -355,29 +421,21 @@
           $("#aluno-pagination").html(paginationHtml);
         }
 
-        // Evento para os links de paginação
+        // Eventos para paginação e seleção dos alunos
         $(document).on("click", ".pagination-link", function (e) {
           e.preventDefault();
           currentPageAlunos = parseInt($(this).data("page"));
           renderAlunosPage();
         });
-
-        // Evento para "Select All" checkbox
         $("#select-all-alunos").on("change", function () {
           var checked = $(this).prop("checked");
-          // Se marcado, inclua todos os IDs de allAlunos; caso contrário, remova-os
-          if (checked) {
-            selectedAlunosIds = allAlunos.map(function (aluno) {
-              return aluno.id.toString();
-            });
-          } else {
-            selectedAlunosIds = [];
-          }
-          // Atualiza os checkboxes na página corrente
+          selectedAlunosIds = checked
+            ? allAlunos.map(function (aluno) {
+                return aluno.id.toString();
+              })
+            : [];
           $("#aluno-table-body .aluno-checkbox").prop("checked", checked);
         });
-
-        // Evento delegado para checkboxes individuais de aluno
         $(document).on("change", ".aluno-checkbox", function () {
           var alunoId = $(this).val();
           if ($(this).prop("checked")) {
@@ -388,9 +446,187 @@
             selectedAlunosIds = selectedAlunosIds.filter(function (id) {
               return id !== alunoId;
             });
-            // Se algum for desmarcado, desmarque o "Select All"
             $("#select-all-alunos").prop("checked", false);
           }
+        });
+
+        // Evento para quando a turma for alterada: busca os alunos via AJAX
+        $("#select-turma").on("change", function () {
+          var turmaId = $(this).val();
+          console.log("Turma selecionada:", turmaId);
+          if (!turmaId) {
+            $("#aluno-table-body").html(`
+              <tr>
+                <td colspan="4" class="text-center py-6">Nenhum aluno cadastrado nesta turma.</td>
+              </tr>
+            `);
+            $("#aluno-pagination").empty();
+            return;
+          }
+          $.ajax({
+            url: "/alunos-por-turma/" + turmaId,
+            type: "GET",
+            dataType: "json",
+            success: function (data) {
+              console.log("Resposta de alunos:", data);
+              allAlunos = data;
+              currentPageAlunos = 1;
+              renderAlunosPage();
+              if ($("#select-all-alunos").prop("checked")) {
+                selectedAlunosIds = allAlunos.map(function (aluno) {
+                  return aluno.id.toString();
+                });
+              }
+            },
+            error: function () {
+              Swal.fire({
+                icon: "error",
+                title: "Erro",
+                text: "Erro ao buscar alunos.",
+              });
+            },
+          });
+        });
+
+        // Função para renderizar as questões na página atual
+        function renderQuestoesPage() {
+          var tbody = $("#questao-table-body");
+          tbody.empty();
+          var startIndex = (currentPageQuestoes - 1) * itemsPerPageQuestoes;
+          var endIndex = startIndex + itemsPerPageQuestoes;
+          var questoesPage = allQuestoes.slice(startIndex, endIndex);
+          if (questoesPage.length > 0) {
+            questoesPage.forEach(function (questao) {
+              var checked =
+                selectedQuestoesIds.indexOf(questao.id.toString()) !== -1
+                  ? "checked"
+                  : "";
+              tbody.append(`
+                <tr>
+                  <td class="px-6 py-3">
+                    <input type="checkbox" name="questoes[]" value="${questao.id}" class="form-checkbox questao-checkbox" ${checked}>
+                  </td>
+                  <td class="px-6 py-3">${questao.id}</td>
+                  <td class="px-6 py-3">${questao.titulo}</td>
+                  <td class="px-6 py-3">${questao.curso}</td>
+                  <td class="px-6 py-3">${questao.materia}</td>
+                  <td class="px-6 py-3">${questao.enunciado}</td>
+                </tr>
+              `);
+            });
+          } else {
+            tbody.append(`
+              <tr>
+                <td colspan="6" class="text-center py-6">Nenhuma questão encontrada.</td>
+              </tr>
+            `);
+          }
+          renderQuestoesPagination();
+        }
+
+        // Função para renderizar a paginação das questões
+        function renderQuestoesPagination() {
+          var totalPages = Math.ceil(allQuestoes.length / itemsPerPageQuestoes);
+          var paginationHtml = "";
+          for (var i = 1; i <= totalPages; i++) {
+            if (i === currentPageQuestoes) {
+              paginationHtml += `<span class="px-3 py-1 bg-primary text-white rounded">${i}</span>`;
+            } else {
+              paginationHtml += `<a href="#" class="pagination-link-questao px-3 py-1 bg-default-100 text-default-700 rounded" data-page="${i}">${i}</a>`;
+            }
+          }
+          $("#questao-pagination").html(paginationHtml);
+        }
+
+        // Eventos para paginação e seleção das questões
+        $(document).on("click", ".pagination-link-questao", function (e) {
+          e.preventDefault();
+          currentPageQuestoes = parseInt($(this).data("page"));
+          renderQuestoesPage();
+        });
+        $("#select-all-questoes").on("change", function () {
+          var checked = $(this).prop("checked");
+          selectedQuestoesIds = checked
+            ? allQuestoes.map(function (questao) {
+                return questao.id.toString();
+              })
+            : [];
+          $("#questao-table-body .questao-checkbox").prop("checked", checked);
+        });
+        $(document).on("change", ".questao-checkbox", function () {
+          var questaoId = $(this).val();
+          if ($(this).prop("checked")) {
+            if (selectedQuestoesIds.indexOf(questaoId) === -1) {
+              selectedQuestoesIds.push(questaoId);
+            }
+          } else {
+            selectedQuestoesIds = selectedQuestoesIds.filter(function (id) {
+              return id !== questaoId;
+            });
+            $("#select-all-questoes").prop("checked", false);
+          }
+        });
+
+        // Função para buscar as questões via AJAX
+        function fetchQuestoes() {
+          var cursoId = $("#select-curso").val();
+          if (!cursoId) {
+            console.error("Curso não selecionado.");
+            return;
+          }
+          $.ajax({
+            url: "/questoes-por-curso/" + cursoId,
+            type: "GET",
+            dataType: "json",
+            success: function (data) {
+              console.log("Resposta de questões:", data);
+              allQuestoes = data;
+              currentPageQuestoes = 1;
+              renderQuestoesPage();
+            },
+            error: function () {
+              Swal.fire({
+                icon: "error",
+                title: "Erro",
+                text: "Erro ao buscar questões.",
+              });
+            },
+          });
+        }
+
+        // Evento de busca para questões
+        $("#questao-search").on("keyup", function () {
+          var query = $(this).val().toLowerCase();
+          $("#questao-table-body tr").each(function () {
+            var idText = $(this).find("td:nth-child(2)").text().toLowerCase();
+            var tituloText = $(this)
+              .find("td:nth-child(3)")
+              .text()
+              .toLowerCase();
+            var cursoText = $(this)
+              .find("td:nth-child(4)")
+              .text()
+              .toLowerCase();
+            var materiaText = $(this)
+              .find("td:nth-child(5)")
+              .text()
+              .toLowerCase();
+            var enunciadoText = $(this)
+              .find("td:nth-child(6)")
+              .text()
+              .toLowerCase();
+            if (
+              idText.indexOf(query) > -1 ||
+              tituloText.indexOf(query) > -1 ||
+              cursoText.indexOf(query) > -1 ||
+              materiaText.indexOf(query) > -1 ||
+              enunciadoText.indexOf(query) > -1
+            ) {
+              $(this).show();
+            } else {
+              $(this).hide();
+            }
+          });
         });
 
         // Função para exibir a etapa atual e atualizar a barra de progresso
@@ -403,11 +639,9 @@
             .attr("aria-valuenow", percent)
             .text(Math.round(percent) + "%");
 
-          // Se for a última etapa, atualiza o resumo usando os alunos selecionados globalmente
           if (index === totalSteps - 1) {
             var cursoText = $("#select-curso option:selected").text();
             var turmaText = $("#select-turma option:selected").text();
-            // Filtra os alunos selecionados a partir do array allAlunos
             var selectedAlunos = allAlunos.filter(function (aluno) {
               return selectedAlunosIds.indexOf(aluno.id.toString()) !== -1;
             });
@@ -416,12 +650,17 @@
                 return aluno.nome;
               })
               .join(", ");
-            var questoes = $("#select-questoes option:selected")
-              .map(function () {
-                return $(this).text();
+            var questoesText = allQuestoes
+              .filter(function (questao) {
+                return (
+                  selectedQuestoesIds.indexOf(questao.id.toString()) !== -1
+                );
               })
-              .get()
+              .map(function (questao) {
+                return questao.titulo;
+              })
               .join(", ");
+
             $("#resumo-curso").html("<strong>Curso:</strong> " + cursoText);
             $("#resumo-turma").html("<strong>Turma:</strong> " + turmaText);
             $("#resumo-alunos").html(
@@ -429,8 +668,12 @@
                 (alunosText || "Nenhum aluno selecionado")
             );
             $("#resumo-questoes").html(
-              "<strong>Questões:</strong> " + questoes
+              "<strong>Questões:</strong> " +
+                (questoesText || "Nenhuma questão selecionada")
             );
+
+            // Sempre tenta carregar as questões ao entrar na última etapa
+            fetchQuestoes();
           }
         }
 
@@ -453,7 +696,6 @@
           });
           if (!valid) return false;
 
-          // Se estamos na Etapa 1 (Curso), atualiza o select de turma via AJAX
           if (currentIndex === 0) {
             var cursoId = $("#select-curso").val();
             if (!cursoId) {
@@ -486,7 +728,6 @@
                     '<option value="">Nenhuma turma disponível</option>'
                   );
                 }
-                // Se já existir uma instância do Choices, destrua-a e remova os dados
                 var instance = $turmaSelect.data("choices");
                 if (instance) {
                   instance.destroy();
@@ -520,48 +761,8 @@
         // Inicializa a primeira etapa
         showStep(currentIndex);
 
-        // Inicializa Choices.js para os selects de curso e questões (o select-turma será inicializado via AJAX)
+        // Inicializa Choices.js para o select de curso
         new Choices("#select-curso", { removeItemButton: false });
-        new Choices("#select-questoes", { removeItemButton: true });
-
-        // Quando a turma for alterada (na Etapa 2), buscar os alunos desta turma com paginação
-        $("#select-turma").on("change", function () {
-          var turmaId = $(this).val();
-          console.log("Turma selecionada:", turmaId);
-          if (!turmaId) {
-            $("#aluno-table-body").html(`
-              <tr>
-                <td colspan="4" class="text-center py-6">Nenhum aluno cadastrado nesta turma.</td>
-              </tr>
-            `);
-            $("#aluno-pagination").empty();
-            return;
-          }
-          $.ajax({
-            url: "/alunos-por-turma/" + turmaId,
-            type: "GET",
-            dataType: "json",
-            success: function (data) {
-              console.log("Resposta de alunos:", data);
-              allAlunos = data; // Armazena os alunos retornados
-              currentPageAlunos = 1; // Reseta para a primeira página
-              renderAlunosPage();
-              // Se "Select All" estiver marcado globalmente, atualize o estado dos checkboxes
-              if ($("#select-all-alunos").prop("checked")) {
-                selectedAlunosIds = allAlunos.map(function (aluno) {
-                  return aluno.id.toString();
-                });
-              }
-            },
-            error: function () {
-              Swal.fire({
-                icon: "error",
-                title: "Erro",
-                text: "Erro ao buscar alunos.",
-              });
-            },
-          });
-        });
       });
 
       $(document).ready(function () {
@@ -570,6 +771,28 @@
           var linkPath = $(this).attr("href");
           if (currentPath === linkPath || currentPath.indexOf(linkPath) === 0) {
             $(this).addClass("active");
+          }
+        });
+      });
+
+      // Filtro para alunos
+      $("#aluno-search").on("keyup", function () {
+        var query = $(this).val().toLowerCase();
+        $("#aluno-table-body tr").each(function () {
+          var idText = $(this).find("td:nth-child(2)").text().toLowerCase();
+          var nomeText = $(this).find("td:nth-child(3)").text().toLowerCase();
+          var usuarioText = $(this)
+            .find("td:nth-child(4)")
+            .text()
+            .toLowerCase();
+          if (
+            idText.indexOf(query) > -1 ||
+            nomeText.indexOf(query) > -1 ||
+            usuarioText.indexOf(query) > -1
+          ) {
+            $(this).show();
+          } else {
+            $(this).hide();
           }
         });
       });
