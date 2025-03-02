@@ -161,10 +161,9 @@
               </div>
             </fieldset>
             <!-- Etapa 3: Selecionar Alunos -->
-
             <fieldset>
               <div class="step-header">Etapa 3: Selecione os Alunos</div>
-
+              <!-- Área de busca (opcional) -->
               <div
                 class="flex flex-wrap items-center justify-between py-4 px-5"
               >
@@ -173,6 +172,7 @@
                     type="search"
                     class="ps-12 pe-4 py-2.5 block lg:w-64 border-none bg-default-100 text-default-700 rounded-lg text-sm focus:border-primary focus:ring-primary"
                     placeholder="Procurar aluno..."
+                    id="aluno-search"
                   />
                   <span class="absolute start-4 top-2.5">
                     <i
@@ -181,6 +181,7 @@
                   </span>
                 </div>
               </div>
+              <!-- Tabela de alunos -->
               <div id="aluno-table-container" class="mb-3">
                 <div
                   class="border-t border-dashed border-default-200 relative overflow-x-auto"
@@ -189,7 +190,11 @@
                     <thead class="border-b border-dashed border-default-200">
                       <tr>
                         <td class="px-6 py-3 w-10 font-medium text-default-900">
-                          <input type="checkbox" class="form-checkbox" />
+                          <input
+                            type="checkbox"
+                            class="form-checkbox"
+                            id="select-all-alunos"
+                          />
                         </td>
                         <th
                           class="px-6 py-3 text-start text-sm capitalize font-semibold text-default-900 min-w-32"
@@ -212,6 +217,7 @@
                       id="aluno-table-body"
                       class="divide-y divide-dashed divide-default-200"
                     >
+                      <!-- Aqui os alunos serão renderizados via AJAX -->
                       <tr>
                         <td colspan="6" class="text-center py-6">
                           Nenhum aluno cadastrado nesta turma.
@@ -221,11 +227,18 @@
                   </table>
                 </div>
               </div>
+              <!-- Container para os controles de paginação -->
+              <div
+                id="aluno-pagination"
+                class="flex items-center justify-center gap-2 my-4"
+              ></div>
+              <!-- Botões de navegação entre etapas -->
               <div class="flex items-center gap-2 justify-between">
                 <button type="button" class="btn-custom prev">Voltar</button>
                 <button type="button" class="btn-custom next">Próximo</button>
               </div>
             </fieldset>
+
             <!-- Etapa 4: Selecionar Questões e Revisão -->
             <fieldset>
               <div class="step-header">
@@ -273,10 +286,114 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
       $(document).ready(function () {
+        // Variáveis globais para o formulário de alunos
         var currentIndex = 0;
         var fieldsets = $("form fieldset");
         var totalSteps = fieldsets.length; // Neste caso, 4 etapas
+        var allAlunos = []; // Armazena todos os alunos retornados via AJAX
+        var currentPageAlunos = 1;
+        var itemsPerPage = 10;
+        var selectedAlunosIds = []; // Armazena os IDs dos alunos selecionados globalmente
 
+        // Função para renderizar os alunos da página corrente
+        function renderAlunosPage() {
+          var tbody = $("#aluno-table-body");
+          tbody.empty();
+          var startIndex = (currentPageAlunos - 1) * itemsPerPage;
+          var endIndex = startIndex + itemsPerPage;
+          var alunosPage = allAlunos.slice(startIndex, endIndex);
+          if (alunosPage.length > 0) {
+            alunosPage.forEach(function (aluno) {
+              // Tratamento da data
+              var dataStr = aluno.data_cadastro || "";
+              var dataObj = new Date(dataStr);
+              if (isNaN(dataObj.getTime())) {
+                dataObj = new Date(dataStr.replace(/-/g, "/"));
+              }
+              var dataFormatada = dataObj.getTime()
+                ? dataObj.toLocaleString("pt-BR")
+                : "";
+              // Verifica se este aluno está selecionado
+              var checked =
+                selectedAlunosIds.indexOf(aluno.id.toString()) !== -1
+                  ? "checked"
+                  : "";
+              tbody.append(`
+                <tr>
+                  <td class="px-6 py-3">
+                    <input type="checkbox" name="alunos[]" value="${
+                      aluno.id
+                    }" class="form-checkbox aluno-checkbox" ${checked}>
+                  </td>
+                  <td class="px-6 py-3">${aluno.id}</td>
+                  <td class="px-6 py-3">${aluno.nome}</td>
+                  <td class="px-6 py-3">${aluno.usuario || ""}</td>
+                </tr>
+              `);
+            });
+          } else {
+            tbody.append(`
+              <tr>
+                <td colspan="7" class="text-center py-6">Nenhum aluno cadastrado nesta turma.</td>
+              </tr>
+            `);
+          }
+          renderPagination();
+        }
+
+        // Função para renderizar os controles de paginação
+        function renderPagination() {
+          var totalPages = Math.ceil(allAlunos.length / itemsPerPage);
+          var paginationHtml = "";
+          for (var i = 1; i <= totalPages; i++) {
+            if (i === currentPageAlunos) {
+              paginationHtml += `<span class="px-3 py-1 bg-primary text-white rounded">${i}</span>`;
+            } else {
+              paginationHtml += `<a href="#" class="pagination-link px-3 py-1 bg-default-100 text-default-700 rounded" data-page="${i}">${i}</a>`;
+            }
+          }
+          $("#aluno-pagination").html(paginationHtml);
+        }
+
+        // Evento para os links de paginação
+        $(document).on("click", ".pagination-link", function (e) {
+          e.preventDefault();
+          currentPageAlunos = parseInt($(this).data("page"));
+          renderAlunosPage();
+        });
+
+        // Evento para "Select All" checkbox
+        $("#select-all-alunos").on("change", function () {
+          var checked = $(this).prop("checked");
+          // Se marcado, inclua todos os IDs de allAlunos; caso contrário, remova-os
+          if (checked) {
+            selectedAlunosIds = allAlunos.map(function (aluno) {
+              return aluno.id.toString();
+            });
+          } else {
+            selectedAlunosIds = [];
+          }
+          // Atualiza os checkboxes na página corrente
+          $("#aluno-table-body .aluno-checkbox").prop("checked", checked);
+        });
+
+        // Evento delegado para checkboxes individuais de aluno
+        $(document).on("change", ".aluno-checkbox", function () {
+          var alunoId = $(this).val();
+          if ($(this).prop("checked")) {
+            if (selectedAlunosIds.indexOf(alunoId) === -1) {
+              selectedAlunosIds.push(alunoId);
+            }
+          } else {
+            selectedAlunosIds = selectedAlunosIds.filter(function (id) {
+              return id !== alunoId;
+            });
+            // Se algum for desmarcado, desmarque o "Select All"
+            $("#select-all-alunos").prop("checked", false);
+          }
+        });
+
+        // Função para exibir a etapa atual e atualizar a barra de progresso
         function showStep(index) {
           fieldsets.removeClass("active");
           fieldsets.eq(index).addClass("active");
@@ -286,15 +403,18 @@
             .attr("aria-valuenow", percent)
             .text(Math.round(percent) + "%");
 
-          // Se for a última etapa, atualiza o resumo
+          // Se for a última etapa, atualiza o resumo usando os alunos selecionados globalmente
           if (index === totalSteps - 1) {
             var cursoText = $("#select-curso option:selected").text();
             var turmaText = $("#select-turma option:selected").text();
-            var alunos = $("#aluno-table-body input[type='checkbox']:checked")
-              .map(function () {
-                return $(this).closest("tr").find("td:nth-child(2)").text();
+            // Filtra os alunos selecionados a partir do array allAlunos
+            var selectedAlunos = allAlunos.filter(function (aluno) {
+              return selectedAlunosIds.indexOf(aluno.id.toString()) !== -1;
+            });
+            var alunosText = selectedAlunos
+              .map(function (aluno) {
+                return aluno.nome;
               })
-              .get()
               .join(", ");
             var questoes = $("#select-questoes option:selected")
               .map(function () {
@@ -306,7 +426,7 @@
             $("#resumo-turma").html("<strong>Turma:</strong> " + turmaText);
             $("#resumo-alunos").html(
               "<strong>Alunos:</strong> " +
-                (alunos || "Nenhum aluno selecionado")
+                (alunosText || "Nenhum aluno selecionado")
             );
             $("#resumo-questoes").html(
               "<strong>Questões:</strong> " + questoes
@@ -404,16 +524,17 @@
         new Choices("#select-curso", { removeItemButton: false });
         new Choices("#select-questoes", { removeItemButton: true });
 
-        // Quando a turma for alterada (na Etapa 2), buscar os alunos desta turma
+        // Quando a turma for alterada (na Etapa 2), buscar os alunos desta turma com paginação
         $("#select-turma").on("change", function () {
           var turmaId = $(this).val();
           console.log("Turma selecionada:", turmaId);
           if (!turmaId) {
             $("#aluno-table-body").html(`
               <tr>
-                <td colspan="6" class="text-center py-6">Nenhum aluno cadastrado nesta turma.</td>
+                <td colspan="4" class="text-center py-6">Nenhum aluno cadastrado nesta turma.</td>
               </tr>
             `);
+            $("#aluno-pagination").empty();
             return;
           }
           $.ajax({
@@ -422,40 +543,14 @@
             dataType: "json",
             success: function (data) {
               console.log("Resposta de alunos:", data);
-              var tbody = $("#aluno-table-body");
-              tbody.empty();
-              if (data.length > 0) {
-                data.forEach(function (aluno) {
-                  var dataStr = aluno.data_cadastro || "";
-                  var dataObj = new Date(dataStr);
-                  if (isNaN(dataObj.getTime())) {
-                    dataObj = new Date(dataStr.replace(/-/g, "/"));
-                  }
-                  var dataFormatada = dataObj.getTime()
-                    ? dataObj.toLocaleString("pt-BR")
-                    : "";
-                  tbody.append(`
-                    <tr>
-                      <td class="px-6 py-3">
-                        <input type="checkbox" name="alunos[]" value="${
-                          aluno.id
-                        }" class="form-checkbox">
-                      </td>
-                      <td class="px-6 py-3">${aluno.id}</td>
-                      <td class="px-6 py-3">${aluno.nome}</td>
-                      <td class="px-6 py-3">${aluno.usuario || ""}</td>
-                      
-                      
-                      
-                    </tr>
-                  `);
+              allAlunos = data; // Armazena os alunos retornados
+              currentPageAlunos = 1; // Reseta para a primeira página
+              renderAlunosPage();
+              // Se "Select All" estiver marcado globalmente, atualize o estado dos checkboxes
+              if ($("#select-all-alunos").prop("checked")) {
+                selectedAlunosIds = allAlunos.map(function (aluno) {
+                  return aluno.id.toString();
                 });
-              } else {
-                tbody.append(`
-                  <tr>
-                    <td colspan="7" class="text-center py-6">Nenhum aluno cadastrado nesta turma.</td>
-                  </tr>
-                `);
               }
             },
             error: function () {
@@ -468,6 +563,7 @@
           });
         });
       });
+
       $(document).ready(function () {
         var currentPath = window.location.pathname;
         $(".admin-menu a").each(function () {
