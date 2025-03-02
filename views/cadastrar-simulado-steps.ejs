@@ -206,21 +206,6 @@
                         >
                           Usuário
                         </th>
-                        <th
-                          class="px-6 py-3 text-start text-sm capitalize font-semibold text-default-900 min-w-32"
-                        >
-                          Senha
-                        </th>
-                        <th
-                          class="px-6 py-3 text-start text-sm capitalize font-semibold text-default-900 min-w-32"
-                        >
-                          Data cadastro
-                        </th>
-                        <th
-                          class="px-3 py-3 text-center text-sm capitalize font-semibold text-default-900 min-w-32"
-                        >
-                          Ação
-                        </th>
                       </tr>
                     </thead>
                     <tbody
@@ -459,22 +444,9 @@
                       <td class="px-6 py-3">${aluno.id}</td>
                       <td class="px-6 py-3">${aluno.nome}</td>
                       <td class="px-6 py-3">${aluno.usuario || ""}</td>
-                      <td class="px-6 py-3">${aluno.senha || ""}</td>
-                      <td class="px-6 py-3">${dataFormatada}</td>
-                      <td class="px-3 py-3 text-center">
-                        <div class="flex items-center justify-center gap-2">
-                          <a href="#" class="edit-aluno inline-flex items-center justify-center h-8 w-8 rounded-md bg-default-800 hover:bg-default-950 border-default-800 hover:border-default-950 text-default-50 transition-all duration-200" data-id="${
-                            aluno.id
-                          }" data-nome="${aluno.nome}" data-usuario="${aluno.usuario}">
-                            <i class="ph-duotone ph-pencil-simple-line text-base"></i>
-                          </a>
-                          <button class="delete-aluno inline-flex items-center justify-center h-8 w-8 rounded-md bg-default-800 hover:bg-default-950 border-default-800 hover:border-default-950 text-default-50 transition-all duration-200" data-id="${
-                            aluno.id
-                          }">
-                            <i class="ph-duotone ph-trash text-base"></i>
-                          </button>
-                        </div>
-                      </td>
+                      
+                      
+                      
                     </tr>
                   `);
                 });
