@@ -840,7 +840,7 @@ app.get("/deletar-aluno/:id", verificarAutenticacao, (req, res) => {
 // Rotas de Questões
 // ==========================
 
-app.get("/questoes", verificarAutenticacao, (req, res) => {
+app.get("/questao", verificarAutenticacao, (req, res) => {
   const page = parseInt(req.query.page) || 1;
   const limit = 10;
   const offset = (page - 1) * limit;
