@@ -391,7 +391,7 @@
         var itemsPerPageQuestoes = 10;
         var selectedQuestoesIds = [];
 
-        // Função para renderizar alunos
+        // Função para renderizar a página de alunos
         function renderAlunosPage() {
           var tbody = $("#aluno-table-body");
           tbody.empty();
@@ -435,6 +435,7 @@
           renderPagination();
         }
 
+        // Função para renderizar a paginação dos alunos
         function renderPagination() {
           var totalPages = Math.ceil(allAlunos.length / itemsPerPage);
           var paginationHtml = "";
@@ -741,7 +742,6 @@
               type: "GET",
               dataType: "json",
               success: function (data) {
-                console.log("Resposta de turmas:", data);
                 var $turmaSelect = $("#select-turma");
                 $turmaSelect.empty();
                 if (data.length > 0) {
@@ -788,11 +788,99 @@
           showStep(currentIndex);
         });
 
-        // Inicializa a primeira etapa
+        // Inicializa a primeira etapa e Choices.js para o select de curso
         showStep(currentIndex);
-
-        // Inicializa Choices.js para o select de curso
         new Choices("#select-curso", { removeItemButton: false });
+
+        // Intercepta o submit do formulário para solicitar campos adicionais via modal
+        $("#form-cadastrar-simulado").submit(function (e) {
+          e.preventDefault(); // Impede o envio normal
+          Swal.fire({
+            title: "Informe os dados adicionais",
+            html:
+              '<textarea id="swal-input-descricao" class="swal2-textarea" placeholder="Descrição"></textarea>' +
+              '<input id="swal-input-tempo" class="swal2-input" placeholder="Tempo de prova (HH:MM:SS)">',
+            focusConfirm: false,
+            preConfirm: () => {
+              const descricao = $("#swal-input-descricao").val().trim();
+              const tempo = $("#swal-input-tempo").val().trim();
+              if (!descricao || !tempo) {
+                Swal.showValidationMessage("Preencha ambos os campos");
+              }
+              // Se o input de tempo não contiver um traço, assume que é apenas o horário e concatena com a data atual
+              let tempoFormatted = tempo;
+              if (tempo.indexOf("-") === -1) {
+                let today = new Date();
+                let yyyy = today.getFullYear();
+                let mm = String(today.getMonth() + 1).padStart(2, "0");
+                let dd = String(today.getDate()).padStart(2, "0");
+                tempoFormatted = `${yyyy}-${mm}-${dd} ${tempo}`;
+              }
+              return { descricao: descricao, tempo: tempoFormatted };
+            },
+            showCancelButton: true,
+            confirmButtonText: "Confirmar",
+            cancelButtonText: "Cancelar",
+            confirmButtonColor: "#10b981",
+            cancelButtonColor: "#d33",
+          }).then((result) => {
+            if (result.isConfirmed) {
+              // Remove inputs hidden anteriores (se houver)
+              $("#form-cadastrar-simulado input[name='tempo_prova']").remove();
+              $("#form-cadastrar-simulado input[name='descricao']").remove();
+              // Adiciona os novos campos ao formulário
+              $("<input>")
+                .attr({
+                  type: "hidden",
+                  name: "tempo_prova",
+                  value: result.value.tempo,
+                })
+                .appendTo("#form-cadastrar-simulado");
+              $("<input>")
+                .attr({
+                  type: "hidden",
+                  name: "descricao",
+                  value: result.value.descricao,
+                })
+                .appendTo("#form-cadastrar-simulado");
+
+              // Envia o formulário via AJAX
+              var formData = $(this).serialize();
+              $.ajax({
+                url: $(this).attr("action"),
+                method: $(this).attr("method"),
+                data: formData,
+                dataType: "json",
+                success: function (response) {
+                  if (response.success) {
+                    Swal.fire({
+                      icon: "success",
+                      title: "Simulado cadastrado com sucesso!",
+                      text: response.message,
+                      timer: 2000,
+                      showConfirmButton: false,
+                    }).then(function () {
+                      window.location.href = "/simulados";
+                    });
+                  } else {
+                    Swal.fire({
+                      icon: "error",
+                      title: "Erro",
+                      text: response.error,
+                    });
+                  }
+                },
+                error: function () {
+                  Swal.fire({
+                    icon: "error",
+                    title: "Erro",
+                    text: "Ocorreu um erro ao cadastrar o simulado.",
+                  });
+                },
+              });
+            }
+          });
+        });
       });
 
       $(document).ready(function () {
@@ -805,7 +893,6 @@
         });
       });
 
-      // Filtro para alunos
       $("#aluno-search").on("keyup", function () {
         var query = $(this).val().toLowerCase();
         $("#aluno-table-body tr").each(function () {
@@ -824,47 +911,6 @@
           } else {
             $(this).hide();
           }
-        });
-      });
-
-      // Intercepta o submit do formulário para enviar via AJAX e exibir mensagem com SweetAlert2
-      $(document).ready(function () {
-        $("#form-cadastrar-simulado").submit(function (e) {
-          e.preventDefault(); // Impede o envio normal do formulário
-          var formData = $(this).serialize();
-          $.ajax({
-            url: $(this).attr("action"),
-            method: $(this).attr("method"),
-            data: formData,
-            dataType: "json",
-            success: function (response) {
-              if (response.success) {
-                Swal.fire({
-                  icon: "success",
-                  title: "Simulado cadastrado com sucesso!",
-                  text: response.message,
-                  timer: 10000,
-                  showConfirmButton: false,
-                }).then(function () {
-                  // Redireciona para a página de simulados
-                  window.location.href = "/simulados";
-                });
-              } else {
-                Swal.fire({
-                  icon: "error",
-                  title: "Erro",
-                  text: response.error,
-                });
-              }
-            },
-            error: function () {
-              Swal.fire({
-                icon: "error",
-                title: "Erro",
-                text: "Ocorreu um erro ao cadastrar o simulado.",
-              });
-            },
-          });
         });
       });
     </script>

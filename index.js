@@ -1494,30 +1494,34 @@ app.get("/questoes-por-curso/:cursoId", verificarAutenticacao, (req, res) => {
   );
 });
 
-// Rota POST para cadastrar o simulado via multi‑etapas
 app.post("/cadastrar-simulado-steps", verificarAutenticacao, (req, res) => {
   // Espera receber:
-  //   curso: id do curso selecionado (na Etapa 1)
-  //   turma: id da turma selecionada (na Etapa 2)
-  //   alunos: array (ou único valor) de ids dos alunos (na Etapa 3)
-  //   questoes: array (ou único valor) de ids das questões (na Etapa 4)
-  const { curso, turma, alunos, questoes } = req.body;
+  //   curso: id do curso selecionado (Etapa 1)
+  //   turma: id da turma selecionada (Etapa 2)
+  //   alunos: array (ou único valor) de ids dos alunos (Etapa 3)
+  //   questoes: array (ou único valor) de ids das questões (Etapa 4)
+  //   tempo_prova: quantidade de horas (informado via modal)
+  //   descricao: descrição (informado via modal)
+  const { curso, turma, alunos, questoes, tempo_prova, descricao } = req.body;
   const professorId = req.session.user.id;
 
-  // Verifica se os campos obrigatórios estão preenchidos
+  // Verifica os campos obrigatórios
   if (!curso || !turma) {
     return res.status(400).json({ error: "Curso e Turma são obrigatórios." });
   }
+  if (!tempo_prova || !descricao) {
+    return res
+      .status(400)
+      .json({ error: "Tempo de prova e Descrição são obrigatórios." });
+  }
 
-  // Como a tabela simulado exige as colunas curso_id, turma_id, professor_id, titulo e descricao,
-  // e supondo que o formulário não forneça título/descrição, usamos valores padrão.
-  const titulo = "Simulado - Turma " + turma; // Pode ser adaptado conforme a lógica desejada
-  const descricao = "Simulado cadastrado via multi‑etapas.";
+  // Define título (pode ser customizado)
+  const titulo = "Simulado - Turma " + turma;
 
-  // Insere o simulado na tabela
+  // Insere o simulado (agora incluindo o tempo_prova)
   db.query(
-    "INSERT INTO simulado (curso_id, turma_id, professor_id, titulo, descricao, data_criacao) VALUES (?, ?, ?, ?, ?, NOW())",
-    [curso, turma, professorId, titulo, descricao],
+    "INSERT INTO simulado (curso_id, turma_id, professor_id, titulo, descricao, tempo_prova, data_criacao) VALUES (?, ?, ?, ?, ?, ?, NOW())",
+    [curso, turma, professorId, titulo, descricao, tempo_prova],
     (err, result) => {
       if (err) {
         console.error("Erro ao cadastrar simulado:", err);
