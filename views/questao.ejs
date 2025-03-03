@@ -2,18 +2,25 @@
 <html lang="pt-BR">
   <head>
     <meta charset="utf-8" />
-    <title>Lista de Questões</title>
+    <title>Adicionar Simulado - Simulação Saep</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="shortcut icon" href="assets/favicon-8fd74f43.ico" />
-    <script type="module" crossorigin src="assets/theme-e4584917.js"></script>
-    <link rel="stylesheet" href="assets/theme-d32f8eb8.css" />
+    <link rel="shortcut icon" href="../assets/favicon-8fd74f43.ico" />
+    <link rel="stylesheet" href="../assets/theme-d32f8eb8.css" />
+    <!-- Choices.js CSS -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css"
+    />
+    <!-- SweetAlert2 CSS -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css"
+    />
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script type="module" crossorigin src="assets/theme-e4584917.js"></script>
-    <link rel="stylesheet" href="assets/theme-d32f8eb8.css" />
+    <!-- SweetAlert2 JS -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
-    <!-- SweetAlert2 -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Choices.js JS -->
+    <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
     <style>
       .modal-overlay {
         z-index: 9999;
@@ -21,413 +28,678 @@
       .swal2-container {
         z-index: 100000 !important;
       }
-      /* Bloco de edição inline oculto */
-      #edit-section {
+      /* Estilos para o formulário multi‑etapas */
+      fieldset {
         display: none;
+        border: 0;
+        padding: 0;
+        margin: 0;
+      }
+      fieldset.active {
+        display: block;
+      }
+      .step-header {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+      }
+      .btn-group-steps {
+        margin-top: 1.5rem;
+      }
+      /* Barra de progresso – 5 etapas: 20% cada (agora 5 etapas = 20% cada) */
+      #progressbar {
+        height: 20px;
+        margin-bottom: 1.5rem;
+        background-color: #e5e7eb;
+        border-radius: 9999px;
+        overflow: hidden;
+      }
+      #progress-step {
+        height: 100%;
+        background-color: #4f46e5;
+        width: 20%;
+        transition: width 0.4s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+        color: white;
+      }
+      /* Botões customizados para "Voltar" e "Próximo" */
+      .btn-custom {
+        padding: 0.5rem 1.25rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+        border: 1px solid #4f46e5;
+        border-radius: 9999px;
+        color: #ffffff;
+        background-color: #4f46e5;
+        transition: background-color 0.3s ease, border-color 0.3s ease;
+      }
+      .btn-custom:hover {
+        background-color: #4338ca;
+        border-color: #4338ca;
+      }
+      /* Estilo para o resumo final na Etapa 5 */
+      .review-container {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+      .review-item {
+        background: #f3f4f6;
+        padding: 1rem;
+        border-radius: 0.5rem;
+      }
+      .review-item h5 {
+        margin-bottom: 0.5rem;
       }
     </style>
   </head>
-  <body>
+  <body class="bg-primary/10">
     <%- include('partials/sidebar') %>
     <div class="min-h-screen flex flex-col lg:ps-64 w-full">
       <%- include('partials/header') %>
       <div class="p-6 space-y-6">
-        <!-- Título e Área de busca -->
+        <!-- Cabeçalho -->
         <div class="flex items-center justify-between w-full print:hidden">
-          <h4 class="text-lg font-semibold text-default-900">
-            Lista de Questões
-          </h4>
+          <h4 class="text-lg font-semibold text-default-900">Adicionar Simulado</h4>
         </div>
-        <!-- Cartão com total de Questões -->
-        <div class="grid lg:grid-cols-4 md:grid-cols-2 grid-cols-1 gap-6">
-          <div class="shadow rounded-lg bg-white dark:bg-default-50">
-            <div class="p-5">
-              <div class="flex items-center justify-between">
-                <div>
-                  <p class="text-base font-semibold text-default-600">
-                    Total de Questões
-                  </p>
-                  <h4 class="text-2xl font-semibold text-default-900 mt-4">
-                    <%= totalRows %>
-                  </h4>
+        <!-- Barra de Progresso -->
+        <div id="progressbar" class="progress">
+          <div id="progress-step" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="20">
+            20%
+          </div>
+        </div>
+        <!-- Formulário Multi‑Etapas -->
+        <div class="shadow rounded-lg bg-white dark:bg-default-50 p-5">
+          <form id="form-cadastrar-simulado" action="/cadastrar-simulado-steps" method="POST">
+            <!-- Etapa 1: Selecionar Curso -->
+            <fieldset class="active">
+              <div class="step-header">Etapa 1: Selecione o Curso</div>
+              <div class="mb-3">
+                <label for="select-curso" class="form-label text-xl">Curso</label>
+                <select name="curso" id="select-curso" class="form-select" required>
+                  <option value="">Selecione um curso</option>
+                  <% if (typeof cursos !== 'undefined' && cursos.length > 0) { %>
+                    <% cursos.forEach(function(curso) { %>
+                      <option value="<%= curso.id %>"><%= curso.nome %></option>
+                    <% }); %>
+                  <% } else { %>
+                    <option value="">Nenhum curso disponível</option>
+                  <% } %>
+                </select>
+              </div>
+              <div class="flex items-center gap-2 justify-end mt-4">
+                <button type="button" class="btn-custom next">Próximo</button>
+              </div>
+            </fieldset>
+            <!-- Etapa 2: Selecionar Turma -->
+            <fieldset>
+              <div class="step-header">Etapa 2: Selecione a Turma</div>
+              <div class="mb-3">
+                <label for="select-turma" class="form-label text-xl">Turma</label>
+                <select name="turma" id="select-turma" class="form-select" required>
+                  <option value="">Selecione uma turma</option>
+                  <!-- Conteúdo atualizado via AJAX -->
+                </select>
+              </div>
+              <div class="flex items-center gap-2 justify-between">
+                <button type="button" class="btn-custom prev">Voltar</button>
+                <button type="button" class="btn-custom next">Próximo</button>
+              </div>
+            </fieldset>
+            <!-- Etapa 3: Selecionar Alunos -->
+            <fieldset>
+              <div class="step-header">Etapa 3: Selecione os Alunos</div>
+              <!-- Área de busca (opcional) -->
+              <div class="flex flex-wrap items-center justify-between py-4 px-5">
+                <div class="relative flex">
+                  <input type="search" class="ps-12 pe-4 py-2.5 block lg:w-64 border-none bg-default-100 text-default-700 rounded-lg text-sm focus:border-primary focus:ring-primary" placeholder="Procurar aluno..." id="aluno-search" />
+                  <span class="absolute start-4 top-2.5">
+                    <i class="ph-duotone ph-magnifying-glass text-lg text-default-600"></i>
+                  </span>
                 </div>
-                <span
-                  class="shrink h-18 w-18 inline-flex items-center justify-center rounded-lg bg-primary/20 text-primary"
-                >
-                  <i class="ph ph-question text-4xl"></i>
-                </span>
               </div>
-            </div>
-          </div>
-        </div>
-        <!-- Área de busca e link para cadastrar questão -->
-        <div class="flex flex-wrap items-center justify-between py-4 px-5">
-          <div class="relative flex">
-            <input
-              type="search"
-              class="ps-12 pe-4 py-2.5 block lg:w-64 border-none bg-default-100 text-default-700 rounded-lg text-sm focus:border-primary focus:ring-primary"
-              placeholder="Procurar questão..."
-            />
-            <span class="absolute start-4 top-2.5">
-              <i
-                class="ph-duotone ph-magnifying-glass text-lg text-default-600"
-              ></i>
-            </span>
-          </div>
-          <a
-            href="/cadastrar-questao"
-            class="py-2 px-4 inline-flex items-center justify-center font-semibold tracking-wide text-xs bg-primary hover:bg-primary-500 text-white rounded"
-          >
-            <i class="ph-duotone ph-plus-circle text-lg/none me-3"></i>
-            Adicionar Questão
-          </a>
-        </div>
-
-        <!-- Tabela de Questões -->
-        <div class="shadow rounded-lg bg-white dark:bg-default-50 h-fit">
-          <div
-            class="border-t border-dashed border-default-200 relative overflow-x-auto"
-          >
-            <table class="min-w-full">
-              <thead class="border-b border-dashed border-default-200">
-                <tr>
-                  <th class="px-6 py-3 text-left text-sm font-semibold">Id</th>
-                  <th class="px-6 py-3 text-left text-sm font-semibold">
-                    Título
-                  </th>
-                  <th class="px-6 py-3 text-left text-sm font-semibold">
-                    Curso
-                  </th>
-                  <th class="px-6 py-3 text-left text-sm font-semibold">
-                    Matéria
-                  </th>
-                  <th class="px-6 py-3 text-left text-sm font-semibold">
-                    Enunciado
-                  </th>
-                  <th class="px-3 py-3 text-center text-sm font-semibold">
-                    Ação
-                  </th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-dashed divide-default-200">
-                <% if (questoes && questoes.length > 0) { %> <%
-                questoes.forEach(function(questao) { %>
-                <tr>
-                  <td class="px-6 py-3"><%= questao.id %></td>
-                  <td class="px-6 py-3"><%= questao.titulo %></td>
-                  <td class="px-6 py-3"><%= questao.curso %></td>
-                  <td class="px-6 py-3"><%= questao.materia %></td>
-                  <td class="px-6 py-3"><%= questao.enunciado %></td>
-                  <td class="px-3 py-3 text-center">
-                    <div class="flex items-center justify-center gap-2">
-                      <a
-                        href="/editar-questao/<%= questao.id %>"
-                        data-identificador="<%= questao.id %>"
-                        class="editar-questao inline-flex items-center justify-center h-8 w-8 rounded-md bg-cyan-500/20 text-cyan-500 transition-all duration-200 hover:bg-cyan-500 hover:text-white"
-                      >
-                        <i
-                          class="ph-duotone ph-pencil-simple-line text-base"
-                        ></i>
-                      </a>
-
-                      <button
-                        class="deletar-questao inline-flex items-center justify-center h-8 w-8 rounded-md bg-red-500/20 text-red-500 transition-all duration-200 hover:bg-red-500 hover:text-white"
-                        data-identificador="<%= questao.id %>"
-                      >
-                        <i class="ph-duotone ph-trash text-base"></i>
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-                <% }); %> <% } else { %>
-                <tr>
-                  <td colspan="6" class="text-center py-6">
-                    Nenhuma questão cadastrada.
-                  </td>
-                </tr>
-                <% } %>
-              </tbody>
-            </table>
-          </div>
-          <!-- Paginação -->
-          <div
-            class="flex items-center justify-between py-3 px-6 border-t border-dashed border-default-200"
-          >
-            <h6 class="text-default-600">
-              Mostrando <%= (currentPage - 1) * 10 + 1 %> a <%= (currentPage *
-              10 > totalRows ? totalRows : currentPage * 10) %> de <%= totalRows
-              %>
-            </h6>
-            <nav class="flex items-center gap-1">
-              <% if (currentPage > 1) { %>
-              <a
-                class="inline-flex items-center justify-center h-8 w-8 border rounded-md transition-all duration-200 hover:bg-primary hover:text-white"
-                href="/questoes?page=<%= currentPage - 1 %>"
-              >
-                <i class="ph ph-caret-left text-base"></i>
-              </a>
-              <% } %> <% for (let i = 1; i <= totalPages; i++) { %>
-              <a
-                class="inline-flex items-center justify-center h-8 w-8 border rounded-md transition-all duration-200 <%= currentPage === i ? 'bg-primary text-white' : 'hover:bg-primary hover:text-white' %>"
-                href="/questoes?page=<%= i %>"
-              >
-                <%= i %>
-              </a>
-              <% } %> <% if (currentPage < totalPages) { %>
-              <a
-                class="inline-flex items-center justify-center h-8 w-8 border rounded-md transition-all duration-200 hover:bg-primary hover:text-white"
-                href="/questoes?page=<%= currentPage + 1 %>"
-              >
-                <i class="ph ph-caret-right text-base"></i>
-              </a>
-              <% } %>
-            </nav>
-          </div>
-        </div>
-
-        <!-- Seção de Edição Inline (inicialmente oculta) -->
-        <div
-          id="edit-section"
-          class="shadow rounded-lg bg-white dark:bg-default-50 p-5 hidden"
-        >
-          <h4 class="text-lg font-semibold text-default-900 mb-4">
-            Editar Questão
-          </h4>
-          <form id="form-editar-questao" action="/editar-questao" method="POST">
-            <!-- Campo oculto para o ID da questão -->
-            <input type="hidden" name="id" id="edit_questao_id" value="" />
-            <div class="grid md:grid-cols-2 gap-4">
-              <!-- Select de Curso -->
-              <div class="w-full">
-                <label
-                  for="edit_questao_curso_id"
-                  class="block text-sm font-medium text-default-900"
-                  >Curso</label
-                >
-                <select
-                  name="curso_id"
-                  id="edit_questao_curso_id"
-                  class="block w-full rounded py-2.5 px-4 border"
-                  required
-                >
-                  <% cursos.forEach(curso => { %>
-                  <option value="<%= curso.id %>"><%= curso.nome %></option>
-                  <% }); %>
-                </select>
+              <!-- Tabela de alunos -->
+              <div id="aluno-table-container" class="mb-3">
+                <div class="border-t border-dashed border-default-200 relative overflow-x-auto">
+                  <table class="min-w-full">
+                    <thead class="border-b border-dashed border-default-200">
+                      <tr>
+                        <td class="px-6 py-3 w-10 font-medium text-default-900">
+                          <input type="checkbox" class="form-checkbox" id="select-all-alunos" />
+                        </td>
+                        <th class="px-6 py-3 text-start text-sm capitalize font-semibold text-default-900 min-w-32">Id</th>
+                        <th class="px-6 py-3 text-start text-sm capitalize font-semibold text-default-900 min-w-32">Nome</th>
+                        <th class="px-6 py-3 text-start text-sm capitalize font-semibold text-default-900 min-w-32">Usuário</th>
+                      </tr>
+                    </thead>
+                    <tbody id="aluno-table-body" class="divide-y divide-dashed divide-default-200">
+                      <tr>
+                        <td colspan="6" class="text-center py-6">Nenhum aluno cadastrado nesta turma.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
               </div>
-              <!-- Select de Matéria -->
-              <div class="w-full">
-                <label
-                  for="edit_questao_materia_id"
-                  class="block text-sm font-medium text-default-900"
-                  >Matéria</label
-                >
-                <select
-                  name="materia_id"
-                  id="edit_questao_materia_id"
-                  class="block w-full rounded py-2.5 px-4 border"
-                  required
-                >
-                  <% materias.forEach(materia => { %>
-                  <option value="<%= materia.id %>"><%= materia.nome %></option>
-                  <% }); %>
-                </select>
+              <!-- Controles de paginação para alunos -->
+              <div id="aluno-pagination" class="flex items-center justify-center gap-2 my-4"></div>
+              <!-- Botões de navegação entre etapas -->
+              <div class="flex items-center gap-2 justify-between">
+                <button type="button" class="btn-custom prev">Voltar</button>
+                <button type="button" class="btn-custom next">Próximo</button>
               </div>
-              <!-- Título -->
-              <div class="space-y-1 md:col-span-2">
-                <label
-                  for="edit_questao_titulo"
-                  class="text-sm font-medium text-default-900"
-                  >Título</label
-                >
-                <input
-                  type="text"
-                  name="titulo"
-                  id="edit_questao_titulo"
-                  placeholder="Informe o título da questão"
-                  class="block w-full rounded py-2.5 px-4 border"
-                  required
-                />
+            </fieldset>
+            <!-- Etapa 4: Selecionar Questões -->
+            <fieldset>
+              <div class="step-header">Etapa 4: Selecione as Questões</div>
+              <!-- Área de busca para questões -->
+              <div class="flex flex-wrap items-center justify-between py-4 px-5">
+                <div class="relative flex">
+                  <input type="search" id="questao-search" class="ps-12 pe-4 py-2.5 block lg:w-64 border-none bg-default-100 text-default-700 rounded-lg text-sm focus:border-primary focus:ring-primary" placeholder="Procurar questão..." />
+                  <span class="absolute start-4 top-2.5">
+                    <i class="ph-duotone ph-magnifying-glass text-lg text-default-600"></i>
+                  </span>
+                </div>
               </div>
-              <!-- Enunciado -->
-              <div class="space-y-1 md:col-span-2">
-                <label
-                  for="edit_questao_enunciado"
-                  class="text-sm font-medium text-default-900"
-                  >Enunciado</label
-                >
-                <textarea
-                  name="enunciado"
-                  id="edit_questao_enunciado"
-                  placeholder="Informe o enunciado da questão"
-                  class="block w-full rounded py-2.5 px-4 border"
-                  required
-                ></textarea>
+              <!-- Tabela de questões -->
+              <div id="questao-table-container" class="mb-3">
+                <div class="border-t border-dashed border-default-200 relative overflow-x-auto">
+                  <table class="min-w-full">
+                    <thead class="border-b border-dashed border-default-200">
+                      <tr>
+                        <td class="px-6 py-3 w-10 font-medium text-default-900">
+                          <input type="checkbox" class="form-checkbox" id="select-all-questoes" />
+                        </td>
+                        <th class="px-6 py-3 text-start text-sm capitalize font-semibold text-default-900">Id</th>
+                        <th class="px-6 py-3 text-start text-sm capitalize font-semibold text-default-900">Título</th>
+                        <th class="px-6 py-3 text-start text-sm capitalize font-semibold text-default-900">Curso</th>
+                        <th class="px-6 py-3 text-start text-sm capitalize font-semibold text-default-900">Matéria</th>
+                        <th class="px-6 py-3 text-start text-sm capitalize font-semibold text-default-900">Enunciado</th>
+                      </tr>
+                    </thead>
+                    <tbody id="questao-table-body" class="divide-y divide-dashed divide-default-200">
+                      <tr>
+                        <td colspan="6" class="text-center py-6">Nenhuma questão encontrada.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
               </div>
-              <!-- Alternativas -->
-              <div class="space-y-1">
-                <label
-                  for="edit_questao_alternativa_a"
-                  class="text-sm font-medium text-default-900"
-                  >Alternativa A</label
-                >
-                <input
-                  type="text"
-                  name="alternativa_a"
-                  id="edit_questao_alternativa_a"
-                  placeholder="Informe a alternativa A"
-                  class="block w-full rounded py-2.5 px-4 border"
-                  required
-                />
+              <!-- Controles de paginação para questões -->
+              <div id="questao-pagination" class="flex items-center justify-center gap-2 my-4"></div>
+              <div class="flex items-center gap-2 justify-end">
+                <button type="button" class="btn-custom prev">Voltar</button>
+                <button type="button" class="btn-custom next">Próximo</button>
               </div>
-              <div class="space-y-1">
-                <label
-                  for="edit_questao_alternativa_b"
-                  class="text-sm font-medium text-default-900"
-                  >Alternativa B</label
-                >
-                <input
-                  type="text"
-                  name="alternativa_b"
-                  id="edit_questao_alternativa_b"
-                  placeholder="Informe a alternativa B"
-                  class="block w-full rounded py-2.5 px-4 border"
-                  required
-                />
+            </fieldset>
+            <!-- Etapa 5: Revisão Final -->
+            <fieldset>
+              <div class="step-header">Etapa 5: Revisão Final</div>
+              <div class="review-container">
+                <div class="review-item">
+                  <h5>Curso Selecionado</h5>
+                  <p id="resumo-final-curso"></p>
+                </div>
+                <div class="review-item">
+                  <h5>Turma Selecionada</h5>
+                  <p id="resumo-final-turma"></p>
+                </div>
+                <div class="review-item">
+                  <h5>Alunos Selecionados</h5>
+                  <p id="resumo-final-alunos"></p>
+                </div>
+                <div class="review-item">
+                  <h5>Questões Selecionadas</h5>
+                  <p id="resumo-final-questoes"></p>
+                </div>
               </div>
-              <div class="space-y-1">
-                <label
-                  for="edit_questao_alternativa_c"
-                  class="text-sm font-medium text-default-900"
-                  >Alternativa C</label
-                >
-                <input
-                  type="text"
-                  name="alternativa_c"
-                  id="edit_questao_alternativa_c"
-                  placeholder="Informe a alternativa C"
-                  class="block w-full rounded py-2.5 px-4 border"
-                  required
-                />
+              <div class="flex items-center gap-2 justify-between mt-4">
+                <button type="button" class="btn-custom prev">Voltar</button>
+                <button type="submit" class="btn-custom" style="background-color: #10b981; border-color: #10b981">
+                  Confirmar Cadastro
+                </button>
               </div>
-              <div class="space-y-1">
-                <label
-                  for="edit_questao_alternativa_d"
-                  class="text-sm font-medium text-default-900"
-                  >Alternativa D</label
-                >
-                <input
-                  type="text"
-                  name="alternativa_d"
-                  id="edit_questao_alternativa_d"
-                  placeholder="Informe a alternativa D"
-                  class="block w-full rounded py-2.5 px-4 border"
-                  required
-                />
-              </div>
-              <!-- Resposta Correta como Select -->
-              <div class="space-y-1 md:col-span-2">
-                <label
-                  for="edit_questao_resposta_correta"
-                  class="text-sm font-medium text-default-900"
-                >
-                  Selecione a alternativa correta (A, B, C ou D)
-                </label>
-                <select
-                  name="resposta_correta"
-                  id="edit_questao_resposta_correta"
-                  class="block w-full rounded py-2.5 px-4 border"
-                  required
-                >
-                  <option value="">Selecione</option>
-                  <option value="A">A</option>
-                  <option value="B">B</option>
-                  <option value="C">C</option>
-                  <option value="D">D</option>
-                </select>
-              </div>
-            </div>
-            <div class="flex items-center gap-2 justify-end mt-4">
-              <button
-                type="button"
-                id="cancel-edit-btn"
-                class="py-2 px-5 inline-flex items-center justify-center gap-2 font-semibold tracking-wide border border-transparent text-sm text-red-600 hover:border-red-500/20 hover:bg-red-500/20 rounded transition-all"
-              >
-                <i class="ph-bold ph-x text-lg"></i> Cancelar
-              </button>
-              <button
-                type="submit"
-                class="py-2 px-5 inline-flex items-center justify-center gap-2 font-semibold tracking-wide border text-sm bg-default-800 hover:bg-default-950 border-default-800 hover:border-default-950 text-default-50 rounded"
-              >
-                <i class="ph-duotone ph-cloud-arrow-up text-lg"></i> Salvar
-                Alterações
-              </button>
-            </div>
+            </fieldset>
           </form>
-          <button
-            id="close-edit-section"
-            class="mt-4 text-red-500 block text-center"
-          >
-            Fechar
-          </button>
         </div>
       </div>
       <%- include('partials/footer') %>
     </div>
-
+    <!-- Bootstrap Bundle JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
       $(document).ready(function () {
-        // Excluir questão
-        $(document).on("click", ".deletar-questao", function (e) {
-          e.preventDefault();
-          const identificador = $(this).data("identificador");
+        // Variáveis globais
+        var currentIndex = 0;
+        var fieldsets = $("form fieldset");
+        var totalSteps = fieldsets.length; // 5 etapas
+        var allAlunos = [];
+        var currentPageAlunos = 1;
+        var itemsPerPage = 10;
+        var selectedAlunosIds = [];
+        var allQuestoes = [];
+        var currentPageQuestoes = 1;
+        var itemsPerPageQuestoes = 10;
+        var selectedQuestoesIds = [];
 
-          Swal.fire({
-            title: "Tem certeza?",
-            text: "Essa ação não pode ser desfeita!",
-            icon: "warning",
-            showCancelButton: true,
-            confirmButtonText: "Sim, excluir!",
-            cancelButtonText: "Cancelar",
-            confirmButtonColor: "#d33",
-            cancelButtonColor: "#3085d6",
-          }).then((result) => {
-            if (result.isConfirmed) {
-              $.ajax({
-                url: `/deletar-questao/${identificador}`,
-                type: "DELETE",
-                success: function (resposta) {
-                  Swal.fire(
-                    "Excluído!",
-                    "A questão foi removida.",
-                    "success"
-                  ).then(() => {
-                    location.reload();
-                  });
-                },
-                error: function () {
-                  Swal.fire(
-                    "Erro!",
-                    "Não foi possível excluir a questão.",
-                    "error"
-                  );
-                },
+        // Função para renderizar alunos
+        function renderAlunosPage() {
+          var tbody = $("#aluno-table-body");
+          tbody.empty();
+          var startIndex = (currentPageAlunos - 1) * itemsPerPage;
+          var endIndex = startIndex + itemsPerPage;
+          var alunosPage = allAlunos.slice(startIndex, endIndex);
+          if (alunosPage.length > 0) {
+            alunosPage.forEach(function (aluno) {
+              var dataStr = aluno.data_cadastro || "";
+              var dataObj = new Date(dataStr);
+              if (isNaN(dataObj.getTime())) {
+                dataObj = new Date(dataStr.replace(/-/g, "/"));
+              }
+              var dataFormatada = dataObj.getTime() ? dataObj.toLocaleString("pt-BR") : "";
+              var checked = selectedAlunosIds.indexOf(aluno.id.toString()) !== -1 ? "checked" : "";
+              tbody.append(`
+                <tr>
+                  <td class="px-6 py-3">
+                    <input type="checkbox" name="alunos[]" value="${aluno.id}" class="form-checkbox aluno-checkbox" ${checked}>
+                  </td>
+                  <td class="px-6 py-3">${aluno.id}</td>
+                  <td class="px-6 py-3">${aluno.nome}</td>
+                  <td class="px-6 py-3">${aluno.usuario || ""}</td>
+                </tr>
+              `);
+            });
+          } else {
+            tbody.append(`
+              <tr>
+                <td colspan="7" class="text-center py-6">Nenhum aluno cadastrado nesta turma.</td>
+              </tr>
+            `);
+          }
+          renderPagination();
+        }
+
+        function renderPagination() {
+          var totalPages = Math.ceil(allAlunos.length / itemsPerPage);
+          var paginationHtml = "";
+          for (var i = 1; i <= totalPages; i++) {
+            if (i === currentPageAlunos) {
+              paginationHtml += `<span class="px-3 py-1 bg-primary text-white rounded">${i}</span>`;
+            } else {
+              paginationHtml += `<a href="#" class="pagination-link px-3 py-1 bg-default-100 text-default-700 rounded" data-page="${i}">${i}</a>`;
+            }
+          }
+          $("#aluno-pagination").html(paginationHtml);
+        }
+
+        $(document).on("click", ".pagination-link", function (e) {
+          e.preventDefault();
+          currentPageAlunos = parseInt($(this).data("page"));
+          renderAlunosPage();
+        });
+
+        $("#select-all-alunos").on("change", function () {
+          var checked = $(this).prop("checked");
+          selectedAlunosIds = checked ? allAlunos.map(function (aluno) { return aluno.id.toString(); }) : [];
+          $("#aluno-table-body .aluno-checkbox").prop("checked", checked);
+        });
+
+        $(document).on("change", ".aluno-checkbox", function () {
+          var alunoId = $(this).val();
+          if ($(this).prop("checked")) {
+            if (selectedAlunosIds.indexOf(alunoId) === -1) {
+              selectedAlunosIds.push(alunoId);
+            }
+          } else {
+            selectedAlunosIds = selectedAlunosIds.filter(function (id) { return id !== alunoId; });
+            $("#select-all-alunos").prop("checked", false);
+          }
+        });
+
+        // Busca alunos via AJAX ao alterar a turma
+        $("#select-turma").on("change", function () {
+          var turmaId = $(this).val();
+          console.log("Turma selecionada:", turmaId);
+          if (!turmaId) {
+            $("#aluno-table-body").html(`
+              <tr>
+                <td colspan="4" class="text-center py-6">Nenhum aluno cadastrado nesta turma.</td>
+              </tr>
+            `);
+            $("#aluno-pagination").empty();
+            return;
+          }
+          $.ajax({
+            url: "/alunos-por-turma/" + turmaId,
+            type: "GET",
+            dataType: "json",
+            success: function (data) {
+              console.log("Resposta de alunos:", data);
+              allAlunos = data;
+              currentPageAlunos = 1;
+              renderAlunosPage();
+              if ($("#select-all-alunos").prop("checked")) {
+                selectedAlunosIds = allAlunos.map(function (aluno) { return aluno.id.toString(); });
+              }
+            },
+            error: function () {
+              Swal.fire({
+                icon: "error",
+                title: "Erro",
+                text: "Erro ao buscar alunos.",
               });
             }
           });
         });
+
+        // Função para renderizar questões
+        function renderQuestoesPage() {
+          var tbody = $("#questao-table-body");
+          tbody.empty();
+          var startIndex = (currentPageQuestoes - 1) * itemsPerPageQuestoes;
+          var endIndex = startIndex + itemsPerPageQuestoes;
+          var questoesPage = allQuestoes.slice(startIndex, endIndex);
+          if (questoesPage.length > 0) {
+            questoesPage.forEach(function (questao) {
+              var checked = selectedQuestoesIds.indexOf(questao.id.toString()) !== -1 ? "checked" : "";
+              tbody.append(`
+                <tr>
+                  <td class="px-6 py-3">
+                    <input type="checkbox" name="questoes[]" value="${questao.id}" class="form-checkbox questao-checkbox" ${checked}>
+                  </td>
+                  <td class="px-6 py-3">${questao.id}</td>
+                  <td class="px-6 py-3">${questao.titulo}</td>
+                  <td class="px-6 py-3">${questao.curso}</td>
+                  <td class="px-6 py-3">${questao.materia}</td>
+                  <td class="px-6 py-3">${questao.enunciado}</td>
+                </tr>
+              `);
+            });
+          } else {
+            tbody.append(`
+              <tr>
+                <td colspan="6" class="text-center py-6">Nenhuma questão encontrada.</td>
+              </tr>
+            `);
+          }
+          renderQuestoesPagination();
+        }
+
+        function renderQuestoesPagination() {
+          var totalPages = Math.ceil(allQuestoes.length / itemsPerPageQuestoes);
+          var paginationHtml = "";
+          for (var i = 1; i <= totalPages; i++) {
+            if (i === currentPageQuestoes) {
+              paginationHtml += `<span class="px-3 py-1 bg-primary text-white rounded">${i}</span>`;
+            } else {
+              paginationHtml += `<a href="#" class="pagination-link-questao px-3 py-1 bg-default-100 text-default-700 rounded" data-page="${i}">${i}</a>`;
+            }
+          }
+          $("#questao-pagination").html(paginationHtml);
+        }
+
+        $(document).on("click", ".pagination-link-questao", function (e) {
+          e.preventDefault();
+          currentPageQuestoes = parseInt($(this).data("page"));
+          renderQuestoesPage();
+        });
+
+        $("#select-all-questoes").on("change", function () {
+          var checked = $(this).prop("checked");
+          selectedQuestoesIds = checked ? allQuestoes.map(function (questao) { return questao.id.toString(); }) : [];
+          $("#questao-table-body .questao-checkbox").prop("checked", checked);
+        });
+
+        $(document).on("change", ".questao-checkbox", function () {
+          var questaoId = $(this).val();
+          if ($(this).prop("checked")) {
+            if (selectedQuestoesIds.indexOf(questaoId) === -1) {
+              selectedQuestoesIds.push(questaoId);
+            }
+          } else {
+            selectedQuestoesIds = selectedQuestoesIds.filter(function (id) { return id !== questaoId; });
+            $("#select-all-questoes").prop("checked", false);
+          }
+        });
+
+        // Busca questões via AJAX – chamada ao entrar na Etapa 4
+        function fetchQuestoes() {
+          var cursoId = $("#select-curso").val();
+          if (!cursoId) {
+            console.error("Curso não selecionado.");
+            return;
+          }
+          $.ajax({
+            url: "/questoes-por-curso/" + cursoId,
+            type: "GET",
+            dataType: "json",
+            success: function (data) {
+              console.log("Resposta de questões:", data);
+              allQuestoes = data;
+              currentPageQuestoes = 1;
+              renderQuestoesPage();
+            },
+            error: function () {
+              Swal.fire({
+                icon: "error",
+                title: "Erro",
+                text: "Erro ao buscar questões.",
+              });
+            }
+          });
+        }
+
+        $("#questao-search").on("keyup", function () {
+          var query = $(this).val().toLowerCase();
+          $("#questao-table-body tr").each(function () {
+            var idText = $(this).find("td:nth-child(2)").text().toLowerCase();
+            var tituloText = $(this).find("td:nth-child(3)").text().toLowerCase();
+            var cursoText = $(this).find("td:nth-child(4)").text().toLowerCase();
+            var materiaText = $(this).find("td:nth-child(5)").text().toLowerCase();
+            var enunciadoText = $(this).find("td:nth-child(6)").text().toLowerCase();
+            if (
+              idText.indexOf(query) > -1 ||
+              tituloText.indexOf(query) > -1 ||
+              cursoText.indexOf(query) > -1 ||
+              materiaText.indexOf(query) > -1 ||
+              enunciadoText.indexOf(query) > -1
+            ) {
+              $(this).show();
+            } else {
+              $(this).hide();
+            }
+          });
+        });
+
+        // Atualiza o resumo final na Etapa 5
+        function updateReviewFinal() {
+          var cursoText = $("#select-curso option:selected").text();
+          var turmaText = $("#select-turma option:selected").text();
+          var selectedAlunos = allAlunos.filter(function (aluno) {
+            return selectedAlunosIds.indexOf(aluno.id.toString()) !== -1;
+          });
+          var alunosText = selectedAlunos.map(function (aluno) { return aluno.nome; }).join(", ");
+          var selectedQuestoes = allQuestoes.filter(function (questao) {
+            return selectedQuestoesIds.indexOf(questao.id.toString()) !== -1;
+          });
+          var questoesText = selectedQuestoes.map(function (questao) { return questao.titulo; }).join(", ");
+
+          $("#resumo-final-curso").text(cursoText);
+          $("#resumo-final-turma").text(turmaText);
+          $("#resumo-final-alunos").text(alunosText || "Nenhum aluno selecionado");
+          $("#resumo-final-questoes").text(questoesText || "Nenhuma questão selecionada");
+        }
+
+        // Exibe a etapa atual e atualiza a barra de progresso
+        function showStep(index) {
+          fieldsets.removeClass("active");
+          fieldsets.eq(index).addClass("active");
+          var percent = ((index + 1) / totalSteps) * 100;
+          $("#progress-step")
+            .css("width", percent + "%")
+            .attr("aria-valuenow", percent)
+            .text(Math.round(percent) + "%");
+          
+          // Se estiver na Etapa 4 (índice 3), carrega as questões se ainda não estiverem
+          if (index === 3 && allQuestoes.length === 0) {
+            fetchQuestoes();
+          }
+          // Se estiver na Etapa 5 (revisão final), atualiza o resumo
+          if (index === totalSteps - 1) {
+            updateReviewFinal();
+          }
+        }
+
+        $(".next").click(function () {
+          var valid = true;
+          var currentFieldset = fieldsets.eq(currentIndex);
+          currentFieldset.find("select[required]").each(function () {
+            if (
+              !$(this).val() ||
+              ($(this).attr("multiple") && $(this).val().length === 0)
+            ) {
+              valid = false;
+              Swal.fire({
+                icon: "warning",
+                title: "Atenção",
+                text: "Preencha os campos obrigatórios!",
+              });
+              return false;
+            }
+          });
+          if (!valid) return false;
+          
+          if (currentIndex === 0) {
+            var cursoId = $("#select-curso").val();
+            if (!cursoId) {
+              Swal.fire({
+                icon: "warning",
+                title: "Atenção",
+                text: "Selecione um curso!",
+              });
+              return;
+            }
+            $.ajax({
+              url: "/turmas-por-curso/" + cursoId,
+              type: "GET",
+              dataType: "json",
+              success: function (data) {
+                console.log("Resposta de turmas:", data);
+                var $turmaSelect = $("#select-turma");
+                $turmaSelect.empty();
+                if (data.length > 0) {
+                  $turmaSelect.append('<option value="">Selecione uma turma</option>');
+                  data.forEach(function (turma) {
+                    $turmaSelect.append(`<option value="${turma.id}">${turma.nome}</option>`);
+                  });
+                } else {
+                  $turmaSelect.append('<option value="">Nenhuma turma disponível</option>');
+                }
+                var instance = $turmaSelect.data("choices");
+                if (instance) {
+                  instance.destroy();
+                  $turmaSelect.removeData("choices");
+                }
+                new Choices($turmaSelect[0], { removeItemButton: false });
+                currentIndex++;
+                showStep(currentIndex);
+              },
+              error: function () {
+                Swal.fire({
+                  icon: "error",
+                  title: "Erro",
+                  text: "Erro ao buscar turmas.",
+                });
+              }
+            });
+          } else {
+            currentIndex++;
+            if (currentIndex >= totalSteps) currentIndex = totalSteps - 1;
+            showStep(currentIndex);
+          }
+        });
+
+        $(".prev").click(function () {
+          currentIndex--;
+          if (currentIndex < 0) currentIndex = 0;
+          showStep(currentIndex);
+        });
+
+        // Inicializa a primeira etapa
+        showStep(currentIndex);
+
+        // Inicializa Choices.js para o select de curso
+        new Choices("#select-curso", { removeItemButton: false });
       });
-      $(document).on("click", ".editar-questao", function (e) {
-        e.preventDefault();
-        const identificador = $(this).data("identificador");
-        window.location.href = `/editar-questao/${identificador}`;
-      });
+
       $(document).ready(function () {
-        // filtra as linhas da tabela
-        $("input[type='search']").on("keyup", function () {
-          var termo = $(this).val().toLowerCase();
-          $("table tbody tr").filter(function () {
-            $(this).toggle($(this).text().toLowerCase().indexOf(termo) > -1);
+        var currentPath = window.location.pathname;
+        $(".admin-menu a").each(function () {
+          var linkPath = $(this).attr("href");
+          if (currentPath === linkPath || currentPath.indexOf(linkPath) === 0) {
+            $(this).addClass("active");
+          }
+        });
+      });
+
+      // Filtro para alunos
+      $("#aluno-search").on("keyup", function () {
+        var query = $(this).val().toLowerCase();
+        $("#aluno-table-body tr").each(function () {
+          var idText = $(this).find("td:nth-child(2)").text().toLowerCase();
+          var nomeText = $(this).find("td:nth-child(3)").text().toLowerCase();
+          var usuarioText = $(this).find("td:nth-child(4)").text().toLowerCase();
+          if (
+            idText.indexOf(query) > -1 ||
+            nomeText.indexOf(query) > -1 ||
+            usuarioText.indexOf(query) > -1
+          ) {
+            $(this).show();
+          } else {
+            $(this).hide();
+          }
+        });
+      });
+
+      // Intercepta o submit do formulário para enviar via AJAX e mostrar mensagem com SweetAlert2
+      $(document).ready(function(){
+        $("#form-cadastrar-simulado").submit(function(e){
+          e.preventDefault(); // Evita o submit normal
+          var formData = $(this).serialize();
+          $.ajax({
+            url: $(this).attr("action"),
+            method: $(this).attr("method"),
+            data: formData,
+            dataType: "json",
+            success: function(response){
+              if(response.success){
+                Swal.fire({
+                  icon: 'success',
+                  title: 'Simulado cadastrado com sucesso!',
+                  text: response.message,
+                  timer: 2000,
+                  showConfirmButton: false
+                }).then(function(){
+                  // Redireciona para a página de simulados (ou onde desejar)
+                  window.location.href = "/simulados";
+                });
+              } else {
+                Swal.fire({
+                  icon: 'error',
+                  title: 'Erro',
+                  text: response.error
+                });
+              }
+            },
+            error: function(){
+              Swal.fire({
+                icon: 'error',
+                title: 'Erro',
+                text: 'Ocorreu um erro ao cadastrar o simulado.'
+              });
+            }
           });
         });
       });

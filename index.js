@@ -1472,14 +1472,20 @@ app.post("/cadastrar-simulado-steps", verificarAutenticacao, (req, res) => {
   const { curso, turma, alunos, questoes } = req.body;
   const professorId = req.session.user.id;
 
-  if (!turma) {
-    return res.status(400).json({ error: "Turma é obrigatória." });
+  // Verifica se os campos obrigatórios estão preenchidos
+  if (!curso || !turma) {
+    return res.status(400).json({ error: "Curso e Turma são obrigatórios." });
   }
 
-  // Insere o simulado na tabela (supondo que a tabela "simulado" possua as colunas turma_id, professor_id, data_criacao)
+  // Como a tabela simulado exige as colunas curso_id, turma_id, professor_id, titulo e descricao,
+  // e supondo que o formulário não forneça título/descrição, usamos valores padrão.
+  const titulo = "Simulado - Turma " + turma; // Pode ser adaptado conforme a lógica desejada
+  const descricao = "Simulado cadastrado via multi‑etapas.";
+
+  // Insere o simulado na tabela
   db.query(
-    "INSERT INTO simulado (turma_id, professor_id, data_criacao) VALUES (?, ?, NOW())",
-    [turma, professorId],
+    "INSERT INTO simulado (curso_id, turma_id, professor_id, titulo, descricao, data_criacao) VALUES (?, ?, ?, ?, ?, NOW())",
+    [curso, turma, professorId, titulo, descricao],
     (err, result) => {
       if (err) {
         console.error("Erro ao cadastrar simulado:", err);
@@ -1487,9 +1493,17 @@ app.post("/cadastrar-simulado-steps", verificarAutenticacao, (req, res) => {
       }
       const simuladoId = result.insertId;
 
-      // Assegura que os campos alunos e questoes sejam arrays
-      const alunosArray = Array.isArray(alunos) ? alunos : [alunos];
-      const questoesArray = Array.isArray(questoes) ? questoes : [questoes];
+      // Garante que os campos alunos e questoes sejam arrays
+      const alunosArray = Array.isArray(alunos)
+        ? alunos
+        : alunos
+        ? [alunos]
+        : [];
+      const questoesArray = Array.isArray(questoes)
+        ? questoes
+        : questoes
+        ? [questoes]
+        : [];
 
       let totalQueries = alunosArray.length + questoesArray.length;
       if (totalQueries === 0) {
