@@ -7,9 +7,15 @@
     <link rel="shortcut icon" href="../assets/favicon-8fd74f43.ico" />
     <link rel="stylesheet" href="../assets/theme-d32f8eb8.css" />
     <!-- Choices.js CSS -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css"
+    />
     <!-- SweetAlert2 CSS -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css"
+    />
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <!-- SweetAlert2 JS -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -97,30 +103,48 @@
       <div class="p-6 space-y-6">
         <!-- Cabeçalho -->
         <div class="flex items-center justify-between w-full print:hidden">
-          <h4 class="text-lg font-semibold text-default-900">Adicionar Simulado</h4>
+          <h4 class="text-lg font-semibold text-default-900">
+            Adicionar Simulado
+          </h4>
         </div>
         <!-- Barra de Progresso -->
         <div id="progressbar" class="progress">
-          <div id="progress-step" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="20">
+          <div
+            id="progress-step"
+            role="progressbar"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            aria-valuenow="20"
+          >
             20%
           </div>
         </div>
         <!-- Formulário Multi‑Etapas -->
         <div class="shadow rounded-lg bg-white dark:bg-default-50 p-5">
-          <form id="form-cadastrar-simulado" action="/cadastrar-simulado-steps" method="POST">
+          <form
+            id="form-cadastrar-simulado"
+            action="/cadastrar-simulado-steps"
+            method="POST"
+          >
             <!-- Etapa 1: Selecionar Curso -->
             <fieldset class="active">
               <div class="step-header">Etapa 1: Selecione o Curso</div>
               <div class="mb-3">
-                <label for="select-curso" class="form-label text-xl">Curso</label>
-                <select name="curso" id="select-curso" class="form-select" required>
+                <label for="select-curso" class="form-label text-xl"
+                  >Curso</label
+                >
+                <select
+                  name="curso"
+                  id="select-curso"
+                  class="form-select"
+                  required
+                >
                   <option value="">Selecione um curso</option>
-                  <% if (typeof cursos !== 'undefined' && cursos.length > 0) { %>
-                    <% cursos.forEach(function(curso) { %>
-                      <option value="<%= curso.id %>"><%= curso.nome %></option>
-                    <% }); %>
-                  <% } else { %>
-                    <option value="">Nenhum curso disponível</option>
+                  <% if (typeof cursos !== 'undefined' && cursos.length > 0) {
+                  %> <% cursos.forEach(function(curso) { %>
+                  <option value="<%= curso.id %>"><%= curso.nome %></option>
+                  <% }); %> <% } else { %>
+                  <option value="">Nenhum curso disponível</option>
                   <% } %>
                 </select>
               </div>
@@ -132,8 +156,15 @@
             <fieldset>
               <div class="step-header">Etapa 2: Selecione a Turma</div>
               <div class="mb-3">
-                <label for="select-turma" class="form-label text-xl">Turma</label>
-                <select name="turma" id="select-turma" class="form-select" required>
+                <label for="select-turma" class="form-label text-xl"
+                  >Turma</label
+                >
+                <select
+                  name="turma"
+                  id="select-turma"
+                  class="form-select"
+                  required
+                >
                   <option value="">Selecione uma turma</option>
                   <!-- Conteúdo atualizado via AJAX -->
                 </select>
@@ -147,38 +178,73 @@
             <fieldset>
               <div class="step-header">Etapa 3: Selecione os Alunos</div>
               <!-- Área de busca (opcional) -->
-              <div class="flex flex-wrap items-center justify-between py-4 px-5">
+              <div
+                class="flex flex-wrap items-center justify-between py-4 px-5"
+              >
                 <div class="relative flex">
-                  <input type="search" class="ps-12 pe-4 py-2.5 block lg:w-64 border-none bg-default-100 text-default-700 rounded-lg text-sm focus:border-primary focus:ring-primary" placeholder="Procurar aluno..." id="aluno-search" />
+                  <input
+                    type="search"
+                    class="ps-12 pe-4 py-2.5 block lg:w-64 border-none bg-default-100 text-default-700 rounded-lg text-sm focus:border-primary focus:ring-primary"
+                    placeholder="Procurar aluno..."
+                    id="aluno-search"
+                  />
                   <span class="absolute start-4 top-2.5">
-                    <i class="ph-duotone ph-magnifying-glass text-lg text-default-600"></i>
+                    <i
+                      class="ph-duotone ph-magnifying-glass text-lg text-default-600"
+                    ></i>
                   </span>
                 </div>
               </div>
               <!-- Tabela de alunos -->
               <div id="aluno-table-container" class="mb-3">
-                <div class="border-t border-dashed border-default-200 relative overflow-x-auto">
+                <div
+                  class="border-t border-dashed border-default-200 relative overflow-x-auto"
+                >
                   <table class="min-w-full">
                     <thead class="border-b border-dashed border-default-200">
                       <tr>
                         <td class="px-6 py-3 w-10 font-medium text-default-900">
-                          <input type="checkbox" class="form-checkbox" id="select-all-alunos" />
+                          <input
+                            type="checkbox"
+                            class="form-checkbox"
+                            id="select-all-alunos"
+                          />
                         </td>
-                        <th class="px-6 py-3 text-start text-sm capitalize font-semibold text-default-900 min-w-32">Id</th>
-                        <th class="px-6 py-3 text-start text-sm capitalize font-semibold text-default-900 min-w-32">Nome</th>
-                        <th class="px-6 py-3 text-start text-sm capitalize font-semibold text-default-900 min-w-32">Usuário</th>
+                        <th
+                          class="px-6 py-3 text-start text-sm capitalize font-semibold text-default-900 min-w-32"
+                        >
+                          Id
+                        </th>
+                        <th
+                          class="px-6 py-3 text-start text-sm capitalize font-semibold text-default-900 min-w-32"
+                        >
+                          Nome
+                        </th>
+                        <th
+                          class="px-6 py-3 text-start text-sm capitalize font-semibold text-default-900 min-w-32"
+                        >
+                          Usuário
+                        </th>
                       </tr>
                     </thead>
-                    <tbody id="aluno-table-body" class="divide-y divide-dashed divide-default-200">
+                    <tbody
+                      id="aluno-table-body"
+                      class="divide-y divide-dashed divide-default-200"
+                    >
                       <tr>
-                        <td colspan="6" class="text-center py-6">Nenhum aluno cadastrado nesta turma.</td>
+                        <td colspan="6" class="text-center py-6">
+                          Nenhum aluno cadastrado nesta turma.
+                        </td>
                       </tr>
                     </tbody>
                   </table>
                 </div>
               </div>
               <!-- Controles de paginação para alunos -->
-              <div id="aluno-pagination" class="flex items-center justify-center gap-2 my-4"></div>
+              <div
+                id="aluno-pagination"
+                class="flex items-center justify-center gap-2 my-4"
+              ></div>
               <!-- Botões de navegação entre etapas -->
               <div class="flex items-center gap-2 justify-between">
                 <button type="button" class="btn-custom prev">Voltar</button>
@@ -189,40 +255,83 @@
             <fieldset>
               <div class="step-header">Etapa 4: Selecione as Questões</div>
               <!-- Área de busca para questões -->
-              <div class="flex flex-wrap items-center justify-between py-4 px-5">
+              <div
+                class="flex flex-wrap items-center justify-between py-4 px-5"
+              >
                 <div class="relative flex">
-                  <input type="search" id="questao-search" class="ps-12 pe-4 py-2.5 block lg:w-64 border-none bg-default-100 text-default-700 rounded-lg text-sm focus:border-primary focus:ring-primary" placeholder="Procurar questão..." />
+                  <input
+                    type="search"
+                    id="questao-search"
+                    class="ps-12 pe-4 py-2.5 block lg:w-64 border-none bg-default-100 text-default-700 rounded-lg text-sm focus:border-primary focus:ring-primary"
+                    placeholder="Procurar questão..."
+                  />
                   <span class="absolute start-4 top-2.5">
-                    <i class="ph-duotone ph-magnifying-glass text-lg text-default-600"></i>
+                    <i
+                      class="ph-duotone ph-magnifying-glass text-lg text-default-600"
+                    ></i>
                   </span>
                 </div>
               </div>
               <!-- Tabela de questões -->
               <div id="questao-table-container" class="mb-3">
-                <div class="border-t border-dashed border-default-200 relative overflow-x-auto">
+                <div
+                  class="border-t border-dashed border-default-200 relative overflow-x-auto"
+                >
                   <table class="min-w-full">
                     <thead class="border-b border-dashed border-default-200">
                       <tr>
                         <td class="px-6 py-3 w-10 font-medium text-default-900">
-                          <input type="checkbox" class="form-checkbox" id="select-all-questoes" />
+                          <input
+                            type="checkbox"
+                            class="form-checkbox"
+                            id="select-all-questoes"
+                          />
                         </td>
-                        <th class="px-6 py-3 text-start text-sm capitalize font-semibold text-default-900">Id</th>
-                        <th class="px-6 py-3 text-start text-sm capitalize font-semibold text-default-900">Título</th>
-                        <th class="px-6 py-3 text-start text-sm capitalize font-semibold text-default-900">Curso</th>
-                        <th class="px-6 py-3 text-start text-sm capitalize font-semibold text-default-900">Matéria</th>
-                        <th class="px-6 py-3 text-start text-sm capitalize font-semibold text-default-900">Enunciado</th>
+                        <th
+                          class="px-6 py-3 text-start text-sm capitalize font-semibold text-default-900"
+                        >
+                          Id
+                        </th>
+                        <th
+                          class="px-6 py-3 text-start text-sm capitalize font-semibold text-default-900"
+                        >
+                          Título
+                        </th>
+                        <th
+                          class="px-6 py-3 text-start text-sm capitalize font-semibold text-default-900"
+                        >
+                          Curso
+                        </th>
+                        <th
+                          class="px-6 py-3 text-start text-sm capitalize font-semibold text-default-900"
+                        >
+                          Matéria
+                        </th>
+                        <th
+                          class="px-6 py-3 text-start text-sm capitalize font-semibold text-default-900"
+                        >
+                          Enunciado
+                        </th>
                       </tr>
                     </thead>
-                    <tbody id="questao-table-body" class="divide-y divide-dashed divide-default-200">
+                    <tbody
+                      id="questao-table-body"
+                      class="divide-y divide-dashed divide-default-200"
+                    >
                       <tr>
-                        <td colspan="6" class="text-center py-6">Nenhuma questão encontrada.</td>
+                        <td colspan="6" class="text-center py-6">
+                          Nenhuma questão encontrada.
+                        </td>
                       </tr>
                     </tbody>
                   </table>
                 </div>
               </div>
               <!-- Controles de paginação para questões -->
-              <div id="questao-pagination" class="flex items-center justify-center gap-2 my-4"></div>
+              <div
+                id="questao-pagination"
+                class="flex items-center justify-center gap-2 my-4"
+              ></div>
               <div class="flex items-center gap-2 justify-end">
                 <button type="button" class="btn-custom prev">Voltar</button>
                 <button type="button" class="btn-custom next">Próximo</button>
@@ -251,7 +360,11 @@
               </div>
               <div class="flex items-center gap-2 justify-between mt-4">
                 <button type="button" class="btn-custom prev">Voltar</button>
-                <button type="submit" class="btn-custom" style="background-color: #10b981; border-color: #10b981">
+                <button
+                  type="submit"
+                  class="btn-custom"
+                  style="background-color: #10b981; border-color: #10b981"
+                >
                   Confirmar Cadastro
                 </button>
               </div>
@@ -292,12 +405,19 @@
               if (isNaN(dataObj.getTime())) {
                 dataObj = new Date(dataStr.replace(/-/g, "/"));
               }
-              var dataFormatada = dataObj.getTime() ? dataObj.toLocaleString("pt-BR") : "";
-              var checked = selectedAlunosIds.indexOf(aluno.id.toString()) !== -1 ? "checked" : "";
+              var dataFormatada = dataObj.getTime()
+                ? dataObj.toLocaleString("pt-BR")
+                : "";
+              var checked =
+                selectedAlunosIds.indexOf(aluno.id.toString()) !== -1
+                  ? "checked"
+                  : "";
               tbody.append(`
                 <tr>
                   <td class="px-6 py-3">
-                    <input type="checkbox" name="alunos[]" value="${aluno.id}" class="form-checkbox aluno-checkbox" ${checked}>
+                    <input type="checkbox" name="alunos[]" value="${
+                      aluno.id
+                    }" class="form-checkbox aluno-checkbox" ${checked}>
                   </td>
                   <td class="px-6 py-3">${aluno.id}</td>
                   <td class="px-6 py-3">${aluno.nome}</td>
@@ -336,7 +456,11 @@
 
         $("#select-all-alunos").on("change", function () {
           var checked = $(this).prop("checked");
-          selectedAlunosIds = checked ? allAlunos.map(function (aluno) { return aluno.id.toString(); }) : [];
+          selectedAlunosIds = checked
+            ? allAlunos.map(function (aluno) {
+                return aluno.id.toString();
+              })
+            : [];
           $("#aluno-table-body .aluno-checkbox").prop("checked", checked);
         });
 
@@ -347,7 +471,9 @@
               selectedAlunosIds.push(alunoId);
             }
           } else {
-            selectedAlunosIds = selectedAlunosIds.filter(function (id) { return id !== alunoId; });
+            selectedAlunosIds = selectedAlunosIds.filter(function (id) {
+              return id !== alunoId;
+            });
             $("#select-all-alunos").prop("checked", false);
           }
         });
@@ -375,7 +501,9 @@
               currentPageAlunos = 1;
               renderAlunosPage();
               if ($("#select-all-alunos").prop("checked")) {
-                selectedAlunosIds = allAlunos.map(function (aluno) { return aluno.id.toString(); });
+                selectedAlunosIds = allAlunos.map(function (aluno) {
+                  return aluno.id.toString();
+                });
               }
             },
             error: function () {
@@ -384,7 +512,7 @@
                 title: "Erro",
                 text: "Erro ao buscar alunos.",
               });
-            }
+            },
           });
         });
 
@@ -397,7 +525,10 @@
           var questoesPage = allQuestoes.slice(startIndex, endIndex);
           if (questoesPage.length > 0) {
             questoesPage.forEach(function (questao) {
-              var checked = selectedQuestoesIds.indexOf(questao.id.toString()) !== -1 ? "checked" : "";
+              var checked =
+                selectedQuestoesIds.indexOf(questao.id.toString()) !== -1
+                  ? "checked"
+                  : "";
               tbody.append(`
                 <tr>
                   <td class="px-6 py-3">
@@ -442,7 +573,11 @@
 
         $("#select-all-questoes").on("change", function () {
           var checked = $(this).prop("checked");
-          selectedQuestoesIds = checked ? allQuestoes.map(function (questao) { return questao.id.toString(); }) : [];
+          selectedQuestoesIds = checked
+            ? allQuestoes.map(function (questao) {
+                return questao.id.toString();
+              })
+            : [];
           $("#questao-table-body .questao-checkbox").prop("checked", checked);
         });
 
@@ -453,7 +588,9 @@
               selectedQuestoesIds.push(questaoId);
             }
           } else {
-            selectedQuestoesIds = selectedQuestoesIds.filter(function (id) { return id !== questaoId; });
+            selectedQuestoesIds = selectedQuestoesIds.filter(function (id) {
+              return id !== questaoId;
+            });
             $("#select-all-questoes").prop("checked", false);
           }
         });
@@ -481,7 +618,7 @@
                 title: "Erro",
                 text: "Erro ao buscar questões.",
               });
-            }
+            },
           });
         }
 
@@ -489,10 +626,22 @@
           var query = $(this).val().toLowerCase();
           $("#questao-table-body tr").each(function () {
             var idText = $(this).find("td:nth-child(2)").text().toLowerCase();
-            var tituloText = $(this).find("td:nth-child(3)").text().toLowerCase();
-            var cursoText = $(this).find("td:nth-child(4)").text().toLowerCase();
-            var materiaText = $(this).find("td:nth-child(5)").text().toLowerCase();
-            var enunciadoText = $(this).find("td:nth-child(6)").text().toLowerCase();
+            var tituloText = $(this)
+              .find("td:nth-child(3)")
+              .text()
+              .toLowerCase();
+            var cursoText = $(this)
+              .find("td:nth-child(4)")
+              .text()
+              .toLowerCase();
+            var materiaText = $(this)
+              .find("td:nth-child(5)")
+              .text()
+              .toLowerCase();
+            var enunciadoText = $(this)
+              .find("td:nth-child(6)")
+              .text()
+              .toLowerCase();
             if (
               idText.indexOf(query) > -1 ||
               tituloText.indexOf(query) > -1 ||
@@ -514,16 +663,28 @@
           var selectedAlunos = allAlunos.filter(function (aluno) {
             return selectedAlunosIds.indexOf(aluno.id.toString()) !== -1;
           });
-          var alunosText = selectedAlunos.map(function (aluno) { return aluno.nome; }).join(", ");
+          var alunosText = selectedAlunos
+            .map(function (aluno) {
+              return aluno.nome;
+            })
+            .join(", ");
           var selectedQuestoes = allQuestoes.filter(function (questao) {
             return selectedQuestoesIds.indexOf(questao.id.toString()) !== -1;
           });
-          var questoesText = selectedQuestoes.map(function (questao) { return questao.titulo; }).join(", ");
+          var questoesText = selectedQuestoes
+            .map(function (questao) {
+              return questao.titulo;
+            })
+            .join(", ");
 
           $("#resumo-final-curso").text(cursoText);
           $("#resumo-final-turma").text(turmaText);
-          $("#resumo-final-alunos").text(alunosText || "Nenhum aluno selecionado");
-          $("#resumo-final-questoes").text(questoesText || "Nenhuma questão selecionada");
+          $("#resumo-final-alunos").text(
+            alunosText || "Nenhum aluno selecionado"
+          );
+          $("#resumo-final-questoes").text(
+            questoesText || "Nenhuma questão selecionada"
+          );
         }
 
         // Exibe a etapa atual e atualiza a barra de progresso
@@ -535,7 +696,7 @@
             .css("width", percent + "%")
             .attr("aria-valuenow", percent)
             .text(Math.round(percent) + "%");
-          
+
           // Se estiver na Etapa 4 (índice 3), carrega as questões se ainda não estiverem
           if (index === 3 && allQuestoes.length === 0) {
             fetchQuestoes();
@@ -564,7 +725,7 @@
             }
           });
           if (!valid) return false;
-          
+
           if (currentIndex === 0) {
             var cursoId = $("#select-curso").val();
             if (!cursoId) {
@@ -584,12 +745,18 @@
                 var $turmaSelect = $("#select-turma");
                 $turmaSelect.empty();
                 if (data.length > 0) {
-                  $turmaSelect.append('<option value="">Selecione uma turma</option>');
+                  $turmaSelect.append(
+                    '<option value="">Selecione uma turma</option>'
+                  );
                   data.forEach(function (turma) {
-                    $turmaSelect.append(`<option value="${turma.id}">${turma.nome}</option>`);
+                    $turmaSelect.append(
+                      `<option value="${turma.id}">${turma.nome}</option>`
+                    );
                   });
                 } else {
-                  $turmaSelect.append('<option value="">Nenhuma turma disponível</option>');
+                  $turmaSelect.append(
+                    '<option value="">Nenhuma turma disponível</option>'
+                  );
                 }
                 var instance = $turmaSelect.data("choices");
                 if (instance) {
@@ -606,7 +773,7 @@
                   title: "Erro",
                   text: "Erro ao buscar turmas.",
                 });
-              }
+              },
             });
           } else {
             currentIndex++;
@@ -644,7 +811,10 @@
         $("#aluno-table-body tr").each(function () {
           var idText = $(this).find("td:nth-child(2)").text().toLowerCase();
           var nomeText = $(this).find("td:nth-child(3)").text().toLowerCase();
-          var usuarioText = $(this).find("td:nth-child(4)").text().toLowerCase();
+          var usuarioText = $(this)
+            .find("td:nth-child(4)")
+            .text()
+            .toLowerCase();
           if (
             idText.indexOf(query) > -1 ||
             nomeText.indexOf(query) > -1 ||
@@ -658,8 +828,8 @@
       });
 
       // Intercepta o submit do formulário para enviar via AJAX e exibir mensagem com SweetAlert2
-      $(document).ready(function(){
-        $("#form-cadastrar-simulado").submit(function(e){
+      $(document).ready(function () {
+        $("#form-cadastrar-simulado").submit(function (e) {
           e.preventDefault(); // Impede o envio normal do formulário
           var formData = $(this).serialize();
           $.ajax({
@@ -667,33 +837,33 @@
             method: $(this).attr("method"),
             data: formData,
             dataType: "json",
-            success: function(response){
-              if(response.success){
+            success: function (response) {
+              if (response.success) {
                 Swal.fire({
-                  icon: 'success',
-                  title: 'Simulado cadastrado com sucesso!',
+                  icon: "success",
+                  title: "Simulado cadastrado com sucesso!",
                   text: response.message,
-                  timer: 2000,
-                  showConfirmButton: false
-                }).then(function(){
+                  timer: 10000,
+                  showConfirmButton: false,
+                }).then(function () {
                   // Redireciona para a página de simulados
                   window.location.href = "/simulados";
                 });
               } else {
                 Swal.fire({
-                  icon: 'error',
-                  title: 'Erro',
-                  text: response.error
+                  icon: "error",
+                  title: "Erro",
+                  text: response.error,
                 });
               }
             },
-            error: function(){
+            error: function () {
               Swal.fire({
-                icon: 'error',
-                title: 'Erro',
-                text: 'Ocorreu um erro ao cadastrar o simulado.'
+                icon: "error",
+                title: "Erro",
+                text: "Ocorreu um erro ao cadastrar o simulado.",
               });
-            }
+            },
           });
         });
       });

@@ -1317,31 +1317,6 @@ app.post("/cadastrar-simulado", async (req, res) => {
 });
 
 /**
- * Rota: GET /editar-simulado/:id
- * Renderiza o formulário de edição para um simulado existente.
- */
-app.get("/editar-simulado/:id", async (req, res) => {
-  try {
-    const { id } = req.params;
-    // Busca o simulado pelo id
-    const [simuladoResult] = await promisePool.query(
-      "SELECT * FROM simulado WHERE id = ?",
-      [id]
-    );
-    if (simuladoResult.length === 0) {
-      return res.status(404).send("Simulado não encontrado");
-    }
-    const simulado = simuladoResult[0];
-    // Busca os cursos para o select
-    const [cursos] = await promisePool.query("SELECT * FROM curso");
-    res.render("editar-simulado", { simulado, cursos });
-  } catch (err) {
-    console.error(err);
-    res.status(500).send("Erro interno do servidor");
-  }
-});
-
-/**
  * Rota: POST /editar-simulado
  * Atualiza os dados de um simulado.
  */
@@ -1377,15 +1352,72 @@ app.post("/editar-simulado", async (req, res) => {
   }
 });
 
-app.delete("/deletar-simulado/:id", async (req, res) => {
-  try {
-    const { id } = req.params;
-    await promisePool.query("DELETE FROM simulado WHERE id = ?", [id]);
-    res.status(200).send({ message: "Simulado excluído com sucesso" });
-  } catch (err) {
-    console.error(err);
-    res.status(500).send("Erro interno do servidor");
-  }
+app.delete("/deletar-simulado/:id", verificarAutenticacao, (req, res) => {
+  const simuladoId = req.params.id;
+  const professorId = req.session.user.id;
+
+  // Primeiro, deleta os registros em simulado_aluno vinculados ao simulado,
+  // garantindo que o simulado pertença a uma turma do professor autenticado
+  db.query(
+    `DELETE sa
+     FROM simulado_aluno sa
+     INNER JOIN simulado s ON sa.simulado_id = s.id
+     INNER JOIN turma t ON s.turma_id = t.id
+     WHERE s.id = ? AND t.professor_id = ?`,
+    [simuladoId, professorId],
+    (err, result) => {
+      if (err) {
+        console.error("Erro ao excluir simulado_aluno:", err);
+        return res
+          .status(500)
+          .json({ error: "Erro ao excluir alunos do simulado." });
+      }
+
+      // Em seguida, deleta os registros em simulado_questao vinculados ao simulado
+      db.query(
+        `DELETE sq
+         FROM simulado_questao sq
+         INNER JOIN simulado s ON sq.simulado_id = s.id
+         INNER JOIN turma t ON s.turma_id = t.id
+         WHERE s.id = ? AND t.professor_id = ?`,
+        [simuladoId, professorId],
+        (err, result) => {
+          if (err) {
+            console.error("Erro ao excluir simulado_questao:", err);
+            return res
+              .status(500)
+              .json({ error: "Erro ao excluir questões do simulado." });
+          }
+
+          // Por fim, deleta o simulado
+          db.query(
+            `DELETE s
+             FROM simulado s
+             INNER JOIN turma t ON s.turma_id = t.id
+             WHERE s.id = ? AND t.professor_id = ?`,
+            [simuladoId, professorId],
+            (err, result) => {
+              if (err) {
+                console.error("Erro ao excluir simulado:", err);
+                return res
+                  .status(500)
+                  .json({ error: "Erro ao excluir simulado." });
+              }
+              if (result.affectedRows === 0) {
+                return res
+                  .status(403)
+                  .json({ error: "Acesso negado ou simulado inexistente." });
+              }
+              return res.json({
+                message:
+                  "Simulado e suas associações foram excluídos com sucesso!",
+              });
+            }
+          );
+        }
+      );
+    }
+  );
 });
 
 app.use(express.json()); // Para processar JSON no req.body
