@@ -15,15 +15,11 @@ $(document).ready(function () {
       success: function (response) {
         $("#modal-turma").addClass("hidden");
         Swal.fire({
-          title: response.message.includes("sucesso")
-            ? "Sucesso!"
-            : "Erro!",
+          title: response.message.includes("sucesso") ? "Sucesso!" : "Erro!",
           text: response.message.includes("sucesso")
             ? "Turma cadastrada com sucesso!"
             : response.message,
-          icon: response.message.includes("sucesso")
-            ? "success"
-            : "error",
+          icon: response.message.includes("sucesso") ? "success" : "error",
           confirmButtonText: "OK",
           timer: 5000,
           timerProgressBar: true,
@@ -76,11 +72,7 @@ $(document).ready(function () {
             });
           },
           error: function (xhr) {
-            Swal.fire(
-              "Erro!",
-              "Não foi possível excluir a turma.",
-              "error"
-            );
+            Swal.fire("Erro!", "Não foi possível excluir a turma.", "error");
           },
         });
       }
@@ -119,13 +111,11 @@ $(document).ready(function () {
           type: "POST",
           data: $("#form-editar-turma").serialize(),
           success: function (response) {
-            Swal.fire(
-              "Editada!",
-              "Turma editada com sucesso!",
-              "success"
-            ).then(() => {
-              window.location.reload();
-            });
+            Swal.fire("Editada!", "Turma editada com sucesso!", "success").then(
+              () => {
+                window.location.reload();
+              }
+            );
           },
           error: function (xhr) {
             let errorMsg =
@@ -137,5 +127,16 @@ $(document).ready(function () {
         });
       }
     });
+  });
+});
+$(document).ready(function () {
+  // Para abrir o modal, remova a classe modal-hidden
+  $("#open-modal-turma").click(function () {
+    $("#modal-turma").removeClass("modal-hidden");
+  });
+
+  // Para fechar o modal, adicione a classe modal-hidden
+  $("#close-modal-turma").click(function () {
+    $("#modal-turma").addClass("modal-hidden");
   });
 });

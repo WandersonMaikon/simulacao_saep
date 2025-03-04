@@ -13,11 +13,54 @@
     <!-- Biblioteca SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
+      .modal-hidden {
+        display: none;
+      }
       .modal-overlay {
         z-index: 9999;
       }
       .swal2-container {
         z-index: 100000 !important;
+      }
+      /* Estilo para o switch (para o campo 'ativa') */
+      .switch {
+        position: relative;
+        display: inline-block;
+        width: 40px;
+        height: 20px;
+      }
+      .switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+      }
+      .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        transition: 0.4s;
+        border-radius: 20px;
+      }
+      .slider:before {
+        position: absolute;
+        content: "";
+        height: 16px;
+        width: 16px;
+        left: 2px;
+        bottom: 2px;
+        background-color: white;
+        transition: 0.4s;
+        border-radius: 50%;
+      }
+      input:checked + .slider {
+        background-color: #10b981; /* verde */
+      }
+      input:checked + .slider:before {
+        transform: translateX(20px);
       }
     </style>
   </head>
@@ -32,7 +75,7 @@
             Lista de Turmas
           </h4>
         </div>
-        <!-- cartão com total  -->
+        <!-- Cartão com total de Turmas -->
         <div class="grid lg:grid-cols-4 md:grid-cols-2 grid-cols-1 gap-6">
           <div class="shadow rounded-lg bg-white dark:bg-default-50">
             <div class="p-5">
@@ -54,29 +97,30 @@
             </div>
           </div>
         </div>
+        <!-- Área de busca e botão para cadastrar turma -->
+        <div class="flex flex-wrap items-center justify-between py-4 px-5">
+          <div class="relative flex">
+            <input
+              type="search"
+              class="ps-12 pe-4 py-2.5 block lg:w-64 border-none bg-default-100 text-default-700 rounded-lg text-sm focus:border-primary focus:ring-primary"
+              placeholder="Procurar turma..."
+            />
+            <span class="absolute start-4 top-2.5">
+              <i
+                class="ph-duotone ph-magnifying-glass text-lg text-default-600"
+              ></i>
+            </span>
+          </div>
+          <button
+            id="open-modal-turma"
+            class="py-2 px-4 inline-flex items-center justify-center font-semibold tracking-wide align-middle duration-500 text-xs bg-primary hover:bg-primary-500 text-white rounded"
+          >
+            <i class="ph-duotone ph-plus-circle text-lg/none me-3"></i>
+            Adicionar Turma
+          </button>
+        </div>
         <!-- Tabela de Turmas -->
         <div class="shadow rounded-lg bg-white dark:bg-default-50 h-fit">
-          <div class="flex flex-wrap items-center justify-between py-4 px-5">
-            <div class="relative flex">
-              <input
-                type="search"
-                class="ps-12 pe-4 py-2.5 block lg:w-64 border-none bg-default-100 text-default-700 rounded-lg text-sm focus:border-primary focus:ring-primary"
-                placeholder="Procurar turma..."
-              />
-              <span class="absolute start-4 top-2.5">
-                <i
-                  class="ph-duotone ph-magnifying-glass text-lg text-default-600"
-                ></i>
-              </span>
-            </div>
-            <button
-              id="open-modal-turma"
-              class="py-2 px-4 inline-flex items-center justify-center font-semibold tracking-wide align-middle duration-500 text-xs text-center bg-primary hover:bg-primary-500 text-white rounded"
-            >
-              <i class="ph-duotone ph-plus-circle text-lg/none me-3"></i>
-              Adicionar Turma
-            </button>
-          </div>
           <div
             class="border-t border-dashed border-default-200 relative overflow-x-auto"
           >
@@ -84,7 +128,7 @@
               <thead class="border-b border-dashed border-default-200">
                 <tr>
                   <td class="px-6 py-3 w-10 font-medium text-default-900">
-                    <input type="checkbox" class="form-checkbox ..." />
+                    <input type="checkbox" class="form-checkbox" />
                   </td>
                   <th
                     class="px-6 py-3 text-start text-sm capitalize font-semibold text-default-900 min-w-32"
@@ -116,15 +160,13 @@
               <tbody class="divide-y divide-dashed divide-default-200">
                 <% if (turmas && turmas.length > 0) { %> <%
                 turmas.forEach(function(turma) { %>
-
                 <tr>
                   <td class="px-6 py-3">
-                    <input type="checkbox" class="form-checkbox ..." />
+                    <input type="checkbox" class="form-checkbox" />
                   </td>
                   <td class="px-6 py-3"><%= turma.id %></td>
                   <td class="px-6 py-3"><%= turma.nome %></td>
                   <td class="px-6 py-3"><%= turma.curso %></td>
-
                   <td class="px-6 py-3">
                     <%= new Date(turma.data_criacao).toLocaleString() %>
                   </td>
@@ -154,7 +196,7 @@
                     </div>
                   </td>
                 </tr>
-                <% }) %> <% } else { %>
+                <% }); %> <% } else { %>
                 <tr>
                   <td colspan="5" class="text-center py-6">
                     Nenhuma turma cadastrada.
@@ -176,22 +218,21 @@
             <nav class="flex items-center gap-1">
               <% if (currentPage > 1) { %>
               <a
-                class="inline-flex items-center justify-center h-8 w-8 border border-default-200 rounded-md text-default-950 transition-all duration-200 hover:bg-primary hover:text-white hover:border-primary"
+                class="inline-flex items-center justify-center h-8 w-8 border rounded-md transition-all duration-200 hover:bg-primary hover:text-white"
                 href="/turmas?page=<%= currentPage - 1 %>"
               >
                 <i class="ph ph-caret-left text-base"></i>
               </a>
               <% } %> <% for (let i = 1; i <= totalPages; i++) { %>
               <a
-                class="inline-flex items-center justify-center h-8 w-8 border rounded-md transition-all duration-200 <%= currentPage === i ? 'bg-primary text-white border-primary' : 'border-default-200 text-default-950 hover:bg-primary hover:text-white hover:border-primary' %>"
+                class="inline-flex items-center justify-center h-8 w-8 border rounded-md transition-all duration-200 <%= currentPage === i ? 'bg-primary text-white' : 'hover:bg-primary hover:text-white' %>"
                 href="/turmas?page=<%= i %>"
-                aria-current="<%= currentPage === i ? 'page' : '' %>"
               >
                 <%= i %>
               </a>
               <% } %> <% if (currentPage < totalPages) { %>
               <a
-                class="inline-flex items-center justify-center h-8 w-8 border border-default-200 rounded-md text-default-950 transition-all duration-200 hover:bg-primary hover:text-white hover:border-primary"
+                class="inline-flex items-center justify-center h-8 w-8 border rounded-md transition-all duration-200 hover:bg-primary hover:text-white"
                 href="/turmas?page=<%= currentPage + 1 %>"
               >
                 <i class="ph ph-caret-right text-base"></i>
@@ -205,15 +246,17 @@
     </div>
 
     <!-- Modal para Cadastro de Turma -->
+    <!-- Modal para Cadastro de Turma -->
     <div
       id="modal-turma"
-      class="fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-50 z-[9999] hidden modal-overlay"
+      class="fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-50 z-[9999] modal-overlay modal-hidden"
     >
       <div class="bg-white p-10 rounded-lg shadow-lg w-full max-w-2xl">
         <h3 class="text-lg font-semibold text-gray-900 mb-4">
           Cadastrar Turma
         </h3>
         <form id="form-cadastrar-turma" action="/cadastrar-turma" method="POST">
+          <!-- Campos do formulário -->
           <div class="mb-8">
             <label
               for="turma_curso_id"
@@ -261,13 +304,12 @@
     <!-- Modal para Edição de Turma -->
     <div
       id="modal-editar-turma"
-      class="fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-50 z-[9999] hidden modal-overlay"
+      class="fixed inset-0 hidden items-center justify-center bg-gray-900 bg-opacity-50 z-[9999] modal-overlay"
     >
       <div class="bg-white p-10 rounded-lg shadow-lg w-full max-w-2xl">
         <h3 class="text-lg font-semibold text-gray-900 mb-4">Editar Turma</h3>
         <form id="form-editar-turma" action="/editar-turma" method="POST">
           <input type="hidden" id="edit_turma_id" name="id" value="" />
-
           <div class="mb-8">
             <label
               for="edit_turma_curso_id"
@@ -314,6 +356,7 @@
       </div>
     </div>
 
+    <!-- Inclusão do arquivo JavaScript externo -->
     <script src="js/turma.js"></script>
   </body>
 </html>
