@@ -152,3 +152,16 @@ $(document).ready(function () {
     });
   });
 });
+$(document).ready(function () {
+  $("#open-modal").click(function () {
+    $("#modal-uc").removeClass("modal-hidden");
+  });
+
+  $("#close-modal").click(function () {
+    $("#modal-uc").addClass("modal-hidden");
+  });
+
+  $("#close-edit-modal").click(function () {
+    $("#modal-editar").addClass("modal-hidden");
+  });
+});

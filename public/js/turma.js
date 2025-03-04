@@ -130,12 +130,10 @@ $(document).ready(function () {
   });
 });
 $(document).ready(function () {
-  // Para abrir o modal, remova a classe modal-hidden
   $("#open-modal-turma").click(function () {
     $("#modal-turma").removeClass("modal-hidden");
   });
 
-  // Para fechar o modal, adicione a classe modal-hidden
   $("#close-modal-turma").click(function () {
     $("#modal-turma").addClass("modal-hidden");
   });
