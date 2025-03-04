@@ -1229,13 +1229,20 @@ app.get("/simulados", verificarAutenticacao, (req, res) => {
     const totalRows = countResult[0].count;
     const totalPages = Math.ceil(totalRows / limit);
 
-    // Query para buscar os dados dos simulados, agora usando "s.turma_id" para associar à tabela "turma"
+    // Query para buscar os dados dos simulados, agora incluindo:
+    // - s.tempo_prova
+    // - s.ativa
+    // - o nome do curso (c.nome como curso_nome)
+    // - o nome da turma (t.nome)
     const dataQuery = `
       SELECT s.id, s.titulo, s.descricao,
-             DATE_FORMAT(s.data_criacao, '%Y-%m-%d') AS data_criacao,
-             t.nome AS turma
+             DATE_FORMAT(s.tempo_prova, '%H:%i:%s') AS tempo_prova,
+             s.ativa,
+             t.nome AS turma,
+             c.nome AS curso_nome
       FROM simulado s
       LEFT JOIN turma t ON s.turma_id = t.id
+      LEFT JOIN curso c ON s.curso_id = c.id
       ${baseWhere}
       ORDER BY s.data_criacao DESC
       LIMIT ? OFFSET ?
@@ -1276,40 +1283,6 @@ app.get("/cadastrar-simulado", async (req, res) => {
     // Busca os cursos para popular o select do formulário
     const [cursos] = await promisePool.query("SELECT * FROM curso");
     res.render("cadastrar-simulado", { cursos });
-  } catch (err) {
-    console.error(err);
-    res.status(500).send("Erro interno do servidor");
-  }
-});
-
-/**
- * Rota: POST /cadastrar-simulado
- * Realiza o cadastro de um novo simulado.
- */
-app.post("/cadastrar-simulado", async (req, res) => {
-  try {
-    // Exemplo: professor_id pode ser obtido da sessão (aqui está vindo via form)
-    const {
-      professor_id,
-      curso_id,
-      titulo,
-      descricao,
-      data_simulacao,
-      tempo_simulado,
-    } = req.body;
-    await promisePool.query(
-      `INSERT INTO simulado (professor_id, curso_id, titulo, descricao, data_simulacao, tempo_simulado)
-       VALUES (?, ?, ?, ?, ?, ?)`,
-      [
-        professor_id,
-        curso_id,
-        titulo,
-        descricao,
-        data_simulacao,
-        tempo_simulado,
-      ]
-    );
-    res.redirect("/simulados");
   } catch (err) {
     console.error(err);
     res.status(500).send("Erro interno do servidor");

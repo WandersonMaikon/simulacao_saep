@@ -20,6 +20,46 @@
       #edit-section {
         display: none;
       }
+      /* Estilo para o switch checkbox */
+      .switch {
+        position: relative;
+        display: inline-block;
+        width: 40px;
+        height: 20px;
+      }
+      .switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+      }
+      .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        transition: 0.4s;
+        border-radius: 20px;
+      }
+      .slider:before {
+        position: absolute;
+        content: "";
+        height: 16px;
+        width: 16px;
+        left: 2px;
+        bottom: 2px;
+        background-color: white;
+        transition: 0.4s;
+        border-radius: 50%;
+      }
+      input:checked + .slider {
+        background-color: #10b981; /* verde */
+      }
+      input:checked + .slider:before {
+        transform: translateX(20px);
+      }
     </style>
   </head>
   <body>
@@ -77,7 +117,6 @@
             Adicionar Simulado
           </a>
         </div>
-
         <!-- Tabela de Simulados -->
         <div class="shadow rounded-lg bg-white dark:bg-default-50 h-fit">
           <div
@@ -88,7 +127,7 @@
                 <tr>
                   <th class="px-6 py-3 text-left text-sm font-semibold">Id</th>
                   <th class="px-6 py-3 text-left text-sm font-semibold">
-                    Título
+                    Descrição
                   </th>
                   <th class="px-6 py-3 text-left text-sm font-semibold">
                     Curso
@@ -96,11 +135,12 @@
                   <th class="px-6 py-3 text-left text-sm font-semibold">
                     Turma
                   </th>
-                  <th class="px-6 py-3 text-left text-sm font-semibold">
-                    Data Simulação
-                  </th>
+
                   <th class="px-6 py-3 text-left text-sm font-semibold">
                     Tempo Prova
+                  </th>
+                  <th class="px-6 py-3 text-center text-sm font-semibold">
+                    Ativa
                   </th>
                   <th class="px-3 py-3 text-center text-sm font-semibold">
                     Ação
@@ -112,22 +152,19 @@
                 simulados.forEach(function(simulado) { %>
                 <tr>
                   <td class="px-6 py-3"><%= simulado.id %></td>
-                  <td class="px-6 py-3"><%= simulado.titulo %></td>
+                  <td class="px-6 py-3"><%= simulado.descricao %></td>
+                  <td class="px-6 py-3"><%= simulado.curso_nome %></td>
                   <td class="px-6 py-3"><%= simulado.turma %></td>
-                  <td class="px-6 py-3"><%= simulado.curso %></td>
-                  <td class="px-6 py-3"><%= simulado.data_simulacao %></td>
-                  <td class="px-6 py-3"><%= simulado.tempo_simulado %></td>
+                  <td class="px-6 py-3"><%= simulado.tempo_prova %></td>
+                  <td class="px-6 py-3 text-center">
+                    <label class="switch">
+                      <input type="checkbox" disabled <%= simulado.ativa == 1 ?
+                      "checked" : "" %>>
+                      <span class="slider"></span>
+                    </label>
+                  </td>
                   <td class="px-3 py-3 text-center">
                     <div class="flex items-center justify-center gap-2">
-                      <a
-                        href="/editar-simulado/<%= simulado.id %>"
-                        data-identificador="<%= simulado.id %>"
-                        class="editar-simulado inline-flex items-center justify-center h-8 w-8 rounded-md bg-cyan-500/20 text-cyan-500 transition-all duration-200 hover:bg-cyan-500 hover:text-white"
-                      >
-                        <i
-                          class="ph-duotone ph-pencil-simple-line text-base"
-                        ></i>
-                      </a>
                       <button
                         class="deletar-simulado inline-flex items-center justify-center h-8 w-8 rounded-md bg-red-500/20 text-red-500 transition-all duration-200 hover:bg-red-500 hover:text-white"
                         data-identificador="<%= simulado.id %>"
@@ -139,7 +176,7 @@
                 </tr>
                 <% }); %> <% } else { %>
                 <tr>
-                  <td colspan="6" class="text-center py-6">
+                  <td colspan="8" class="text-center py-6">
                     Nenhum simulado cadastrado.
                   </td>
                 </tr>
@@ -182,178 +219,67 @@
             </nav>
           </div>
         </div>
-
-        <!-- Seção de Edição Inline (inicialmente oculta) -->
-        <div
-          id="edit-section"
-          class="shadow rounded-lg bg-white dark:bg-default-50 p-5 hidden"
-        >
-          <h4 class="text-lg font-semibold text-default-900 mb-4">
-            Editar Simulado
-          </h4>
-          <form
-            id="form-editar-simulado"
-            action="/editar-simulado"
-            method="POST"
-          >
-            <!-- Campo oculto para o ID do simulado -->
-            <input type="hidden" name="id" id="edit_simulado_id" value="" />
-            <div class="grid md:grid-cols-2 gap-4">
-              <!-- Select de Curso -->
-              <div class="w-full">
-                <label
-                  for="edit_simulado_curso_id"
-                  class="block text-sm font-medium text-default-900"
-                  >Curso</label
-                >
-              </div>
-              <!-- Título -->
-              <div class="space-y-1 md:col-span-2">
-                <label
-                  for="edit_simulado_titulo"
-                  class="text-sm font-medium text-default-900"
-                  >Título</label
-                >
-                <input
-                  type="text"
-                  name="titulo"
-                  id="edit_simulado_titulo"
-                  placeholder="Informe o título do simulado"
-                  class="block w-full rounded py-2.5 px-4 border"
-                  required
-                />
-              </div>
-              <!-- Descrição -->
-              <div class="space-y-1 md:col-span-2">
-                <label
-                  for="edit_simulado_descricao"
-                  class="text-sm font-medium text-default-900"
-                  >Descrição</label
-                >
-                <textarea
-                  name="descricao"
-                  id="edit_simulado_descricao"
-                  placeholder="Informe a descrição do simulado"
-                  class="block w-full rounded py-2.5 px-4 border"
-                ></textarea>
-              </div>
-              <!-- Data da Simulação -->
-              <div class="space-y-1">
-                <label
-                  for="edit_simulado_data"
-                  class="text-sm font-medium text-default-900"
-                  >Data da Simulação</label
-                >
-                <input
-                  type="date"
-                  name="data_simulacao"
-                  id="edit_simulado_data"
-                  class="block w-full rounded py-2.5 px-4 border"
-                  required
-                />
-              </div>
-              <!-- Tempo de Prova -->
-              <div class="space-y-1">
-                <label
-                  for="edit_simulado_tempo"
-                  class="text-sm font-medium text-default-900"
-                  >Tempo de Prova</label
-                >
-                <input
-                  type="time"
-                  name="tempo_simulado"
-                  id="edit_simulado_tempo"
-                  class="block w-full rounded py-2.5 px-4 border"
-                  required
-                />
-              </div>
-            </div>
-            <div class="flex items-center gap-2 justify-end mt-4">
-              <button
-                type="button"
-                id="cancel-edit-btn"
-                class="py-2 px-5 inline-flex items-center justify-center gap-2 font-semibold tracking-wide border border-transparent text-sm text-red-600 hover:border-red-500/20 hover:bg-red-500/20 rounded transition-all"
-              >
-                <i class="ph-bold ph-x text-lg"></i> Cancelar
-              </button>
-              <button
-                type="submit"
-                class="py-2 px-5 inline-flex items-center justify-center gap-2 font-semibold tracking-wide border text-sm bg-default-800 hover:bg-default-950 border-default-800 hover:border-default-950 text-default-50 rounded"
-              >
-                <i class="ph-duotone ph-cloud-arrow-up text-lg"></i> Salvar
-                Alterações
-              </button>
-            </div>
-          </form>
-          <button
-            id="close-edit-section"
-            class="mt-4 text-red-500 block text-center"
-          >
-            Fechar
-          </button>
-        </div>
       </div>
       <%- include('partials/footer') %>
     </div>
-
-    <script>
-      $(document).ready(function () {
-        // Excluir simulado
-        $(document).on("click", ".deletar-simulado", function (e) {
-          e.preventDefault();
-          const identificador = $(this).data("identificador");
-
-          Swal.fire({
-            title: "Tem certeza?",
-            text: "Esta ação não pode ser desfeita!",
-            icon: "warning",
-            showCancelButton: true,
-            confirmButtonText: "Sim, excluir!",
-            cancelButtonText: "Cancelar",
-            confirmButtonColor: "#d33",
-            cancelButtonColor: "#3085d6",
-          }).then((result) => {
-            if (result.isConfirmed) {
-              $.ajax({
-                url: `/deletar-simulado/${identificador}`,
-                type: "DELETE",
-                success: function (resposta) {
-                  Swal.fire(
-                    "Excluído!",
-                    "O simulado foi removido.",
-                    "success"
-                  ).then(() => {
-                    location.reload();
-                  });
-                },
-                error: function () {
-                  Swal.fire(
-                    "Erro!",
-                    "Não foi possível excluir o simulado.",
-                    "error"
-                  );
-                },
-              });
-            }
-          });
-        });
-      });
-
-      $(document).on("click", ".editar-simulado", function (e) {
+  </body>
+  <script>
+    $(document).ready(function () {
+      // Excluir simulado
+      $(document).on("click", ".deletar-simulado", function (e) {
         e.preventDefault();
         const identificador = $(this).data("identificador");
-        window.location.href = `/editar-simulado/${identificador}`;
-      });
 
-      $(document).ready(function () {
-        // Filtrar as linhas da tabela
-        $("input[type='search']").on("keyup", function () {
-          var termo = $(this).val().toLowerCase();
-          $("table tbody tr").filter(function () {
-            $(this).toggle($(this).text().toLowerCase().indexOf(termo) > -1);
-          });
+        Swal.fire({
+          title: "Tem certeza?",
+          text: "Esta ação não pode ser desfeita!",
+          icon: "warning",
+          showCancelButton: true,
+          confirmButtonText: "Sim, excluir!",
+          cancelButtonText: "Cancelar",
+          confirmButtonColor: "#d33",
+          cancelButtonColor: "#3085d6",
+        }).then((result) => {
+          if (result.isConfirmed) {
+            $.ajax({
+              url: `/deletar-simulado/${identificador}`,
+              type: "DELETE",
+              success: function (resposta) {
+                Swal.fire(
+                  "Excluído!",
+                  "O simulado foi removido.",
+                  "success"
+                ).then(() => {
+                  location.reload();
+                });
+              },
+              error: function () {
+                Swal.fire(
+                  "Erro!",
+                  "Não foi possível excluir o simulado.",
+                  "error"
+                );
+              },
+            });
+          }
         });
       });
-    </script>
-  </body>
+    });
+
+    $(document).on("click", ".editar-simulado", function (e) {
+      e.preventDefault();
+      const identificador = $(this).data("identificador");
+      window.location.href = `/editar-simulado/${identificador}`;
+    });
+
+    $(document).ready(function () {
+      // Filtrar as linhas da tabela
+      $("input[type='search']").on("keyup", function () {
+        var termo = $(this).val().toLowerCase();
+        $("table tbody tr").filter(function () {
+          $(this).toggle($(this).text().toLowerCase().indexOf(termo) > -1);
+        });
+      });
+    });
+  </script>
 </html>
