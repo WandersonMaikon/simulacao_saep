@@ -179,6 +179,13 @@
               <div class="step-header">Etapa 3: Selecione os Alunos</div>
               <!-- Área de busca (opcional) -->
               <div
+                id="aluno-selected-count"
+                class="mb-2 text-sm text-default-800"
+              >
+                Total selecionados: 0
+              </div>
+
+              <div
                 class="flex flex-wrap items-center justify-between py-4 px-5"
               >
                 <div class="relative flex">
@@ -254,6 +261,13 @@
             <!-- Etapa 4: Selecionar Questões -->
             <fieldset>
               <div class="step-header">Etapa 4: Selecione as Questões</div>
+              <div
+                id="questao-selected-count"
+                class="mb-2 text-sm text-default-800"
+              >
+                <h2>Total selecionados: 0</h2>
+              </div>
+
               <!-- Área de busca para questões -->
               <div
                 class="flex flex-wrap items-center justify-between py-4 px-5"
@@ -365,7 +379,7 @@
                   class="btn-custom"
                   style="background-color: #10b981; border-color: #10b981"
                 >
-                  Confirmar Cadastro
+                  Concluir Cadastro
                 </button>
               </div>
             </fieldset>
@@ -390,6 +404,18 @@
         var currentPageQuestoes = 1;
         var itemsPerPageQuestoes = 10;
         var selectedQuestoesIds = [];
+
+        // Funções para atualizar os contadores de itens selecionados
+        function updateAlunosSelectedCount() {
+          $("#aluno-selected-count").text(
+            "Total selecionados: " + selectedAlunosIds.length
+          );
+        }
+        function updateQuestoesSelectedCount() {
+          $("#questao-selected-count").text(
+            "Total selecionados: " + selectedQuestoesIds.length
+          );
+        }
 
         // Função para renderizar alunos
         function renderAlunosPage() {
@@ -433,6 +459,7 @@
             `);
           }
           renderPagination();
+          updateAlunosSelectedCount();
         }
 
         function renderPagination() {
@@ -462,6 +489,7 @@
               })
             : [];
           $("#aluno-table-body .aluno-checkbox").prop("checked", checked);
+          updateAlunosSelectedCount();
         });
 
         $(document).on("change", ".aluno-checkbox", function () {
@@ -476,6 +504,7 @@
             });
             $("#select-all-alunos").prop("checked", false);
           }
+          updateAlunosSelectedCount();
         });
 
         // Busca alunos via AJAX ao alterar a turma
@@ -550,6 +579,7 @@
             `);
           }
           renderQuestoesPagination();
+          updateQuestoesSelectedCount();
         }
 
         function renderQuestoesPagination() {
@@ -579,6 +609,7 @@
               })
             : [];
           $("#questao-table-body .questao-checkbox").prop("checked", checked);
+          updateQuestoesSelectedCount();
         });
 
         $(document).on("change", ".questao-checkbox", function () {
@@ -593,6 +624,7 @@
             });
             $("#select-all-questoes").prop("checked", false);
           }
+          updateQuestoesSelectedCount();
         });
 
         // Busca questões via AJAX – chamada ao entrar na Etapa 4
@@ -799,11 +831,11 @@
             html:
               "<div>" +
               '<label for="simpleinput" class="text-default-800 text-sm font-medium inline-block mb-2">Descrição</label>' +
-              '<input type="text" id="simpleinput" class="block w-full rounded py-2.5 px-4 text-default-800 text-sm focus:ring-transparent border-default-200 dark:bg-default-50">' +
+              '<input type="text" id="simpleinput" class="block w-full rounded py-2.5 px-4 text-default-800 text-sm focus:ring-transparent border-default-200 dark:bg-default-50" placeholder="Descrição">' +
               "</div>" +
               '<div style="margin-top:1rem;">' +
-              '<label for="example-time" class="text-default-800 text-sm font-medium inline-block mb-2">Tempo da prova (em horas)</label>' +
-              '<input class="block w-full rounded py-2.5 px-4 text-default-800 text-sm focus:ring-transparent border-default-200 dark:bg-default-50" id="example-time" type="time" name="time">' +
+              '<label for="example-time" class="text-default-800 text-sm font-medium inline-block mb-2">Tempo da prova (HH:MM)</label>' +
+              '<input id="example-time" type="time" class="block w-full rounded py-2.5 px-4 text-default-800 text-sm focus:ring-transparent border-default-200 dark:bg-default-50" placeholder="Tempo de prova (HH:MM:SS)">' +
               "</div>",
             focusConfirm: false,
             preConfirm: () => {
@@ -886,6 +918,61 @@
             }
           });
         });
+      });
+
+      // Rota para ativar simulado via checkbox com confirmação
+      $(document).on("change", ".ativar-simulado", function () {
+        var checkbox = $(this);
+        if (checkbox.is(":checked")) {
+          Swal.fire({
+            title: "Atenção",
+            text: "Esta operação não poderá ser desfeita! Deseja prosseguir para ativar este simulado?",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonText: "Sim, ativar",
+            cancelButtonText: "Cancelar",
+            confirmButtonColor: "#10b981",
+            cancelButtonColor: "#d33",
+          }).then((result) => {
+            if (result.isConfirmed) {
+              var simuladoId = checkbox.data("id");
+              $.ajax({
+                url: "/ativar-simulado/" + simuladoId,
+                method: "PUT",
+                dataType: "json",
+                success: function (response) {
+                  if (response.success) {
+                    Swal.fire({
+                      icon: "success",
+                      title: "Simulado ativado!",
+                      text: response.message,
+                      timer: 2000,
+                      showConfirmButton: false,
+                    });
+                    checkbox.prop("disabled", true);
+                  } else {
+                    Swal.fire({
+                      icon: "error",
+                      title: "Erro",
+                      text: response.error,
+                    });
+                    checkbox.prop("checked", false);
+                  }
+                },
+                error: function () {
+                  Swal.fire({
+                    icon: "error",
+                    title: "Erro",
+                    text: "Não foi possível ativar o simulado.",
+                  });
+                  checkbox.prop("checked", false);
+                },
+              });
+            } else {
+              checkbox.prop("checked", false);
+            }
+          });
+        }
       });
 
       $(document).ready(function () {
