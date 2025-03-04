@@ -1573,6 +1573,32 @@ app.post("/cadastrar-simulado-steps", verificarAutenticacao, (req, res) => {
     }
   );
 });
+app.put("/ativar-simulado/:id", verificarAutenticacao, (req, res) => {
+  const simuladoId = req.params.id;
+  const professorId = req.session.user.id;
+  db.query(
+    `UPDATE simulado s 
+     INNER JOIN turma t ON s.turma_id = t.id
+     SET s.ativa = 1
+     WHERE s.id = ? AND t.professor_id = ?`,
+    [simuladoId, professorId],
+    (err, result) => {
+      if (err) {
+        console.error("Erro ao ativar simulado:", err);
+        return res.status(500).json({ error: "Erro ao ativar simulado." });
+      }
+      if (result.affectedRows === 0) {
+        return res
+          .status(403)
+          .json({ error: "Acesso negado ou simulado inexistente." });
+      }
+      return res.json({
+        success: true,
+        message: "Simulado ativado com sucesso!",
+      });
+    }
+  );
+});
 
 // Inicializa o servidor
 const PORT = process.env.PORT || 3000;
