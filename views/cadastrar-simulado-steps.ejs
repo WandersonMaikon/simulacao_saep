@@ -391,7 +391,7 @@
         var itemsPerPageQuestoes = 10;
         var selectedQuestoesIds = [];
 
-        // Função para renderizar a página de alunos
+        // Função para renderizar alunos
         function renderAlunosPage() {
           var tbody = $("#aluno-table-body");
           tbody.empty();
@@ -435,7 +435,6 @@
           renderPagination();
         }
 
-        // Função para renderizar a paginação dos alunos
         function renderPagination() {
           var totalPages = Math.ceil(allAlunos.length / itemsPerPage);
           var paginationHtml = "";
@@ -794,16 +793,22 @@
 
         // Intercepta o submit do formulário para solicitar campos adicionais via modal
         $("#form-cadastrar-simulado").submit(function (e) {
-          e.preventDefault(); // Impede o envio normal
+          e.preventDefault(); // Impede o envio normal do formulário
           Swal.fire({
             title: "Informe os dados adicionais",
             html:
-              '<textarea id="swal-input-descricao" class="swal2-textarea" placeholder="Descrição"></textarea>' +
-              '<input id="swal-input-tempo" class="swal2-input" placeholder="Tempo de prova (HH:MM:SS)">',
+              "<div>" +
+              '<label for="simpleinput" class="text-default-800 text-sm font-medium inline-block mb-2">Descrição</label>' +
+              '<input type="text" id="simpleinput" class="block w-full rounded py-2.5 px-4 text-default-800 text-sm focus:ring-transparent border-default-200 dark:bg-default-50">' +
+              "</div>" +
+              '<div style="margin-top:1rem;">' +
+              '<label for="example-time" class="text-default-800 text-sm font-medium inline-block mb-2">Tempo da prova (em horas)</label>' +
+              '<input class="block w-full rounded py-2.5 px-4 text-default-800 text-sm focus:ring-transparent border-default-200 dark:bg-default-50" id="example-time" type="time" name="time">' +
+              "</div>",
             focusConfirm: false,
             preConfirm: () => {
-              const descricao = $("#swal-input-descricao").val().trim();
-              const tempo = $("#swal-input-tempo").val().trim();
+              const descricao = $("#simpleinput").val().trim();
+              const tempo = $("#example-time").val().trim();
               if (!descricao || !tempo) {
                 Swal.showValidationMessage("Preencha ambos os campos");
               }
