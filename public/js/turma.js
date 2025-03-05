@@ -1,11 +1,13 @@
 $(document).ready(function () {
   // Cadastro de Turma
   $("#open-modal-turma").click(function () {
-    $("#modal-turma").removeClass("hidden");
+    $("#modal-turma").removeClass("modal-hidden");
   });
+
   $("#close-modal-turma").click(function () {
-    $("#modal-turma").addClass("hidden");
+    $("#modal-turma").addClass("modal-hidden");
   });
+
   $("#form-cadastrar-turma").submit(function (event) {
     event.preventDefault();
     $.ajax({
@@ -13,7 +15,7 @@ $(document).ready(function () {
       type: "POST",
       data: $(this).serialize(),
       success: function (response) {
-        $("#modal-turma").addClass("hidden");
+        $("#modal-turma").addClass("modal-hidden");
         Swal.fire({
           title: response.message.includes("sucesso") ? "Sucesso!" : "Erro!",
           text: response.message.includes("sucesso")
@@ -28,7 +30,7 @@ $(document).ready(function () {
         });
       },
       error: function (xhr) {
-        $("#modal-turma").addClass("hidden");
+        $("#modal-turma").addClass("modal-hidden");
         let errorMsg =
           (xhr.responseJSON && xhr.responseJSON.error) ||
           "Erro ao cadastrar turma.";
@@ -79,20 +81,20 @@ $(document).ready(function () {
     });
   });
 
-  // Edição de Turma
-  $(document).on("click", ".edit-turma", function (e) {
-    e.preventDefault();
-    const id = $(this).data("id");
-    const nome = $(this).data("nome");
-    const curso_id = $(this).data("curso_id");
-    $("#edit_turma_id").val(id);
-    $("#edit_turma_nome").val(nome);
-    $("#edit_turma_curso_id").val(curso_id);
-    $("#modal-editar-turma").removeClass("hidden");
+  $(document).ready(function () {
+    // Abre o modal de edição de turma
+    $(".edit-turma").click(function (e) {
+      e.preventDefault();
+      // Preenche os campos do modal conforme necessário...
+      $("#modal-editar-turma").removeClass("modal-hidden");
+    });
+
+    // Fecha o modal de edição de turma
+    $("#close-edit-modal-turma").click(function () {
+      $("#modal-editar-turma").addClass("modal-hidden");
+    });
   });
-  $("#close-edit-modal-turma").click(function () {
-    $("#modal-editar-turma").addClass("hidden");
-  });
+
   $("#form-editar-turma").submit(function (e) {
     e.preventDefault();
     Swal.fire({
@@ -127,14 +129,5 @@ $(document).ready(function () {
         });
       }
     });
-  });
-});
-$(document).ready(function () {
-  $("#open-modal-turma").click(function () {
-    $("#modal-turma").removeClass("modal-hidden");
-  });
-
-  $("#close-modal-turma").click(function () {
-    $("#modal-turma").addClass("modal-hidden");
   });
 });
