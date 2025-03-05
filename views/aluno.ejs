@@ -70,9 +70,6 @@
             <table class="min-w-full">
               <thead class="border-b border-dashed border-default-200">
                 <tr>
-                  <td class="px-6 py-3 w-10 font-medium text-default-900">
-                    <input type="checkbox" class="form-checkbox ..." />
-                  </td>
                   <th
                     class="px-6 py-3 text-start text-sm capitalize font-semibold text-default-900 min-w-32"
                   >
@@ -104,9 +101,6 @@
                 <% if (turmas.length > 0) { %> <% turmas.forEach(function(turma)
                 { %>
                 <tr>
-                  <td class="px-6 py-3">
-                    <input type="checkbox" class="form-checkbox ..." />
-                  </td>
                   <td class="px-6 py-3"><%= turma.id %></td>
                   <td class="px-6 py-3"><%= turma.nome %></td>
                   <td class="px-6 py-3">
@@ -124,12 +118,7 @@
                         class="text-blue-500 hover:underline"
                         >Cadastrar Alunos</a
                       >
-                      &nbsp;|&nbsp;
-                      <a
-                        href="/aluno/listar?turma_id=<%= turma.id %>"
-                        class="text-green-500 hover:underline"
-                        >Ver Alunos</a
-                      >
+                      &nbsp;
                     </div>
                   </td>
                 </tr>
@@ -166,7 +155,5 @@
       <%- include('partials/footer') %>
     </div>
   </body>
-  <script src="js/aluno.js">
-    
-  </script>
+  <script src="js/aluno.js"></script>
 </html>
