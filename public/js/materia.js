@@ -153,12 +153,17 @@ $(document).ready(function () {
   });
 });
 $(document).ready(function () {
-  $("#open-modal").click(function () {
-    $("#modal-uc").removeClass("modal-hidden");
-  });
+  $(document).on("click", ".edit-materia", function (e) {
+    e.preventDefault();
+    var id = $(this).data("id");
+    var nome = $(this).data("nome");
+    var curso_id = $(this).data("curso_id");
 
-  $("#close-modal").click(function () {
-    $("#modal-uc").addClass("modal-hidden");
+    $("#edit_id").val(id);
+    $("#edit_nome_materia").val(nome);
+    $("#edit_curso_id").val(curso_id);
+
+    $("#modal-editar").removeClass("modal-hidden");
   });
 
   $("#close-edit-modal").click(function () {

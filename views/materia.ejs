@@ -32,9 +32,7 @@
       <div class="p-6 space-y-6">
         <!-- Título da página -->
         <div class="flex items-center justify-between w-full print:hidden">
-          <h4 class="text-lg font-semibold text-default-900">
-            Lista de matérias
-          </h4>
+          <h4 class="text-lg font-semibold text-default-900">Lista de UCs</h4>
         </div>
         <!-- Cartão com total de UCs (exemplo estático) -->
         <div class="grid lg:grid-cols-4 md:grid-cols-2 grid-cols-1 gap-6">
@@ -49,7 +47,9 @@
                     <%= totalRows %>
                   </h4>
                 </div>
-                <span class="shrink h-18 w-18 inline-flex items-center justify-center rounded-lg bg-primary/20 text-primary">
+                <span
+                  class="shrink h-18 w-18 inline-flex items-center justify-center rounded-lg bg-primary/20 text-primary"
+                >
                   <i class="ph ph-books text-4xl"></i>
                 </span>
               </div>
@@ -65,7 +65,9 @@
               placeholder="Procurar matéria..."
             />
             <span class="absolute start-4 top-2.5">
-              <i class="ph-duotone ph-magnifying-glass text-lg text-default-600"></i>
+              <i
+                class="ph-duotone ph-magnifying-glass text-lg text-default-600"
+              ></i>
             </span>
           </div>
           <button
@@ -78,100 +80,109 @@
         </div>
         <!-- Tabela de matérias -->
         <div class="shadow rounded-lg bg-white dark:bg-default-50 h-fit">
-          <div class="border-t border-dashed border-default-200 relative overflow-x-auto">
+          <div
+            class="border-t border-dashed border-default-200 relative overflow-x-auto"
+          >
             <table class="min-w-full">
               <thead class="border-b border-dashed border-default-200">
                 <tr>
-                  <td class="px-6 py-3 w-10 font-medium text-default-900">
-                    <input type="checkbox" class="form-checkbox transition-all duration-100 ease-in-out border-default-200 cursor-pointer rounded focus:ring-0 bg-transparent" />
-                  </td>
-                  <th class="px-6 py-3 text-start text-sm capitalize font-semibold text-default-900 min-w-32">
+                  <th
+                    class="px-6 py-3 text-start text-sm capitalize font-semibold text-default-900 min-w-32"
+                  >
                     Id
                   </th>
-                  <th class="px-6 py-3 text-start text-sm capitalize font-semibold text-default-900 min-w-32">
+                  <th
+                    class="px-6 py-3 text-start text-sm capitalize font-semibold text-default-900 min-w-32"
+                  >
                     UC
                   </th>
-                  <th class="px-6 py-3 text-start text-sm capitalize font-semibold text-default-900 min-w-40">
+                  <th
+                    class="px-6 py-3 text-start text-sm capitalize font-semibold text-default-900 min-w-40"
+                  >
                     Curso
                   </th>
-                  <th class="px-3 py-3 text-center text-sm capitalize font-semibold text-default-900 min-w-32">
+                  <th
+                    class="px-3 py-3 text-center text-sm capitalize font-semibold text-default-900 min-w-32"
+                  >
                     Ação
                   </th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-dashed divide-default-200">
-                <% if (materias && materias.length > 0) { %>
-                  <% materias.forEach(materia => { %>
-                    <tr>
-                      <td class="px-6 py-3">
-                        <input type="checkbox" class="form-checkbox ..." />
-                      </td>
-                      <td class="px-6 py-3"><%= materia.id %></td>
-                      <td class="px-6 py-3"><%= materia.nome %></td>
-                      <td class="px-6 py-3"><%= materia.curso %></td>
-                      <td class="px-3 py-3 text-center whitespace-nowrap text-sm font-medium">
-                        <div class="flex items-center justify-center gap-2">
-                          <!-- Botão para abrir modal de edição -->
-                          <a
-                            href="#"
-                            class="edit-materia inline-flex items-center justify-center h-8 w-8 rounded-md bg-cyan-500/20 text-cyan-500 transition-all duration-200 hover:bg-cyan-500 hover:text-white"
-                            data-id="<%= materia.id %>"
-                            data-nome="<%= materia.nome %>"
-                            data-curso_id="<%= materia.curso_id %>"
-                          >
-                            <i class="ph-duotone ph-pencil-simple-line text-base"></i>
-                          </a>
-                          <!-- Botão de exclusão -->
-                          <button
-                            class="delete-materia inline-flex items-center justify-center h-8 w-8 rounded-md bg-red-500/20 text-red-500 transition-all duration-200 hover:bg-red-500 hover:text-white"
-                            data-id="<%= materia.id %>"
-                          >
-                            <i class="ph-duotone ph-trash text-base"></i>
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  <% }); %>
-                <% } else { %>
-                  <tr>
-                    <td colspan="5" class="text-center py-6">
-                      Nenhuma matéria cadastrada.
-                    </td>
-                  </tr>
+                <% if (materias && materias.length > 0) { %> <%
+                materias.forEach(materia => { %>
+                <tr>
+                  <td class="px-6 py-3"><%= materia.id %></td>
+                  <td class="px-6 py-3"><%= materia.nome %></td>
+                  <td class="px-6 py-3"><%= materia.curso %></td>
+                  <td
+                    class="px-3 py-3 text-center whitespace-nowrap text-sm font-medium"
+                  >
+                    <div class="flex items-center justify-center gap-2">
+                      <!-- Botão para abrir modal de edição -->
+                      <a
+                        href="#"
+                        class="edit-materia inline-flex items-center justify-center h-8 w-8 rounded-md bg-cyan-500/20 text-cyan-500 transition-all duration-200 hover:bg-cyan-500 hover:text-white"
+                        data-id="<%= materia.id %>"
+                        data-nome="<%= materia.nome %>"
+                        data-curso_id="<%= materia.curso_id %>"
+                      >
+                        <i
+                          class="ph-duotone ph-pencil-simple-line text-base"
+                        ></i>
+                      </a>
+                      <!-- Botão de exclusão -->
+                      <button
+                        class="delete-materia inline-flex items-center justify-center h-8 w-8 rounded-md bg-red-500/20 text-red-500 transition-all duration-200 hover:bg-red-500 hover:text-white"
+                        data-id="<%= materia.id %>"
+                      >
+                        <i class="ph-duotone ph-trash text-base"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+                <% }); %> <% } else { %>
+                <tr>
+                  <td colspan="5" class="text-center py-6">
+                    Nenhuma matéria cadastrada.
+                  </td>
+                </tr>
                 <% } %>
               </tbody>
             </table>
           </div>
           <!-- Paginação -->
-          <div class="flex items-center justify-between py-3 px-6 border-t border-dashed border-default-200">
+          <div
+            class="flex items-center justify-between py-3 px-6 border-t border-dashed border-default-200"
+          >
             <h6 class="text-default-600">
-              Mostrando <%= (currentPage - 1) * 10 + 1 %> a <%= (currentPage * 10 > totalRows ? totalRows : currentPage * 10) %> de <%= totalRows %>
+              Mostrando <%= (currentPage - 1) * 10 + 1 %> a <%= (currentPage *
+              10 > totalRows ? totalRows : currentPage * 10) %> de <%= totalRows
+              %>
             </h6>
             <nav class="flex items-center gap-1">
               <% if (currentPage > 1) { %>
-                <a
-                  class="inline-flex items-center justify-center h-8 w-8 border border-default-200 rounded-md text-default-950 transition-all duration-200 hover:bg-primary hover:text-white hover:border-primary"
-                  href="/materias?page=<%= currentPage - 1 %>"
-                >
-                  <i class="ph ph-caret-left text-base"></i>
-                </a>
-              <% } %>
-              <% for (let i = 1; i <= totalPages; i++) { %>
-                <a
-                  class="inline-flex items-center justify-center h-8 w-8 border rounded-md transition-all duration-200 <%= currentPage === i ? 'bg-primary text-white border-primary' : 'border-default-200 text-default-950 hover:bg-primary hover:text-white hover:border-primary' %>"
-                  href="/materias?page=<%= i %>"
-                  aria-current="<%= currentPage === i ? 'page' : '' %>"
-                >
-                  <%= i %>
-                </a>
-              <% } %>
-              <% if (currentPage < totalPages) { %>
-                <a
-                  class="inline-flex items-center justify-center h-8 w-8 border border-default-200 rounded-md text-default-950 transition-all duration-200 hover:bg-primary hover:text-white hover:border-primary"
-                  href="/materias?page=<%= currentPage + 1 %>"
-                >
-                  <i class="ph ph-caret-right text-base"></i>
-                </a>
+              <a
+                class="inline-flex items-center justify-center h-8 w-8 border border-default-200 rounded-md text-default-950 transition-all duration-200 hover:bg-primary hover:text-white hover:border-primary"
+                href="/materias?page=<%= currentPage - 1 %>"
+              >
+                <i class="ph ph-caret-left text-base"></i>
+              </a>
+              <% } %> <% for (let i = 1; i <= totalPages; i++) { %>
+              <a
+                class="inline-flex items-center justify-center h-8 w-8 border rounded-md transition-all duration-200 <%= currentPage === i ? 'bg-primary text-white border-primary' : 'border-default-200 text-default-950 hover:bg-primary hover:text-white hover:border-primary' %>"
+                href="/materias?page=<%= i %>"
+                aria-current="<%= currentPage === i ? 'page' : '' %>"
+              >
+                <%= i %>
+              </a>
+              <% } %> <% if (currentPage < totalPages) { %>
+              <a
+                class="inline-flex items-center justify-center h-8 w-8 border border-default-200 rounded-md text-default-950 transition-all duration-200 hover:bg-primary hover:text-white hover:border-primary"
+                href="/materias?page=<%= currentPage + 1 %>"
+              >
+                <i class="ph ph-caret-right text-base"></i>
+              </a>
               <% } %>
             </nav>
           </div>
@@ -181,6 +192,7 @@
     </div>
 
     <!-- Modal para Cadastro de UC -->
+    <!-- Modal para Cadastro de UC -->
     <div
       id="modal-uc"
       class="fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-50 z-[9999] modal-overlay modal-hidden"
@@ -189,10 +201,20 @@
         <h3 class="text-lg font-semibold text-gray-900 mb-4">Cadastrar UC</h3>
         <form id="form-cadastrar-uc" action="/cadastrar-materia" method="POST">
           <div class="mb-8">
-            <label for="curso_id" class="block text-base font-semibold text-default-900 mb-2">Curso</label>
-            <select name="curso_id" id="curso_id" required class="border border-gray-300 rounded-md w-full p-2">
+            <label
+              for="curso_id"
+              class="block text-base font-semibold text-default-900 mb-2"
+            >
+              Curso
+            </label>
+            <select
+              name="curso_id"
+              id="curso_id"
+              required
+              class="border border-gray-300 rounded-md w-full p-2"
+            >
               <% cursos.forEach(curso => { %>
-                <option value="<%= curso.id %>"><%= curso.nome %></option>
+              <option value="<%= curso.id %>"><%= curso.nome %></option>
               <% }); %>
             </select>
           </div>
@@ -200,15 +222,31 @@
             <label for="nome_materia" class="block font-semibold text-gray-700">
               Nome da UC:
             </label>
-            <input type="text" name="nome_materia" id="nome_materia" required class="border border-gray-300 rounded-md w-96 p-2" />
+            <input
+              type="text"
+              name="nome_materia"
+              id="nome_materia"
+              required
+              class="border border-gray-300 rounded-md w-96 p-2"
+            />
           </div>
-          <div class="text-center mt-8">
-            <button type="submit" class="bg-primary text-white px-6 py-2 rounded-md">
+          <!-- Contêiner flex para os botões -->
+          <div class="flex items-center justify-center gap-4 mt-8">
+            <button
+              type="submit"
+              class="py-2 px-5 inline-block font-semibold tracking-wide border align-middle duration-500 text-sm text-center bg-blue-600 hover:bg-blue-700 border-blue-600 hover:border-blue-700 text-white rounded"
+            >
               Cadastrar
+            </button>
+            <button
+              id="close-modal"
+              type="button"
+              class="py-2 px-5 font-semibold tracking-wide border duration-500 text-sm text-center bg-red-600 hover:bg-red-700 border-red-600 hover:border-red-700 text-white rounded"
+            >
+              Fechar
             </button>
           </div>
         </form>
-        <button id="close-modal" class="mt-4 text-red-500">Fechar</button>
       </div>
     </div>
 
@@ -223,24 +261,55 @@
           <!-- Campo oculto para o ID da matéria -->
           <input type="hidden" id="edit_id" name="id" value="" />
           <div class="mb-8">
-            <label for="edit_curso_id" class="block text-base font-semibold text-default-900 mb-2">Curso</label>
-            <select name="curso_id" id="edit_curso_id" required class="border border-gray-300 rounded-md w-full p-2">
+            <label
+              for="edit_curso_id"
+              class="block text-base font-semibold text-default-900 mb-2"
+            >
+              Curso
+            </label>
+            <select
+              name="curso_id"
+              id="edit_curso_id"
+              required
+              class="border border-gray-300 rounded-md w-full p-2"
+            >
               <% cursos.forEach(curso => { %>
-                <option value="<%= curso.id %>"><%= curso.nome %></option>
+              <option value="<%= curso.id %>"><%= curso.nome %></option>
               <% }); %>
             </select>
           </div>
           <div class="mb-8">
-            <label for="edit_nome_materia" class="block text-base font-semibold text-default-900 mb-2">Nome da Matéria</label>
-            <input type="text" id="edit_nome_materia" name="nome_materia" required class="border border-gray-300 rounded-md w-full p-2" />
+            <label
+              for="edit_nome_materia"
+              class="block text-base font-semibold text-default-900 mb-2"
+            >
+              Nome da Matéria
+            </label>
+            <input
+              type="text"
+              id="edit_nome_materia"
+              name="nome_materia"
+              required
+              class="border border-gray-300 rounded-md w-full p-2"
+            />
           </div>
-          <div class="text-center mt-8">
-            <button type="submit" class="bg-primary text-white px-6 py-2 rounded-md">
+
+          <div class="flex items-center justify-center gap-4 mt-8">
+            <button
+              type="submit"
+              class="py-2 px-5 inline-block font-semibold tracking-wide border align-middle duration-500 text-sm text-center bg-blue-600 hover:bg-blue-700 border-blue-600 hover:border-blue-700 text-white rounded"
+            >
               Salvar Alterações
+            </button>
+            <button
+              id="close-edit-modal"
+              type="button"
+              class="py-2 px-5 font-semibold tracking-wide border duration-500 text-sm text-center bg-red-600 hover:bg-red-700 border-red-600 hover:border-red-700 text-white rounded"
+            >
+              Fechar
             </button>
           </div>
         </form>
-        <button id="close-edit-modal" class="mt-4 text-red-500">Fechar</button>
       </div>
     </div>
 
