@@ -24,7 +24,7 @@ $(document).ready(function () {
           timer: 5000,
           timerProgressBar: true,
         }).then(() => {
-          window.location.href = "/questoes?page=1";
+          window.location.href = "/questao?page=1";
         });
       },
       error: function (xhr) {
@@ -143,4 +143,9 @@ $(document).ready(function () {
       }
     });
   });
+});
+$(document).on("click", ".edit-questao", function (e) {
+  // e.preventDefault();  // Remova ou comente esta linha
+  var id = $(this).data("id");
+  window.location.href = "/editar-questao/" + id;
 });

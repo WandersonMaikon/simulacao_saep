@@ -1039,6 +1039,46 @@ app.post("/cadastrar-questao", verificarAutenticacao, (req, res) => {
   );
 });
 
+app.post("/editar-questao", verificarAutenticacao, (req, res) => {
+  const {
+    id,
+    curso_id,
+    materia_id,
+    titulo,
+    enunciado,
+    alternativa_a,
+    alternativa_b,
+    alternativa_c,
+    alternativa_d,
+    resposta_correta,
+  } = req.body;
+  // Atualize a questão no banco de dados:
+  db.query(
+    `UPDATE questao 
+     SET curso_id = ?, materia_id = ?, titulo = ?, enunciado = ?, alternativa_a = ?, alternativa_b = ?, alternativa_c = ?, alternativa_d = ?, resposta_correta = ?
+     WHERE id = ?`,
+    [
+      curso_id,
+      materia_id,
+      titulo,
+      enunciado,
+      alternativa_a,
+      alternativa_b,
+      alternativa_c,
+      alternativa_d,
+      resposta_correta,
+      id,
+    ],
+    (err, result) => {
+      if (err) {
+        console.error("Erro ao editar questão:", err);
+        return res.status(500).json({ error: "Erro ao editar questão." });
+      }
+      res.json({ success: true, message: "Questão editada com sucesso!" });
+    }
+  );
+});
+
 // Rota para deletar uma questão
 app.delete(
   "/deletar-questao/:identificador",
@@ -1084,7 +1124,7 @@ app.get("/editar-questao/:identificador", verificarAutenticacao, (req, res) => {
         return res.status(500).send("Erro interno no servidor.");
       }
       if (resultados.length === 0) {
-        return res.redirect("/questoes?page=1");
+        return res.redirect("/questao?page=1");
       }
       const questao = resultados[0];
 
@@ -1452,7 +1492,7 @@ app.get("/alunos-por-turma/:turmaId", verificarAutenticacao, (req, res) => {
     }
   );
 });
-app.get("/questoes-por-curso/:cursoId", verificarAutenticacao, (req, res) => {
+app.get("/questao-por-curso/:cursoId", verificarAutenticacao, (req, res) => {
   const cursoId = Number(req.params.cursoId);
   db.query(
     "SELECT q.id, q.titulo, q.enunciado, c.nome AS curso, m.nome AS materia FROM questao q JOIN curso c ON q.curso_id = c.id JOIN materia m ON q.materia_id = m.id WHERE q.curso_id = ?",

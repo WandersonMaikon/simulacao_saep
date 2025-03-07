@@ -11,7 +11,7 @@ new Choices("#choices-multiple-remove-button");
 $("#choices-multiple-remove-button").on("change", function () {
   let selectedCourses = $(this).val();
   if (selectedCourses && selectedCourses.length > 0) {
-    // Aqui, usamos o primeiro curso selecionado para filtrar as matérias
+    //curso selecionado para filtrar as matérias
     const cursoId = selectedCourses[0];
     $.ajax({
       url: "/materias-por-curso/" + cursoId,
@@ -30,7 +30,7 @@ $("#choices-multiple-remove-button").on("change", function () {
             `<option value="">Nenhuma matéria encontrada</option>`
           );
         }
-        // Opcional: reinicialize o Choices.js para o select de matéria, se desejar
+
         new Choices("#select-materia");
       },
       error: function () {
