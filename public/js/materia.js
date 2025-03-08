@@ -38,7 +38,7 @@ $(document).ready(function () {
       showCancelButton: true,
       confirmButtonText: "Sim, editar!",
       cancelButtonText: "Cancelar",
-      confirmButtonColor: "#02A824",
+      confirmButtonColor: "#3085d6",
       cancelButtonColor: "#d33",
     }).then((result) => {
       if (result.isConfirmed) {
@@ -131,7 +131,7 @@ $(document).ready(function () {
         showCancelButton: true,
         confirmButtonText: "Sim, excluir!",
         cancelButtonText: "Cancelar",
-        confirmButtonColor: "#02A824",
+        confirmButtonColor: "#3085d6",
         cancelButtonColor: "#d33",
       }).then((result) => {
         if (result.isConfirmed) {

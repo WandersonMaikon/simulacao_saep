@@ -1,4 +1,3 @@
-// Inicializa Choices para o select de cursos
 const courseChoices = new Choices("#choices-multiple-remove-button", {
   removeItemButton: true,
   placeholder: true,
@@ -42,20 +41,19 @@ $("#choices-multiple-remove-button").on("change", function () {
 
 // Botão Cancelar: Se houver algum campo preenchido, avisa que os dados serão perdidos
 $("#cancel-btn").click(function () {
-  // Verifica se algum input ou textarea não está vazio
   let hasData = false;
   $("#form-cadastrar-questao")
     .find("input[type='text'], textarea")
     .each(function () {
       if ($(this).val().trim() !== "") {
         hasData = true;
-        return false; // interrompe o loop
+        return false;
       }
     });
   if (hasData) {
     Swal.fire({
       title: "Tem certeza?",
-      text: "Ao cancelar, todas as informações preenchidas serão perdidas.",
+      text: "Ao cancelar, as informações preenchidas serão perdidas.",
       icon: "warning",
       showCancelButton: true,
       confirmButtonText: "Sim, cancelar",
@@ -64,15 +62,17 @@ $("#cancel-btn").click(function () {
       cancelButtonColor: "#d33",
     }).then((result) => {
       if (result.isConfirmed) {
-        // Limpa apenas os campos de texto e textarea, mantendo os selects
         $("#form-cadastrar-questao")
           .find("input[type='text'], textarea")
           .val("");
+        $("#edit-section").addClass("hidden");
+        window.location.href = "/questao?page=1";
       }
     });
   } else {
-    // Se não houver dados, apenas limpa os campos (ou faz outra ação)
     $("#form-cadastrar-questao")[0].reset();
+    $("#edit-section").addClass("hidden");
+    window.location.href = "/questao?page=1";
   }
 });
 

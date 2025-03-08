@@ -451,7 +451,7 @@ $(document).ready(function () {
       showCancelButton: true,
       confirmButtonText: "Confirmar",
       cancelButtonText: "Cancelar",
-      confirmButtonColor: "#10b981",
+      confirmButtonColor: "#3085d6",
       cancelButtonColor: "#d33",
     }).then((result) => {
       if (result.isConfirmed) {
