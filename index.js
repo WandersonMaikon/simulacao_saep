@@ -40,6 +40,11 @@ app.use((req, res, next) => {
   next();
 });
 
+app.use((req, res, next) => {
+  res.locals.user = req.session.user; // ou res.locals.professor, conforme sua preferência
+  next();
+});
+
 // Importando as rotas
 const authRoutes = require("./routes/auth");
 const registroRoutes = require("./routes/registro");
