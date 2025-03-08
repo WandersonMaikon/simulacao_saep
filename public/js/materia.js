@@ -1,5 +1,14 @@
 $(document).ready(function () {
-  // Ao clicar no botão de edição, abre o modal e preenche os campos
+  // Abrir modal de Cadastro de UC
+  $("#open-modal").click(function () {
+    $("#modal-uc").removeClass("modal-hidden");
+  });
+  // Fechar modal de Cadastro de UC
+  $("#close-modal").click(function () {
+    $("#modal-uc").addClass("modal-hidden");
+  });
+
+  // Abrir modal de Edição de Matéria
   $(document).on("click", ".edit-materia", function (e) {
     e.preventDefault();
     var id = $(this).data("id");
@@ -9,12 +18,13 @@ $(document).ready(function () {
     $("#edit_id").val(id);
     $("#edit_nome_materia").val(nome);
     $("#edit_curso_id").val(curso_id);
-    $("#modal-editar").removeClass("hidden");
+
+    $("#modal-editar").removeClass("modal-hidden");
   });
 
-  // Fecha o modal de edição
+  // Fechar modal de Edição de Matéria
   $("#close-edit-modal").click(function () {
-    $("#modal-editar").addClass("hidden");
+    $("#modal-editar").addClass("modal-hidden");
   });
 
   // Envio do formulário de edição com confirmação
