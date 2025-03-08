@@ -102,11 +102,8 @@ $(document).ready(function () {
     $("#edit_questao_alternativa_c").val(alternativa_c);
     $("#edit_questao_alternativa_d").val(alternativa_d);
     $("#edit_questao_resposta_correta").val(resposta_correta);
-    $("#modal-editar-questao").removeClass("hidden");
   });
-  $("#close-edit-modal-questao").click(function () {
-    $("#modal-editar-questao").addClass("hidden");
-  });
+
   $("#form-editar-questao").submit(function (e) {
     e.preventDefault();
     Swal.fire({
@@ -145,7 +142,6 @@ $(document).ready(function () {
   });
 });
 $(document).on("click", ".edit-questao", function (e) {
-  // e.preventDefault();  // Remova ou comente esta linha
   var id = $(this).data("id");
   window.location.href = "/editar-questao/" + id;
 });

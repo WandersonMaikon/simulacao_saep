@@ -101,7 +101,7 @@ $("#form-cadastrar-questao").submit(function (e) {
             .find("input[type='text'], textarea")
             .val("");
         } else {
-          window.location.href = "/questoes?page=1";
+          window.location.href = "/questao?page=1";
         }
       });
     },

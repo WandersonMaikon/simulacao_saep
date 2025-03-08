@@ -1516,7 +1516,8 @@ app.post("/cadastrar-simulado-steps", verificarAutenticacao, (req, res) => {
   //   tempo_prova: quantidade de horas (informado via modal)
   //   descricao: descrição (informado via modal)
   const { curso, turma, alunos, questoes, tempo_prova, descricao } = req.body;
-  const professorId = req.session.user.id;
+  const professorId = req.session.us
+  er.id;
 
   // Verifica os campos obrigatórios
   if (!curso || !turma) {

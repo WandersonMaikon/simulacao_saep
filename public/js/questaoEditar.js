@@ -1,9 +1,7 @@
 $(document).ready(function () {
-  // Intercepta o submit do formulário de edição de questão
   $("#form-editar-questao").submit(function (e) {
     e.preventDefault(); // Impede o envio padrão do formulário
 
-    // Exibe uma mensagem de confirmação com SweetAlert2
     Swal.fire({
       title: "Tem certeza?",
       text: "Deseja salvar as alterações nesta questão?",
@@ -15,7 +13,6 @@ $(document).ready(function () {
       cancelButtonColor: "#d33",
     }).then((result) => {
       if (result.isConfirmed) {
-        // Envia os dados do formulário via AJAX
         $.ajax({
           url: "/editar-questao",
           type: "POST",
@@ -24,28 +21,20 @@ $(document).ready(function () {
           success: function (response) {
             Swal.fire({
               title: "Editada!",
-              text: response.message, // Exibe a mensagem retornada pelo back‑end
+              text: response.mensagem, // Usando "mensagem" conforme o back‑end
               icon: "success",
               confirmButtonText: "OK",
               timer: 3000,
               timerProgressBar: true,
             }).then(() => {
-              // Redireciona para a listagem de questões (ou recarrega a página)
-              window.location.href = "/questao";
+              window.location.href = "/questao?page=1"; // Rota de listagem correta
             });
           },
           error: function (xhr) {
             let errorMsg =
               (xhr.responseJSON && xhr.responseJSON.error) ||
               "Erro ao editar questão.";
-            Swal.fire({
-              title: "Erro!",
-              text: errorMsg,
-              icon: "error",
-              confirmButtonText: "OK",
-              timer: 5000,
-              timerProgressBar: true,
-            });
+            Swal.fire("Erro!", errorMsg, "error");
           },
         });
       }
