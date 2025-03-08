@@ -1,7 +1,44 @@
 $(document).ready(function () {
-  $("#form-editar-questao").submit(function (e) {
-    e.preventDefault(); // Impede o envio padrão do formulário
+  // Botão Cancelar na edição: se houver dados preenchidos, alerta que serão perdidos
+  $("#cancel-edit-btn").click(function () {
+    let hasData = false;
+    $("#form-editar-questao")
+      .find("input[type='text'], textarea")
+      .each(function () {
+        if ($(this).val().trim() !== "") {
+          hasData = true;
+          return false;
+        }
+      });
+    if (hasData) {
+      Swal.fire({
+        title: "Tem certeza?",
+        text: "Ao cancelar, as informações preenchidas serão perdidas.",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonText: "Sim, cancelar",
+        cancelButtonText: "Voltar",
+        confirmButtonColor: "#3085d6",
+        cancelButtonColor: "#d33",
+      }).then((result) => {
+        if (result.isConfirmed) {
+          $("#form-editar-questao")
+            .find("input[type='text'], textarea")
+            .val("");
+          $("#edit-section").addClass("hidden");
+          window.location.href = "/questao?page=1";
+        }
+      });
+    } else {
+      $("#form-editar-questao")[0].reset();
+      $("#edit-section").addClass("hidden");
+      window.location.href = "/questao?page=1";
+    }
+  });
 
+  // Envio do formulário de edição via AJAX
+  $("#form-editar-questao").submit(function (e) {
+    e.preventDefault();
     Swal.fire({
       title: "Tem certeza?",
       text: "Deseja salvar as alterações nesta questão?",
@@ -17,17 +54,13 @@ $(document).ready(function () {
           url: "/editar-questao",
           type: "POST",
           data: $("#form-editar-questao").serialize(),
-          dataType: "json",
           success: function (response) {
-            Swal.fire({
-              title: "Editada!",
-              text: response.mensagem, // Usando "mensagem" conforme o back‑end
-              icon: "success",
-              confirmButtonText: "OK",
-              timer: 3000,
-              timerProgressBar: true,
-            }).then(() => {
-              window.location.href = "/questao?page=1"; // Rota de listagem correta
+            Swal.fire(
+              "Editada!",
+              "Questão editada com sucesso!",
+              "success"
+            ).then(() => {
+              window.location.href = "/questao?page=1";
             });
           },
           error: function (xhr) {
