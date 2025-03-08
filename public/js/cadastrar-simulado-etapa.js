@@ -242,7 +242,7 @@ $(document).ready(function () {
       return;
     }
     $.ajax({
-      url: "/questoes-por-curso/" + cursoId,
+      url: "/questao-por-curso/" + cursoId,
       type: "GET",
       dataType: "json",
       success: function (data) {
