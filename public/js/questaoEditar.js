@@ -74,3 +74,10 @@ $(document).ready(function () {
     });
   });
 });
+
+document.addEventListener("DOMContentLoaded", function () {
+  var questoesLink = document.querySelector('a[href="/questao"]');
+  if (questoesLink) {
+    questoesLink.classList.add("active");
+  }
+});

@@ -595,3 +595,10 @@ $("#aluno-search").on("keyup", function () {
     }
   });
 });
+
+document.addEventListener("DOMContentLoaded", function () {
+  var simuladoLink = document.querySelector('a[href="/simulados"]');
+  if (simuladoLink) {
+    simuladoLink.classList.add("active");
+  }
+});

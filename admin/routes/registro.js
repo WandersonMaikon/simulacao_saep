@@ -11,7 +11,7 @@ const verificarAutenticacao = (req, res, next) => {
 };
 
 // Exibe a página de registro
-router.get("/registro", (req, res) => {
+router.get("/admin/registro", (req, res) => {
   const db = req.db; // ou importe o db de outro módulo, se preferir
   // Busca todos os cursos disponíveis
   db.query("SELECT id, nome FROM curso", (err, results) => {

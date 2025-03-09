@@ -1,8 +1,9 @@
-require("dotenv").config();
 const express = require("express");
 const session = require("express-session");
 const path = require("path");
 const mysql = require("mysql2");
+require("dotenv").config();
+
 const app = express();
 
 // Configuração do banco de dados
@@ -21,8 +22,14 @@ db.connect((error) => {
   }
 });
 
-// Middlewares
+// Configuração do view engine com múltiplos diretórios de views
 app.set("view engine", "ejs");
+app.set("views", [
+  path.join(__dirname, "admin", "views"),
+  path.join(__dirname, "aluno", "views")
+]);
+
+// Middlewares
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static("public"));
 app.use(express.static(path.join(__dirname, "public")));
@@ -40,21 +47,21 @@ app.use((req, res, next) => {
   next();
 });
 
+// Variáveis locais para as views
 app.use((req, res, next) => {
-  res.locals.user = req.session.user; // ou res.locals.professor, conforme sua preferência
+  res.locals.user = req.session.user;
   next();
 });
 
-// Importando as rotas
-const authRoutes = require("./routes/auth");
-const registroRoutes = require("./routes/registro");
-const turmasRoutes = require("./routes/turmas");
-const materiasRoutes = require("./routes/materias");
-const alunoRoutes = require("./routes/aluno");
-const questaoRoutes = require("./routes/questao");
-const simuladoRoutes = require("./routes/simulado");
+// Importando as rotas (ajuste conforme sua organização)
+const authRoutes = require("./admin/routes/auth");
+const registroRoutes = require("./admin/routes/registro");
+const turmasRoutes = require("./admin/routes/turmas");
+const materiasRoutes = require("./admin/routes/materias");
+const alunoRoutes = require("./admin/routes/aluno");
+const questaoRoutes = require("./admin/routes/questao");
+const simuladoRoutes = require("./admin/routes/simulado");
 
-// Usando as rotas
 app.use(authRoutes);
 app.use(registroRoutes);
 app.use(turmasRoutes);

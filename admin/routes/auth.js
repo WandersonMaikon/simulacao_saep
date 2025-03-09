@@ -5,15 +5,17 @@ const bcrypt = require("bcryptjs");
 // Middleware de autenticação para rotas protegidas
 const verificarAutenticacao = (req, res, next) => {
   if (!req.session.user) {
-    return res.redirect("/login");
+    // Redirecionamento com barra no início
+    return res.redirect("/admin/login");
   }
   next();
 };
 
 // Exibe a página de login
-router.get("/login", (req, res) => {
+router.get("/admin/login", (req, res) => {
   const message = req.session.message || "";
   req.session.message = "";
+  // Como a view está em admin/views e é "login.ejs", renderize como "login"
   res.render("login", { message });
 });
 
@@ -39,13 +41,13 @@ router.post("/login", (req, res) => {
       }
       req.session.user = user;
       req.session.successMessage = "Logado com sucesso!";
-      res.redirect("/dashboard");
+      res.redirect("/admin/dashboard");
     }
   );
 });
 
 // Dashboard (rota protegida)
-router.get("/dashboard", verificarAutenticacao, (req, res) => {
+router.get("/admin/dashboard", verificarAutenticacao, (req, res) => {
   const successMessage = req.session.successMessage || "";
   delete req.session.successMessage;
   res.render("dashboard", {
@@ -57,7 +59,7 @@ router.get("/dashboard", verificarAutenticacao, (req, res) => {
 // Logout
 router.get("/logout", (req, res) => {
   req.session.destroy();
-  res.redirect("/login");
+  res.redirect("/admin/login");
 });
 
 module.exports = router;
