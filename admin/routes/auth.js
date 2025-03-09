@@ -11,7 +11,6 @@ const verificarAutenticacao = (req, res, next) => {
   next();
 };
 
-// Exibe a página de login
 router.get("/admin/login", (req, res) => {
   const message = req.session.message || "";
   req.session.message = "";
