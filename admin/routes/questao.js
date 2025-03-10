@@ -4,7 +4,7 @@ const router = express.Router();
 // Middleware de autenticação
 const verificarAutenticacao = (req, res, next) => {
   if (!req.session.user) {
-    return res.redirect("/login");
+    return res.redirect("/admin/login");
   }
   next();
 };
@@ -14,7 +14,7 @@ const verificarAutenticacao = (req, res, next) => {
 // ==========================
 
 // Listagem de questões com paginação e pesquisa
-router.get("/questao", verificarAutenticacao, (req, res) => {
+router.get("/admin/questao", verificarAutenticacao, (req, res) => {
   const db = req.db;
   const page = parseInt(req.query.page) || 1;
   const limit = 10;

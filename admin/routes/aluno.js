@@ -10,7 +10,7 @@ const verificarAutenticacao = (req, res, next) => {
 };
 
 // Rota para listar turmas para cadastro de alunos
-router.get("/aluno", verificarAutenticacao, (req, res) => {
+router.get("/admin/aluno", verificarAutenticacao, (req, res) => {
   const db = req.db;
   // Contar quantas turmas existem para o professor logado
   db.query(

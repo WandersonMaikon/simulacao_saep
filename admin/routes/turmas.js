@@ -10,7 +10,7 @@ const verificarAutenticacao = (req, res, next) => {
 };
 
 // Listagem de turmas com paginação
-router.get("/turmas", verificarAutenticacao, (req, res) => {
+router.get("/admin/turmas", verificarAutenticacao, (req, res) => {
   const db = req.db; // ou importe o db de outro módulo, conforme sua configuração
   const page = parseInt(req.query.page) || 1;
   const limit = 10;

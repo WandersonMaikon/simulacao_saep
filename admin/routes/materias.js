@@ -10,7 +10,7 @@ const verificarAutenticacao = (req, res, next) => {
 };
 
 // Listagem de matérias com paginação (rota protegida)
-router.get("/materias", verificarAutenticacao, (req, res) => {
+router.get("/admin/materias", verificarAutenticacao, (req, res) => {
   const db = req.db;
   const page = parseInt(req.query.page) || 1;
   const limit = 10;
