@@ -130,7 +130,7 @@ $(document).ready(function () {
     }).then((result) => {
       if (result.isConfirmed) {
         $.ajax({
-          url: "/deletar-aluno/" + alunoId,
+          url: "/admin/deletar-aluno/" + alunoId,
           type: "GET",
           success: function (response) {
             Swal.fire(
@@ -178,7 +178,7 @@ $(document).ready(function () {
     }).then((result) => {
       if (result.isConfirmed) {
         $.ajax({
-          url: "/editar-aluno",
+          url: "/admin/editar-aluno",
           type: "POST",
           data: $("#form-editar-aluno").serialize(),
           success: function (response) {

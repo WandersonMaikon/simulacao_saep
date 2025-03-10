@@ -26,7 +26,7 @@ $(document).ready(function () {
           timer: 5000,
           timerProgressBar: true,
         }).then(() => {
-          window.location.href = "/turmas?page=1";
+          window.location.href = "turmas?page=1";
         });
       },
       error: function (xhr) {

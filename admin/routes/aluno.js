@@ -4,7 +4,7 @@ const router = express.Router();
 // Middleware de autenticação (pode ser reutilizado ou importado de outro módulo)
 const verificarAutenticacao = (req, res, next) => {
   if (!req.session.user) {
-    return res.redirect("/login");
+    return res.redirect("/admin/login");
   }
   next();
 };
@@ -59,7 +59,7 @@ router.get("/admin/aluno", verificarAutenticacao, (req, res) => {
 });
 
 // Rota para exibir o formulário de cadastro de aluno para uma turma específica
-router.get("/aluno/cadastrar", verificarAutenticacao, (req, res) => {
+router.get("/admin/aluno/cadastrar", verificarAutenticacao, (req, res) => {
   const db = req.db;
   const turmaId = req.query.turma_id;
   const page = parseInt(req.query.page) || 1;
@@ -67,7 +67,7 @@ router.get("/aluno/cadastrar", verificarAutenticacao, (req, res) => {
   const offset = (page - 1) * limit;
 
   if (!turmaId) {
-    return res.redirect("/aluno");
+    return res.redirect("/admin/aluno");
   }
 
   db.query(
@@ -76,7 +76,7 @@ router.get("/aluno/cadastrar", verificarAutenticacao, (req, res) => {
     (err, results) => {
       if (err || results.length === 0) {
         console.error("Erro ao verificar a turma:", err);
-        return res.redirect("/aluno");
+        return res.redirect("/admin/aluno");
       }
       const turma = results[0];
 
@@ -177,7 +177,7 @@ router.post("/aluno/cadastrar", verificarAutenticacao, (req, res) => {
 });
 
 // Rota para listar os alunos de uma turma
-router.get("/aluno/listar", verificarAutenticacao, (req, res) => {
+router.get("/admin/aluno/listar", verificarAutenticacao, (req, res) => {
   const db = req.db;
   const turmaId = req.query.turma_id;
   if (!turmaId) {
@@ -239,7 +239,7 @@ router.get("/aluno/listar", verificarAutenticacao, (req, res) => {
 });
 
 // Rota para editar aluno
-router.post("/editar-aluno", verificarAutenticacao, (req, res) => {
+router.post("/admin/editar-aluno", verificarAutenticacao, (req, res) => {
   const db = req.db;
   const { id, turma_id, nome, usuario, senha } = req.body;
 
@@ -271,7 +271,7 @@ router.post("/editar-aluno", verificarAutenticacao, (req, res) => {
 });
 
 // Rota para deletar aluno
-router.get("/deletar-aluno/:id", verificarAutenticacao, (req, res) => {
+router.get("/admin/deletar-aluno/:id", verificarAutenticacao, (req, res) => {
   const db = req.db;
   const alunoId = req.params.id;
 
