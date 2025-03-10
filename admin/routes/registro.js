@@ -5,7 +5,7 @@ const bcrypt = require("bcryptjs"); // Certifique-se de instalar e importar o bc
 // Middleware de autenticação (pode ser reutilizado ou importado de um módulo separado)
 const verificarAutenticacao = (req, res, next) => {
   if (!req.session.user) {
-    return res.redirect("/login");
+    return res.redirect("/admin/login");
   }
   next();
 };
@@ -49,7 +49,9 @@ router.post("/registro", async (req, res) => {
     let cursosSelecionados = Array.isArray(curso) ? curso : [curso];
 
     if (!cursosSelecionados.length || cursosSelecionados[0] === "") {
-      return res.redirect("/registro?error=Selecione pelo menos um curso.");
+      return res.redirect(
+        "admin/registro?error=Selecione pelo menos um curso."
+      );
     }
 
     // Hash da senha antes de inserir no banco
@@ -77,7 +79,7 @@ router.post("/registro", async (req, res) => {
         values
       );
 
-    return res.redirect("/registro?success=true");
+    return res.redirect("admin/registro?success=true");
   } catch (error) {
     console.error("Erro no registro:", error);
 

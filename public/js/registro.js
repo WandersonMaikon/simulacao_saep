@@ -12,7 +12,7 @@ document.addEventListener("DOMContentLoaded", function () {
       timer: 5000,
       timerProgressBar: true,
     }).then(() => {
-      window.location.href = "/login"; // Redireciona após sucesso
+      window.location.href = "/admin/login";
     });
   } else if (errorMessage) {
     Swal.fire({
