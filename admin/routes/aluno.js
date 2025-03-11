@@ -1,5 +1,8 @@
 const express = require("express");
 const router = express.Router();
+const multer = require("multer");
+const csvParser = require("csv-parser"); // Para arquivos CSV
+const fs = require("fs");
 
 // Middleware de autenticação (pode ser reutilizado ou importado de outro módulo)
 const verificarAutenticacao = (req, res, next) => {
@@ -295,6 +298,64 @@ router.get("/admin/deletar-aluno/:id", verificarAutenticacao, (req, res) => {
       return res.json({ message: "Aluno excluído com sucesso!" });
     }
   );
+});
+// Configura o multer para armazenar arquivos temporariamente
+const upload = multer({ dest: "uploads/" });
+
+// Rota para exibir a página de importação
+router.get("/admin/aluno/importar", (req, res) => {
+  res.render("importar", { message: null });
+});
+
+// Rota para processar o upload do arquivo CSV
+router.post("/admin/aluno/importar", upload.single("arquivo"), (req, res) => {
+  const file = req.file;
+  if (!file) {
+    return res.render("importar", {
+      message: "Nenhum arquivo selecionado.",
+    });
+  }
+
+  const alunos = [];
+  fs.createReadStream(file.path)
+    .pipe(csvParser())
+    .on("data", (row) => {
+      // Suponha que seu CSV possua as colunas: nome, usuario, senha e opcionalmente data_cadastro
+      alunos.push(row);
+    })
+    .on("end", () => {
+      const db = req.db; // Certifique-se de disponibilizar a conexão no req (por exemplo, via middleware)
+      let insertPromises = alunos.map((aluno) => {
+        return new Promise((resolve, reject) => {
+          db.query(
+            "INSERT INTO aluno (nome, usuario, senha, data_cadastro) VALUES (?, ?, ?, ?)",
+            [
+              aluno.nome,
+              aluno.usuario,
+              aluno.senha,
+              aluno.data_cadastro || new Date(), // Se não houver data, utiliza a data atual
+            ],
+            (err, results) => {
+              if (err) return reject(err);
+              resolve(results);
+            }
+          );
+        });
+      });
+
+      Promise.all(insertPromises)
+        .then(() => {
+          // Remove o arquivo temporário após processamento
+          fs.unlinkSync(file.path);
+          res.render("importar", {
+            message: "Alunos importados com sucesso!",
+          });
+        })
+        .catch((err) => {
+          console.error("Erro ao inserir alunos:", err);
+          res.render("importar", { message: "Erro ao importar alunos." });
+        });
+    });
 });
 
 module.exports = router;
