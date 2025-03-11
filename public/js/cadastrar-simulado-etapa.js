@@ -490,7 +490,7 @@ $(document).ready(function () {
                 timer: 2000,
                 showConfirmButton: false,
               }).then(function () {
-                window.location.href = "/simulados";
+                window.location.href = "/admin/simulados";
               });
             } else {
               Swal.fire({
@@ -597,7 +597,7 @@ $("#aluno-search").on("keyup", function () {
 });
 
 document.addEventListener("DOMContentLoaded", function () {
-  var simuladoLink = document.querySelector('a[href="/simulados"]');
+  var simuladoLink = document.querySelector('a[href="/admin/simulados"]');
   if (simuladoLink) {
     simuladoLink.classList.add("active");
   }

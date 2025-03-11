@@ -203,21 +203,28 @@ router.delete("/deletar-simulado/:id", verificarAutenticacao, (req, res) => {
 });
 
 // GET /cadastrar-simulado-steps - Renderiza a página de cadastro multi‑etapas de simulado
-router.get("/cadastrar-simulado-steps", verificarAutenticacao, (req, res) => {
-  const db = req.db;
-  const professorId = req.session.user.id;
-  db.query(
-    "SELECT c.id, c.nome FROM curso c INNER JOIN professor_curso pc ON c.id = pc.curso_id WHERE pc.professor_id = ?",
-    [professorId],
-    (err, results) => {
-      if (err) {
-        console.error("Erro ao carregar a página de cadastro multi-step:", err);
-        return res.status(500).send("Erro interno do servidor");
+router.get(
+  "/admin/cadastrar-simulado-steps",
+  verificarAutenticacao,
+  (req, res) => {
+    const db = req.db;
+    const professorId = req.session.user.id;
+    db.query(
+      "SELECT c.id, c.nome FROM curso c INNER JOIN professor_curso pc ON c.id = pc.curso_id WHERE pc.professor_id = ?",
+      [professorId],
+      (err, results) => {
+        if (err) {
+          console.error(
+            "Erro ao carregar a página de cadastro multi-step:",
+            err
+          );
+          return res.status(500).send("Erro interno do servidor");
+        }
+        res.render("cadastrar-simulado-steps", { cursos: results });
       }
-      res.render("cadastrar-simulado-steps", { cursos: results });
-    }
-  );
-});
+    );
+  }
+);
 
 // GET /turmas-por-curso/:cursoId - Retorna turmas com base no curso selecionado
 router.get("/turmas-por-curso/:cursoId", verificarAutenticacao, (req, res) => {
