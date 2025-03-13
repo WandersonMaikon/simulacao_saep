@@ -26,7 +26,7 @@ db.connect((error) => {
 app.set("view engine", "ejs");
 app.set("views", [
   path.join(__dirname, "admin", "views"),
-  path.join(__dirname, "aluno", "views")
+  path.join(__dirname, "aluno", "views"),
 ]);
 
 // Middlewares
@@ -53,7 +53,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// Importando as rotas (ajuste conforme sua organização)
+// Importando as rotas admin
 const authRoutes = require("./admin/routes/auth");
 const registroRoutes = require("./admin/routes/registro");
 const turmasRoutes = require("./admin/routes/turmas");
@@ -69,6 +69,11 @@ app.use(materiasRoutes);
 app.use(alunoRoutes);
 app.use(questaoRoutes);
 app.use(simuladoRoutes);
+
+// Importando as rotas alunos
+const alunoAuthRoutes = require("./aluno/routes/auth");
+
+app.use(alunoAuthRoutes);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
