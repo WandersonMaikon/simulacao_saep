@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <title>Dashboard - Aluno</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta content="" name="description" />
+    <meta content="coderthemes" name="author" />
+
+    <!-- Theme favicon -->
+    <link rel="shortcut icon" href="../assets/favicon-8fd74f43.ico" />
+
+    <script
+      type="module"
+      crossorigin
+      src="../assets/admin-dashboard-a08afcd4.js"
+    ></script>
+    <link rel="modulepreload" crossorigin href="../assets/theme-e4584917.js" />
+    <link
+      rel="modulepreload"
+      crossorigin
+      href="../assets/apexcharts.common-ac06378e.js"
+    />
+    <link rel="stylesheet" href="../assets/theme-d32f8eb8.css" />
+
+    <!-- SweetAlert CSS e JS -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  </head>
+
+  <body class="bg-gray-100 min-h-screen flex flex-col">
+    <!-- Sidebar -->
+    <%- include('./partials/aluno-sidebar') %>
+
+    <div class="min-h-screen flex flex-col lg:ps-64 w-full">
+      <!-- Header -->
+      <%- include('partials/aluno-header') %>
+
+      <!-- Conteúdo principal -->
+      <div class="w-full mx-auto p-6">
+        <h2 class="text-2xl font-semibold text-center"></h2>
+      </div>
+
+      <!-- Footer -->
+      <%- include('partials/aluno-footer') %>
+    </div>
+  </body>
+  <% if (message) { %>
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      Swal.fire({
+        title: "Sucesso!",
+        text: "<%= message %>",
+        icon: "success",
+        confirmButtonText: "OK",
+        timer: 3000, // O alerta desaparecerá após 3 segundos
+        timerProgressBar: true,
+      });
+    });
+  </script>
+  <% } %>
+  <!-- Mirrored from coderthemes.com/wb/studyzen/admin-dashboard.html by HTTrack Website Copier/3.x [XR&CO'2014], Wed, 22 Jan 2025 13:08:33 GMT -->
+</html>

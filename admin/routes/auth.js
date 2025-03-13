@@ -19,7 +19,7 @@ router.get("/admin/login", (req, res) => {
 });
 
 // Processa o login
-router.post("/login", (req, res) => {
+router.post("/admin/login", (req, res) => {
   const { email, password } = req.body;
   const db = req.db;
   db.query(

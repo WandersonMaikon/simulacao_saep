@@ -1,6 +1,5 @@
 const express = require("express");
 const router = express.Router();
-const bcrypt = require("bcryptjs");
 
 // Middleware de autenticação para rotas protegidas
 const verificarAutenticacao = (req, res, next) => {
@@ -14,30 +13,43 @@ const verificarAutenticacao = (req, res, next) => {
 router.get("/aluno/login", (req, res) => {
   const message = req.session.message || "";
   req.session.message = "";
-  // Procura a view "login.ejs" dentro dos diretórios de views configurados
+  // Renderiza a view "aluno-login.ejs" que deve estar em aluno/views/
   res.render("aluno-login", { message });
 });
 
-// Rota POST para processar o login de aluno
+// Rota POST para processar o login de aluno usando comparação direta de senhas
 router.post("/aluno/login", (req, res) => {
-  const { email, password } = req.body;
+  console.log("Dados recebidos:", req.body); // Verifica os dados recebidos para depuração
+  const { usuario, senha } = req.body;
+
+  // Verifica se os campos obrigatórios foram enviados
+  if (!usuario || !senha) {
+    return res.render("aluno-login", {
+      message: "Usuário e senha são obrigatórios.",
+    });
+  }
+
   const db = req.db;
-  // Supondo que o login de alunos seja feito na tabela "aluno"
+  // Consulta a tabela "aluno" utilizando o campo "usuario"
   db.query(
-    "SELECT * FROM aluno WHERE email = ?",
-    [email],
-    async (err, results) => {
+    "SELECT * FROM aluno WHERE usuario = ?",
+    [usuario],
+    (err, results) => {
       if (err) {
         console.error("Erro na consulta SQL:", err);
-        return res.render("login", { message: "Erro no sistema" });
+        return res.render("aluno-login", { message: "Erro no sistema" });
       }
       if (results.length === 0) {
-        return res.render("login", { message: "Usuário ou senha inválidos" });
+        return res.render("aluno-login", {
+          message: "Usuário ou senha inválidos",
+        });
       }
       const user = results[0];
-      const passwordMatch = await bcrypt.compare(password, user.senha);
-      if (!passwordMatch) {
-        return res.render("login", { message: "Usuário ou senha inválidos" });
+      // Se as senhas estiverem armazenadas em texto plano, faça comparação direta:
+      if (senha !== user.senha) {
+        return res.render("aluno-login", {
+          message: "Usuário ou senha inválidos",
+        });
       }
       req.session.user = user;
       req.session.successMessage = "Logado com sucesso!";
@@ -50,7 +62,7 @@ router.post("/aluno/login", (req, res) => {
 router.get("/aluno/dashboard", verificarAutenticacao, (req, res) => {
   const successMessage = req.session.successMessage || "";
   delete req.session.successMessage;
-  res.render("dashboard", {
+  res.render("aluno-dashboard", {
     username: req.session.user.nome,
     message: successMessage,
   });

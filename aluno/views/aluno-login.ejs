@@ -13,7 +13,6 @@
       src="../assets/theme-e4584917.js"
     ></script>
     <link rel="stylesheet" href="../assets/theme-d32f8eb8.css" />
-
     <!-- SweetAlert2 CSS -->
     <link
       rel="stylesheet"
@@ -45,35 +44,38 @@
             <p class="mb-10 dark:text-default-600 text-center">
               Bem-vindo de volta, Aluno!
             </p>
-
-            <form action="aluno/login" method="POST" class="mt-10">
+            <!-- Alterado o action para "/aluno/login" e o nome do campo para "usuario" -->
+            <form action="/aluno/login" method="POST" class="mt-10">
               <div class="mb-4">
                 <label
-                  for="email"
+                  for="usuario"
                   class="block text-base font-semibold text-default-900 mb-2"
-                  >Usuário</label
                 >
+                  Usuário
+                </label>
                 <input
-                  type="email"
-                  id="email"
-                  name="email"
+                  type="text"
+                  id="usuario"
+                  name="usuario"
                   class="block w-full rounded py-2.5 px-4 bg-transparent border-default-200 text-default-900 focus:outline-0 focus:ring-0"
-                  placeholder="Digite seu e-mail"
+                  placeholder="Digite o seu usuário"
                   required
                 />
               </div>
 
+              <!-- Campo para senha -->
               <div class="mb-4">
                 <label
-                  for="password"
+                  for="senha"
                   class="block text-base font-semibold text-default-900 mb-2"
-                  >Senha</label
                 >
+                  Senha
+                </label>
                 <div class="flex">
                   <input
                     type="password"
-                    id="password"
-                    name="password"
+                    id="senha"
+                    name="senha"
                     class="form-password text-default-900 block w-full rounded-s py-2.5 px-4 bg-transparent border border-default-200 focus:ring-transparent -me-px"
                     placeholder="Digite sua senha"
                     required
@@ -93,8 +95,9 @@
                   <label
                     class="text-base ms-2 text-default-900 align-middle select-none"
                     for="checkbox-signin"
-                    >Lembrar-me</label
                   >
+                    Lembrar-me
+                  </label>
                 </div>
               </div>
 
@@ -117,14 +120,13 @@
     <script>
       document.addEventListener("DOMContentLoaded", function () {
         const alertMessage = "<%= message %>";
-
         if (alertMessage && alertMessage.trim() !== "") {
           Swal.fire({
             title: "Erro!",
             text: alertMessage,
             icon: "error",
             confirmButtonText: "OK",
-            timer: 3000, // O alerta desaparecerá após 3 segundos
+            timer: 3000,
             timerProgressBar: true,
           });
         }

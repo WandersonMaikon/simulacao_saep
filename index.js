@@ -71,7 +71,7 @@ app.use(questaoRoutes);
 app.use(simuladoRoutes);
 
 // Importando as rotas alunos
-const alunoAuthRoutes = require("./aluno/routes/auth");
+const alunoAuthRoutes = require("./aluno/routes/alunoAuth");
 
 app.use(alunoAuthRoutes);
 
