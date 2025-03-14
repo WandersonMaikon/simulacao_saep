@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <title>Simulado Ativo</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="shortcut icon" href="../assets/favicon-8fd74f43.ico" />
+    <script
+      type="module"
+      crossorigin
+      src="../assets/theme-e4584917.js"
+    ></script>
+    <link rel="stylesheet" href="../assets/theme-d32f8eb8.css" />
+    <style>
+      /* Você pode ajustar os estilos conforme necessário */
+      .card-simulado {
+        max-width: 600px;
+        margin: 0 auto;
+      }
+    </style>
+  </head>
+  <body>
+    <%- include('partials/aluno-sidebar') %>
+    <div class="min-h-screen flex flex-col lg:ps-64 w-full">
+      <%- include('partials/aluno-header') %>
+      <main class="p-6 space-y-6">
+        <h4 class="text-lg font-semibold text-default-900 text-center mb-6">
+          Simulado Ativo
+        </h4>
+        <% if (simulado) { %>
+        <div
+          class="card-simulado shadow rounded-lg bg-white overflow-hidden dark:bg-default-50 border border-primary"
+        >
+          <div class="p-6">
+            <h3 class="text-base font-bold text-primary mb-2">
+              <%= simulado.titulo %>
+            </h3>
+            <p class="mt-1 text-default-800 mb-3"><%= simulado.descricao %></p>
+            <p class="mt-1 text-default-800 mb-3">
+              Tempo de prova: <%= simulado.tempo_prova %>
+            </p>
+            <a
+              class="py-2 px-5 inline-block font-semibold tracking-wide border align-middle duration-500 text-base text-center bg-primary hover:bg-primary-700 border-primary hover:border-primary-700 text-white rounded-md mt-2"
+              href="/aluno/responder-simulado/<%= simulado.id %>"
+            >
+              Responder Simulado
+            </a>
+          </div>
+        </div>
+        <% } else { %>
+        <div class="text-center text-base text-gray-700">
+          Nenhum simulado ativo no momento.
+        </div>
+        <% } %>
+      </main>
+      <%- include('partials/aluno-footer') %>
+    </div>
+  </body>
+</html>

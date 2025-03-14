@@ -72,8 +72,10 @@ app.use(simuladoRoutes);
 
 // Importando as rotas alunos
 const alunoAuthRoutes = require("./aluno/routes/alunoAuth");
+const alunoSimuladoRoutes = require("./aluno/routes/alunoSimulado");
 
 app.use(alunoAuthRoutes);
+app.use(alunoSimuladoRoutes);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

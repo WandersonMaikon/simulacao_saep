@@ -96,7 +96,7 @@ $(document).ready(function () {
           timer: 5000,
           timerProgressBar: true,
         }).then(() => {
-          window.location.href = "/materias?page=1";
+          window.location.href = "/admin/materias?page=1";
         });
       },
       error: function (xhr) {

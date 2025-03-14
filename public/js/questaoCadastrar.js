@@ -66,13 +66,13 @@ $("#cancel-btn").click(function () {
           .find("input[type='text'], textarea")
           .val("");
         $("#edit-section").addClass("hidden");
-        window.location.href = "/questao?page=1";
+        window.location.href = "/admin/questao?page=1";
       }
     });
   } else {
     $("#form-cadastrar-questao")[0].reset();
     $("#edit-section").addClass("hidden");
-    window.location.href = "/questao?page=1";
+    window.location.href = "/admin/questao?page=1";
   }
 });
 
@@ -101,7 +101,7 @@ $("#form-cadastrar-questao").submit(function (e) {
             .find("input[type='text'], textarea")
             .val("");
         } else {
-          window.location.href = "/questao?page=1";
+          window.location.href = "/admin/questao?page=1";
         }
       });
     },

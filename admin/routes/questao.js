@@ -335,7 +335,7 @@ router.get(
           return res.status(500).send("Erro interno no servidor.");
         }
         if (resultados.length === 0) {
-          return res.redirect("/questao?page=1");
+          return res.redirect("/admin/questao?page=1");
         }
         const questao = resultados[0];
         // Buscar cursos vinculados ao professor

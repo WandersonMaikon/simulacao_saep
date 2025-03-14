@@ -24,7 +24,7 @@
       #edit-section {
         display: none;
       }
-      /* Estilo para o switch checkbox */
+      /* Estilo para o switch checkbox usado para ativar simulado */
       .switch {
         position: relative;
         display: inline-block;
@@ -63,6 +63,39 @@
       }
       input:checked + .slider:before {
         transform: translateX(20px);
+      }
+      /* Novo estilo para o checkbox de finalização (usando classes conforme fornecido) */
+      .finalizar-simulado {
+        /* As classes abaixo já incluem as regras definidas: */
+        width: 2.25rem; /* w-9 */
+        height: 1.25rem; /* h-5 */
+        display: flex;
+        align-items: center;
+        appearance: none;
+        background-color: var(--default-200, #e5e7eb);
+        border: 2px solid transparent;
+        border-radius: 9999px;
+        cursor: pointer;
+        transition: background-color 0.2s ease-in-out;
+        /* Pseudo-elementos para a bolinha */
+        position: relative;
+        color: #ef4444; /* text-red-500 */
+      }
+      .finalizar-simulado:before {
+        content: "";
+        display: inline-block;
+        width: 1rem; /* w-4 */
+        height: 1rem; /* h-4 */
+        background-color: white;
+        border-radius: 9999px;
+        transform: translateX(0);
+        transition: transform 0.2s ease-in-out;
+        position: absolute;
+        left: 0.125rem; /* 2px approximado */
+        bottom: 0.125rem;
+      }
+      .finalizar-simulado:checked:before {
+        transform: translateX(1.25rem); /* translate-x-full */
       }
     </style>
   </head>
@@ -117,7 +150,7 @@
             href="/admin/cadastrar-simulado-steps"
             class="py-2 px-4 inline-flex items-center justify-center font-semibold tracking-wide text-xs bg-primary hover:bg-primary-500 text-white rounded"
           >
-            <i class="ph-duotone ph-plus-circle text-lg/none me-3"></i>
+            <i class="ph-duotone ph-plus-circle text-lg me-3"></i>
             Adicionar Simulado
           </a>
         </div>
@@ -139,15 +172,14 @@
                   <th class="px-6 py-3 text-left text-sm font-semibold">
                     Turma
                   </th>
-
                   <th class="px-6 py-3 text-left text-sm font-semibold">
                     Tempo de prova
                   </th>
                   <th class="px-6 py-3 text-center text-sm font-semibold">
-                    Ativar simulado
+                    Simulado Ativado?
                   </th>
-                  <th class="px-3 py-3 text-center text-sm font-semibold">
-                    Ação
+                  <th class="px-6 py-3 text-center text-sm font-semibold">
+                    Simulado Finalizado?
                   </th>
                 </tr>
               </thead>
@@ -160,6 +192,7 @@
                   <td class="px-6 py-3"><%= simulado.curso_nome %></td>
                   <td class="px-6 py-3"><%= simulado.turma %></td>
                   <td class="px-6 py-3"><%= simulado.tempo_prova %></td>
+                  <!-- Checkbox de ativação (permanece inalterado) -->
                   <td class="px-6 py-3 text-center">
                     <label class="switch">
                       <input type="checkbox" class="ativar-simulado"
@@ -168,21 +201,28 @@
                       <span class="slider"></span>
                     </label>
                   </td>
-
-                  <td class="px-3 py-3 text-center">
-                    <div class="flex items-center justify-center gap-2">
-                      <button
-                        class="deletar-simulado inline-flex items-center justify-center h-8 w-8 rounded-md bg-red-500/20 text-red-500 transition-all duration-200 hover:bg-red-500 hover:text-white"
-                        data-identificador="<%= simulado.id %>"
-                      >
-                        <i class="ph-duotone ph-trash text-base"></i>
-                      </button>
-                    </div>
+                  <!-- Checkbox para finalizar simulado -->
+                  <td class="px-6 py-3 text-center">
+                    <label class="switch">
+                      <input type="checkbox" id="formSwitch3-<%= simulado.id %>"
+                      class="finalizar-simulado w-9 h-5 flex items-center
+                      appearance-none bg-default-200 border-2 border-transparent
+                      rounded-full focus:ring-0 focus:ring-offset-0
+                      cursor-pointer transition-colors ease-in-out duration-200
+                      checked:bg-none before:content-[''] before:inline-block
+                      before:w-4 before:h-4 before:bg-white before:rounded-full
+                      before:translate-x-0 before:transform before:transition
+                      before:ease-in-out before:checked:translate-x-full
+                      before:duration-200 text-red-500" data-id="<%= simulado.id
+                      %>" <%= simulado.finalizado == 1 ? "checked disabled" : ""
+                      %>>
+                      <span class="slider"></span>
+                    </label>
                   </td>
                 </tr>
                 <% }); %> <% } else { %>
                 <tr>
-                  <td colspan="8" class="text-center py-6">
+                  <td colspan="7" class="text-center py-6">
                     Nenhum simulado cadastrado.
                   </td>
                 </tr>
@@ -228,6 +268,65 @@
       </div>
       <%- include('partials/footer') %>
     </div>
+    <!-- Script para tratar o clique no checkbox de finalização -->
+    <script>
+      $(document).on("change", ".finalizar-simulado", function () {
+        var checkbox = $(this);
+        if (checkbox.is(":checked")) {
+          Swal.fire({
+            title: "Atenção",
+            text: "Esta operação não poderá ser desfeita! Deseja prosseguir para finalizar este simulado?",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonText: "Sim, finalizar",
+            cancelButtonText: "Cancelar",
+            confirmButtonColor: "#10b981",
+            cancelButtonColor: "#d33",
+          }).then((result) => {
+            if (result.isConfirmed) {
+              var simuladoId = checkbox.data("id");
+              $.ajax({
+                url: "/admin/simulado/finalizar/" + simuladoId,
+                method: "PUT",
+                dataType: "json",
+                success: function (response) {
+                  if (response.success) {
+                    Swal.fire({
+                      icon: "success",
+                      title: "Simulado finalizado!",
+                      text: response.message,
+                      timer: 2000,
+                      showConfirmButton: false,
+                    });
+                    checkbox.prop("disabled", true);
+                  } else {
+                    Swal.fire({
+                      icon: "error",
+                      title: "Erro",
+                      text: response.error,
+                    });
+                    checkbox.prop("checked", false);
+                  }
+                },
+                error: function () {
+                  Swal.fire({
+                    icon: "error",
+                    title: "Erro",
+                    text: "Não foi possível finalizar o simulado.",
+                  });
+                  checkbox.prop("checked", false);
+                },
+              });
+            } else {
+              checkbox.prop("checked", false);
+            }
+          });
+        } else {
+          // Impede que o usuário desmarque o checkbox (desfinalizar) manualmente
+          checkbox.prop("checked", true);
+        }
+      });
+    </script>
+    <script src="../js/simulado.js"></script>
   </body>
-  <script src="../js/simulado.js"></script>
 </html>
