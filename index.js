@@ -15,9 +15,7 @@ const server = http.createServer(app);
 const io = new Server(server);
 
 // Configura a conexão do Socket.IO
-io.on("connection", (socket) => {
-  console.log("Novo cliente conectado:", socket.id);
-});
+io.on("connection", (socket) => {});
 
 // Disponibiliza o objeto io para ser utilizado em outras partes da aplicação (rotas, etc.)
 app.set("io", io);

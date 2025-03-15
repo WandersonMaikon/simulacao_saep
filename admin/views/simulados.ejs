@@ -237,26 +237,4 @@
   </body>
   <script src="/socket.io/socket.io.js"></script>
   <script src="../js/simulado.js"></script>
-
-  <script>
-    // Conecta ao Socket.IO
-    const socket = io();
-
-    // Escuta o evento de atualização de simulado
-    socket.on("updateSimulation", function (data) {
-      // Atualiza o checkbox de "Simulação ativa?" com base no ID
-      const checkbox = document.querySelector(
-        `input.ativar-simulado[data-id="${data.id}"]`
-      );
-      if (checkbox) {
-        if (data.ativa == 1) {
-          checkbox.checked = true;
-          checkbox.disabled = true;
-        } else {
-          checkbox.checked = false;
-          checkbox.disabled = false;
-        }
-      }
-    });
-  </script>
 </html>
