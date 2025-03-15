@@ -175,6 +175,7 @@ router.get(
 
 // Cadastro de nova questão
 router.post("/cadastrar-questao", verificarAutenticacao, (req, res) => {
+  console.log("Dados recebidos:", req.body); // Log para depuração
   const db = req.db;
   const {
     curso_id,
@@ -187,6 +188,7 @@ router.post("/cadastrar-questao", verificarAutenticacao, (req, res) => {
     alternativa_d,
     resposta_correta,
   } = req.body;
+
   if (
     !curso_id ||
     !materia_id ||
@@ -200,6 +202,7 @@ router.post("/cadastrar-questao", verificarAutenticacao, (req, res) => {
   ) {
     return res.status(400).json({ error: "Todos os campos são obrigatórios." });
   }
+
   db.query(
     "INSERT INTO questao (curso_id, materia_id, titulo, enunciado, alternativa_a, alternativa_b, alternativa_c, alternativa_d, resposta_correta) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
     [

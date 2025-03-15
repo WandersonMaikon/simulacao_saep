@@ -10,7 +10,6 @@ new Choices("#choices-multiple-remove-button");
 $("#choices-multiple-remove-button").on("change", function () {
   let selectedCourses = $(this).val();
   if (selectedCourses && selectedCourses.length > 0) {
-    //curso selecionado para filtrar as matérias
     const cursoId = selectedCourses[0];
     $.ajax({
       url: "/materias-por-curso/" + cursoId,
@@ -29,7 +28,10 @@ $("#choices-multiple-remove-button").on("change", function () {
             `<option value="">Nenhuma matéria encontrada</option>`
           );
         }
-
+        // Se já houver uma instância do Choices, destrua-a antes de criar outra
+        if (materiaSelect.data("choices")) {
+          materiaSelect.data("choices").destroy();
+        }
         new Choices("#select-materia");
       },
       error: function () {
@@ -79,6 +81,11 @@ $("#cancel-btn").click(function () {
 // Envio do formulário de cadastro de questão via AJAX
 $("#form-cadastrar-questao").submit(function (e) {
   e.preventDefault();
+
+  // Atualiza o campo hidden "enunciado" com o conteúdo HTML do Quill
+  $("#hidden-enunciado").val(quill.root.innerHTML);
+  console.log("Conteúdo do enunciado (no submit):", quill.root.innerHTML);
+
   $.ajax({
     url: "/cadastrar-questao",
     type: "POST",
@@ -95,8 +102,7 @@ $("#form-cadastrar-questao").submit(function (e) {
         cancelButtonColor: "#d33",
       }).then((result) => {
         if (result.isConfirmed) {
-          // Limpa somente os inputs de texto e textarea para continuar no mesmo formulário,
-          // mantendo os selects com os valores atuais.
+          // Limpa somente os inputs de texto e textarea
           $("#form-cadastrar-questao")
             .find("input[type='text'], textarea")
             .val("");
@@ -120,8 +126,9 @@ $("#form-cadastrar-questao").submit(function (e) {
     },
   });
 });
+
 document.addEventListener("DOMContentLoaded", function () {
-  var questoesLink = document.querySelector('a[href="/questao"]');
+  var questoesLink = document.querySelector('a[href="admin/questao"]');
   if (questoesLink) {
     questoesLink.classList.add("active");
   }

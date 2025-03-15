@@ -16,6 +16,11 @@
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css"
     />
+    <!-- Quill Snow Editor CSS -->
+    <link
+      href="https://cdn.quilljs.com/1.3.6/quill.snow.css"
+      rel="stylesheet"
+    />
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <!-- SweetAlert2 JS -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -100,8 +105,9 @@
                   <label
                     for="questao_titulo"
                     class="text-sm font-medium text-default-900"
-                    >Título</label
                   >
+                    Título
+                  </label>
                   <input
                     type="text"
                     name="titulo"
@@ -112,27 +118,30 @@
                   />
                 </div>
                 <!-- Enunciado -->
+                <!-- Campo para o enunciado com o Quill -->
                 <div class="space-y-1 md:col-span-2">
                   <label
-                    for="questao_enunciado"
+                    for="editor"
                     class="text-sm font-medium text-default-900"
-                    >Enunciado</label
                   >
-                  <textarea
-                    name="enunciado"
-                    id="questao_enunciado"
-                    placeholder="Informe o enunciado da questão"
-                    class="block w-full rounded py-2.5 px-4 border"
-                    required
-                  ></textarea>
+                    Enunciado
+                  </label>
+                  <div
+                    id="editor"
+                    style="height: 300px"
+                    class="ql-container ql-snow"
+                  ></div>
+                  <!-- Campo hidden que receberá o HTML do editor -->
+                  <input type="hidden" name="enunciado" id="hidden-enunciado" />
                 </div>
                 <!-- Alternativas -->
                 <div class="space-y-1">
                   <label
                     for="questao_alternativa_a"
                     class="text-sm font-medium text-default-900"
-                    >Alternativa A</label
                   >
+                    Alternativa A
+                  </label>
                   <input
                     type="text"
                     name="alternativa_a"
@@ -146,8 +155,9 @@
                   <label
                     for="questao_alternativa_b"
                     class="text-sm font-medium text-default-900"
-                    >Alternativa B</label
                   >
+                    Alternativa B
+                  </label>
                   <input
                     type="text"
                     name="alternativa_b"
@@ -161,8 +171,9 @@
                   <label
                     for="questao_alternativa_c"
                     class="text-sm font-medium text-default-900"
-                    >Alternativa C</label
                   >
+                    Alternativa C
+                  </label>
                   <input
                     type="text"
                     name="alternativa_c"
@@ -176,8 +187,9 @@
                   <label
                     for="questao_alternativa_d"
                     class="text-sm font-medium text-default-900"
-                    >Alternativa D</label
                   >
+                    Alternativa D
+                  </label>
                   <input
                     type="text"
                     name="alternativa_d"
@@ -232,7 +244,39 @@
 
       <%- include('partials/footer') %>
     </div>
-
+    <!-- Inclua o Quill JS -->
+    <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+    <script>
+      // Declara a variável global para o editor
+      var quill;
+      document.addEventListener("DOMContentLoaded", function () {
+        // Inicializa o editor Quill no elemento com id "editor"
+        quill = new Quill("#editor", {
+          theme: "snow",
+          modules: {
+            toolbar: [
+              [{ header: [1, 2, 3, false] }],
+              ["bold", "italic", "underline", "strike"],
+              ["blockquote", "code-block"],
+              [{ list: "ordered" }, { list: "bullet" }],
+              ["link", "image"],
+              [{ align: [] }],
+              ["clean"],
+            ],
+          },
+        });
+        // Listener para atualizar o campo hidden antes de submeter o formulário
+        document
+          .getElementById("form-cadastrar-questao")
+          .addEventListener("submit", function (e) {
+            // Atualiza o valor do input hidden com o conteúdo HTML do editor
+            var conteudo = quill.root.innerHTML;
+            document.getElementById("hidden-enunciado").value = conteudo;
+            console.log("Conteúdo do enunciado (antes de enviar):", conteudo);
+          });
+      });
+    </script>
+    <!-- Caso o arquivo questaoCadastrar.js possua outras lógicas, verifique se ele não interfere na submissão -->
     <script src="js/questaoCadastrar.js"></script>
   </body>
 </html>

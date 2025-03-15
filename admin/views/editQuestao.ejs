@@ -138,13 +138,13 @@
                   .find("input[type='text'], textarea")
                   .val("");
                 $("#edit-section").addClass("hidden");
-                window.location.href = "/questao?page=1";
+                window.location.href = "admin/questao?page=1";
               }
             });
           } else {
             $("#form-editar-questao")[0].reset();
             $("#edit-section").addClass("hidden");
-            window.location.href = "/questao?page=1";
+            window.location.href = "admin/questao?page=1";
           }
         });
 
@@ -169,7 +169,7 @@
                 success: function (response) {
                   Swal.fire("Editada!", "Questão editada com sucesso!", "success")
                     .then(() => {
-                      window.location.href = "/questao?page=1";
+                      window.location.href = "admin/questao?page=1";
                     });
                 },
                 error: function (xhr) {
