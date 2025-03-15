@@ -20,6 +20,10 @@ io.on("connection", (socket) => {});
 // Disponibiliza o objeto io para ser utilizado em outras partes da aplicação (rotas, etc.)
 app.set("io", io);
 
+// Configura o body-parser embutido do Express com um limite maior
+app.use(express.urlencoded({ extended: true, limit: "50mb" }));
+app.use(express.json({ limit: "50mb" }));
+
 // Configuração do banco de dados
 const db = mysql.createConnection({
   host: process.env.DB_HOST,
