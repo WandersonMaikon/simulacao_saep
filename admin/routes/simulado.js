@@ -47,11 +47,12 @@ router.get("/admin/simulados", verificarAutenticacao, (req, res) => {
     const totalRows = countResult[0].count;
     const totalPages = Math.ceil(totalRows / limit);
 
-    // Query para buscar os dados dos simulados
+    // Query para buscar os dados dos simulados, agora incluindo o campo "finalizado"
     const dataQuery = `
       SELECT s.id, s.titulo, s.descricao,
              DATE_FORMAT(s.tempo_prova, '%H:%i:%s') AS tempo_prova,
              s.ativa,
+             s.finalizado,
              t.nome AS turma,
              c.nome AS curso_nome
       FROM simulado s
@@ -283,30 +284,120 @@ router.post("/cadastrar-simulado-steps", verificarAutenticacao, (req, res) => {
   );
 });
 
-// PUT /ativar-simulado/:id - Ativa um simulado
+// PUT /ativar-simulado/:id - Atualiza o status do simulado para ativo (1) ou inativo (0)
+// PUT /ativar-simulado/:id - Ativa um simulado somente se não houver outro simulado ativo para a mesma turma
+// e se o simulado ainda não foi finalizado.
 router.put("/ativar-simulado/:id", verificarAutenticacao, (req, res) => {
   const db = req.db;
   const simuladoId = req.params.id;
   const professorId = req.session.user.id;
+
+  // Primeiro, buscamos o simulado para identificar a turma à qual ele pertence
+  // e verificar se ele já foi finalizado.
+  const selectQuery = `
+    SELECT s.turma_id, s.finalizado
+    FROM simulado s
+    INNER JOIN turma t ON s.turma_id = t.id
+    WHERE s.id = ? AND t.professor_id = ?
+  `;
+  db.query(selectQuery, [simuladoId, professorId], (err, simuladoResult) => {
+    if (err) {
+      console.error("Erro ao buscar simulado:", err);
+      return res.status(500).json({ error: "Erro ao buscar simulado." });
+    }
+    if (simuladoResult.length === 0) {
+      return res
+        .status(403)
+        .json({ error: "Acesso negado ou simulado inexistente." });
+    }
+
+    // Se o simulado já estiver finalizado, não permite alterar o status de ativo.
+    if (simuladoResult[0].finalizado == 1) {
+      return res.status(400).json({
+        error:
+          "Este simulado já foi finalizado, não é possível modificar o status de simulação ativa.",
+      });
+    }
+
+    // Obtemos o ID da turma
+    const turmaId = simuladoResult[0].turma_id;
+
+    // Verificamos se já existe um simulado ativo para essa mesma turma
+    const checkQuery = `
+      SELECT COUNT(*) AS activeCount
+      FROM simulado s
+      INNER JOIN turma t ON s.turma_id = t.id
+      WHERE s.turma_id = ? AND s.ativa = 1 AND t.professor_id = ?
+    `;
+    db.query(checkQuery, [turmaId, professorId], (err, checkResult) => {
+      if (err) {
+        console.error("Erro ao verificar simulado ativo:", err);
+        return res
+          .status(500)
+          .json({ error: "Erro ao verificar simulado ativo." });
+      }
+      // Se já existir um simulado ativo para essa turma, não permitimos a ativação de outro
+      if (checkResult[0].activeCount > 0) {
+        return res
+          .status(400)
+          .json({ error: "Já existe um simulado ativo para esta turma." });
+      }
+
+      // Caso não exista outro simulado ativo e o simulado não esteja finalizado,
+      // prosseguimos com a ativação
+      const updateQuery = `
+        UPDATE simulado s 
+        INNER JOIN turma t ON s.turma_id = t.id
+        SET s.ativa = 1
+        WHERE s.id = ? AND t.professor_id = ?
+      `;
+      db.query(updateQuery, [simuladoId, professorId], (err, result) => {
+        if (err) {
+          console.error("Erro ao ativar simulado:", err);
+          return res.status(500).json({ error: "Erro ao ativar simulado." });
+        }
+        if (result.affectedRows === 0) {
+          return res
+            .status(403)
+            .json({ error: "Acesso negado ou simulado inexistente." });
+        }
+        return res.json({
+          success: true,
+          message: "Simulado ativado com sucesso!",
+        });
+      });
+    });
+  });
+});
+
+// PUT /finalizar-simulado/:id - Finaliza um simulado e desativa a simulação ativa
+router.put("/finalizar-simulado/:id", verificarAutenticacao, (req, res) => {
+  const db = req.db;
+  const simuladoId = req.params.id;
+  const professorId = req.session.user.id;
+
   db.query(
     `UPDATE simulado s 
      INNER JOIN turma t ON s.turma_id = t.id
-     SET s.ativa = 1
+     SET s.finalizado = 1, s.ativa = 0
      WHERE s.id = ? AND t.professor_id = ?`,
     [simuladoId, professorId],
     (err, result) => {
       if (err) {
-        console.error("Erro ao ativar simulado:", err);
-        return res.status(500).json({ error: "Erro ao ativar simulado." });
+        console.error("Erro ao finalizar simulado:", err);
+        return res.status(500).json({ error: "Erro ao finalizar simulado." });
       }
       if (result.affectedRows === 0) {
         return res
           .status(403)
           .json({ error: "Acesso negado ou simulado inexistente." });
       }
+      const io = req.app.get("io");
+      io.emit("updateSimulation", { id: simuladoId, ativa: 0 });
       return res.json({
         success: true,
-        message: "Simulado ativado com sucesso!",
+        message:
+          "Simulado finalizado com sucesso! A simulação ativa foi desativada.",
       });
     }
   );

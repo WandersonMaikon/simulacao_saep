@@ -2,9 +2,25 @@ const express = require("express");
 const session = require("express-session");
 const path = require("path");
 const mysql = require("mysql2");
+const http = require("http"); // Necessário para criar o servidor HTTP
+const { Server } = require("socket.io"); // Importa o Socket.IO
 require("dotenv").config();
 
 const app = express();
+
+// Cria o servidor HTTP a partir do app Express
+const server = http.createServer(app);
+
+// Inicializa o Socket.IO passando o servidor HTTP
+const io = new Server(server);
+
+// Configura a conexão do Socket.IO
+io.on("connection", (socket) => {
+  console.log("Novo cliente conectado:", socket.id);
+});
+
+// Disponibiliza o objeto io para ser utilizado em outras partes da aplicação (rotas, etc.)
+app.set("io", io);
 
 // Configuração do banco de dados
 const db = mysql.createConnection({
@@ -78,6 +94,6 @@ app.use(alunoAuthRoutes);
 app.use(alunoSimuladoRoutes);
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`Servidor rodando na porta ${PORT}`);
 });

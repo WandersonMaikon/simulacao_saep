@@ -554,14 +554,64 @@ $(document).on("change", ".ativar-simulado", function () {
   }
 });
 
-$(document).ready(function () {
-  var currentPath = window.location.pathname;
-  $(".admin-menu a").each(function () {
-    var linkPath = $(this).attr("href");
-    if (currentPath === linkPath || currentPath.indexOf(linkPath) === 0) {
-      $(this).addClass("active");
-    }
-  });
+$(document).on("change", ".finalizado-simulado", function () {
+  var checkbox = $(this);
+  // Se o checkbox for marcado (tentativa de finalização)
+  if (checkbox.is(":checked")) {
+    Swal.fire({
+      title: "Atenção",
+      text: "Esta operação não poderá ser desfeita! Deseja prosseguir para finalizar este simulado?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Sim, finalizar",
+      cancelButtonText: "Cancelar",
+      confirmButtonColor: "#10b981",
+      cancelButtonColor: "#d33",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        var simuladoId = checkbox.data("id");
+        // Envia requisição AJAX para finalizar o simulado
+        $.ajax({
+          url: "/finalizar-simulado/" + simuladoId,
+          method: "PUT",
+          dataType: "json",
+          success: function (response) {
+            if (response.success) {
+              Swal.fire({
+                icon: "success",
+                title: "Simulado finalizado!",
+                text: response.message,
+                timer: 2000,
+                showConfirmButton: false,
+              });
+              // Desabilita o checkbox para não permitir alteração
+              checkbox.prop("disabled", true);
+            } else {
+              Swal.fire({
+                icon: "error",
+                title: "Erro",
+                text: response.error,
+              });
+              // Reverte a seleção do checkbox
+              checkbox.prop("checked", false);
+            }
+          },
+          error: function () {
+            Swal.fire({
+              icon: "error",
+              title: "Erro",
+              text: "Não foi possível finalizar o simulado.",
+            });
+            // Reverte a seleção do checkbox
+            checkbox.prop("checked", false);
+          },
+        });
+      } else {
+        // Se cancelar, reverte o checkbox
+        checkbox.prop("checked", false);
+      }
+    });
+  }
 });
 
 $("#aluno-search").on("keyup", function () {
