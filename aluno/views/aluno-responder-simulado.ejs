@@ -13,6 +13,8 @@
       .alternative-container {
         cursor: pointer;
         transition: background-color 0.2s;
+        display: flex;
+        align-items: center;
       }
       .alternative-selected {
         background-color: #d1e7dd;
@@ -34,6 +36,15 @@
       .nav-buttons a,
       .nav-buttons button {
         min-width: 120px;
+      }
+      /* O botão (círculo) não terá margem extra */
+      .alternative-toggle {
+        flex-shrink: 0;
+      }
+      /* O texto da alternativa começará logo após o círculo, com um pequeno padding para separação */
+      .alternative-text {
+        padding-left: 10px;
+        flex-grow: 1;
       }
     </style>
   </head>
@@ -74,12 +85,12 @@
                   <% Object.keys(alternativas).forEach(function(key) { %> <% if
                   (alternativas[key]) { %>
                   <div
-                    class="alternative-container border p-2 my-1 d-flex align-items-center"
+                    class="alternative-container border p-2 my-1"
                     data-questao="<%= questao.id %>"
                     data-alternative="<%= key %>"
                   >
                     <div
-                      class="alternative-toggle text-center font-weight-bold mr-3"
+                      class="alternative-toggle text-center font-weight-bold"
                       style="
                         width: 40px;
                         height: 40px;
@@ -90,7 +101,7 @@
                     >
                       <%= key %>
                     </div>
-                    <div class="alternative text"><%= alternativas[key] %></div>
+                    <div class="alternative-text"><%= alternativas[key] %></div>
                   </div>
                   <% } %> <% }); %>
                 </div>
@@ -103,6 +114,7 @@
           </div>
           <% } %>
         </div>
+        <!-- Navegação: Botões "Anterior", "Próxima" e "Encerrar Simulado" -->
         <div
           class="nav-buttons d-flex flex-column flex-md-row justify-content-between mt-4"
         >
@@ -139,6 +151,7 @@
       <%- include('partials/aluno-footer') %>
     </div>
     <script>
+      // Lógica para seleção de alternativas
       document
         .querySelectorAll(".alternative-container")
         .forEach(function (el) {
@@ -154,6 +167,7 @@
             el.classList.add("alternative-selected");
           });
         });
+      // Evento para encerrar o simulado
       var encerrarBtn = document.getElementById("encerrar-simulado-btn");
       if (encerrarBtn) {
         encerrarBtn.addEventListener("click", function () {
