@@ -174,6 +174,7 @@ router.get(
 );
 
 // Cadastro de nova questão
+// Cadastro de nova questão
 router.post("/cadastrar-questao", verificarAutenticacao, (req, res) => {
   console.log("Dados recebidos:", req.body); // Log para depuração
   const db = req.db;
@@ -186,7 +187,7 @@ router.post("/cadastrar-questao", verificarAutenticacao, (req, res) => {
     alternativa_b,
     alternativa_c,
     alternativa_d,
-    alternativa_e, // novo campo para a alternativa extra
+    alternativa_e, // novo campo para a alternativa extra (não obrigatório)
     resposta_correta,
     dificuldade, // novo campo para dificuldade (fácil, médio, difícil)
   } = req.body;
@@ -200,11 +201,12 @@ router.post("/cadastrar-questao", verificarAutenticacao, (req, res) => {
     !alternativa_b ||
     !alternativa_c ||
     !alternativa_d ||
-    !alternativa_e || // validação do novo campo
     !resposta_correta ||
-    !dificuldade // validação do campo de dificuldade
+    !dificuldade
   ) {
-    return res.status(400).json({ error: "Todos os campos são obrigatórios." });
+    return res
+      .status(400)
+      .json({ error: "Todos os campos obrigatórios devem ser preenchidos." });
   }
 
   db.query(
@@ -218,7 +220,7 @@ router.post("/cadastrar-questao", verificarAutenticacao, (req, res) => {
       alternativa_b,
       alternativa_c,
       alternativa_d,
-      alternativa_e,
+      alternativa_e || "", // Se não for informado, envia string vazia
       resposta_correta,
       dificuldade,
     ],

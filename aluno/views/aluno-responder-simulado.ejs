@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Responder Simulado</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Inclua seu CSS customizado e frameworks se necessário -->
+    <link rel="stylesheet" href="/assets/theme-d32f8eb8.css" />
+    <style>
+      .question-card {
+        margin-bottom: 20px;
+      }
+      .alternative-container {
+        cursor: pointer;
+        transition: background-color 0.2s;
+      }
+      .alternative-selected {
+        background-color: #d1e7dd;
+      }
+      .question-index {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        background-color: #f1f1f1;
+        border-radius: 4px;
+        margin-right: 10px;
+      }
+      header .btn-review {
+        margin-left: auto;
+      }
+      .nav-buttons a,
+      .nav-buttons button {
+        min-width: 120px;
+      }
+    </style>
+  </head>
+  <body>
+    <%- include('partials/aluno-sidebar') %>
+    <div class="min-h-screen flex flex-col lg:ps-64 w-full">
+      <%- include('partials/aluno-header') %>
+      <main class="p-6 space-y-6">
+        <h4 class="text-lg font-semibold text-default-900 text-center mb-6">
+          Responder Simulado
+        </h4>
+        <div class="container">
+          <% if (questoes && questoes.length > 0) { %> <%
+          questoes.forEach(function(questao, index) { %> <% var alternativas = {
+          A: questao.alternativa_a, B: questao.alternativa_b, C:
+          questao.alternativa_c, D: questao.alternativa_d, E:
+          questao.alternativa_e }; %>
+          <div
+            class="question-card card-simulado shadow rounded-lg bg-white dark:bg-default-50 border"
+          >
+            <header class="d-flex align-items-baseline px-3 py-3">
+              <div class="d-flex align-items-center">
+                <div class="question-index"><%= index + 1 %></div>
+                <div class="info">
+                  <span class="font-weight-bold">Questão</span>
+                </div>
+              </div>
+              <button
+                class="btn btn-sm btn-default elevation-0 rounded-pill font-size-1 btn-review"
+              >
+                Marcar para revisão
+              </button>
+            </header>
+            <div class="px-3 pb-3">
+              <div class="mt-2">
+                <div class="font-size-2"><%- questao.enunciado %></div>
+                <div class="d-flex flex-column mt-3">
+                  <% Object.keys(alternativas).forEach(function(key) { %> <% if
+                  (alternativas[key]) { %>
+                  <div
+                    class="alternative-container border p-2 my-1 d-flex align-items-center"
+                    data-questao="<%= questao.id %>"
+                    data-alternative="<%= key %>"
+                  >
+                    <div
+                      class="alternative-toggle text-center font-weight-bold mr-3"
+                      style="
+                        width: 40px;
+                        height: 40px;
+                        line-height: 40px;
+                        border: 1px solid #ccc;
+                        border-radius: 50%;
+                      "
+                    >
+                      <%= key %>
+                    </div>
+                    <div class="alternative text"><%= alternativas[key] %></div>
+                  </div>
+                  <% } %> <% }); %>
+                </div>
+              </div>
+            </div>
+          </div>
+          <% }); %> <% } else { %>
+          <div class="text-center text-base text-gray-700">
+            Nenhuma questão encontrada.
+          </div>
+          <% } %>
+        </div>
+        <div
+          class="nav-buttons d-flex flex-column flex-md-row justify-content-between mt-4"
+        >
+          <div class="d-flex justify-content-between mb-3 mb-md-0">
+            <a
+              class="btn btn-default mr-3"
+              href="/aluno/responder-simulado/<%= simulado.id %>?page=<%= currentPage - 1 %>"
+            >
+              <svg width="16" height="16" fill="currentColor">
+                <!-- ícone esquerdo -->
+              </svg>
+              <span>Anterior</span>
+            </a>
+            <a
+              class="btn btn-default"
+              href="/aluno/responder-simulado/<%= simulado.id %>?page=<%= currentPage + 1 %>"
+            >
+              <span>Próxima</span>
+              <svg width="16" height="16" fill="currentColor">
+                <!-- ícone direito -->
+              </svg>
+            </a>
+          </div>
+          <div>
+            <button
+              class="btn btn-secondary btn-block"
+              id="encerrar-simulado-btn"
+            >
+              Encerrar simulado
+            </button>
+          </div>
+        </div>
+      </main>
+      <%- include('partials/aluno-footer') %>
+    </div>
+    <script>
+      document
+        .querySelectorAll(".alternative-container")
+        .forEach(function (el) {
+          el.addEventListener("click", function () {
+            var currentQuestao = el.getAttribute("data-questao");
+            document
+              .querySelectorAll(
+                '.alternative-container[data-questao="' + currentQuestao + '"]'
+              )
+              .forEach(function (sibling) {
+                sibling.classList.remove("alternative-selected");
+              });
+            el.classList.add("alternative-selected");
+          });
+        });
+      var encerrarBtn = document.getElementById("encerrar-simulado-btn");
+      if (encerrarBtn) {
+        encerrarBtn.addEventListener("click", function () {
+          if (confirm("Tem certeza que deseja encerrar o simulado?")) {
+            window.location.href =
+              "/aluno/encerrar-simulado/<%= simulado.id %>";
+          }
+        });
+      }
+    </script>
+  </body>
+</html>
