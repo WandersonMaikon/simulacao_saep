@@ -4,7 +4,6 @@
     <meta charset="UTF-8" />
     <title>Responder Simulado</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <!-- Inclua seu CSS customizado e frameworks se necessário -->
     <link rel="stylesheet" href="/assets/theme-d32f8eb8.css" />
     <style>
       .question-card {
@@ -33,15 +32,18 @@
       header .btn-review {
         margin-left: auto;
       }
+      .nav-buttons {
+        margin-top: 20px;
+        text-align: center;
+      }
       .nav-buttons a,
       .nav-buttons button {
         min-width: 120px;
+        margin: 0 10px;
       }
-      /* O botão (círculo) não terá margem extra */
       .alternative-toggle {
         flex-shrink: 0;
       }
-      /* O texto da alternativa começará logo após o círculo, com um pequeno padding para separação */
       .alternative-text {
         padding-left: 10px;
         flex-grow: 1;
@@ -57,17 +59,16 @@
           Responder Simulado
         </h4>
         <div class="container">
-          <% if (questoes && questoes.length > 0) { %> <%
-          questoes.forEach(function(questao, index) { %> <% var alternativas = {
-          A: questao.alternativa_a, B: questao.alternativa_b, C:
-          questao.alternativa_c, D: questao.alternativa_d, E:
-          questao.alternativa_e }; %>
+          <% if (questoes && questoes.length > 0) { %> <% var questao =
+          questoes[0]; var alternativas = { A: questao.alternativa_a, B:
+          questao.alternativa_b, C: questao.alternativa_c, D:
+          questao.alternativa_d, E: questao.alternativa_e }; %>
           <div
             class="question-card card-simulado shadow rounded-lg bg-white dark:bg-default-50 border"
           >
             <header class="d-flex align-items-baseline px-3 py-3">
               <div class="d-flex align-items-center">
-                <div class="question-index"><%= index + 1 %></div>
+                <div class="question-index"><%= currentPage %></div>
                 <div class="info">
                   <span class="font-weight-bold">Questão</span>
                 </div>
@@ -108,50 +109,39 @@
               </div>
             </div>
           </div>
-          <% }); %> <% } else { %>
+          <% } else { %>
           <div class="text-center text-base text-gray-700">
             Nenhuma questão encontrada.
           </div>
           <% } %>
         </div>
-        <!-- Navegação: Botões "Anterior", "Próxima" e "Encerrar Simulado" -->
-        <div
-          class="nav-buttons d-flex flex-column flex-md-row justify-content-between mt-4"
-        >
-          <div class="d-flex justify-content-between mb-3 mb-md-0">
-            <a
-              class="btn btn-default mr-3"
-              href="/aluno/responder-simulado/<%= simulado.id %>?page=<%= currentPage - 1 %>"
-            >
-              <svg width="16" height="16" fill="currentColor">
-                <!-- ícone esquerdo -->
-              </svg>
-              <span>Anterior</span>
-            </a>
-            <a
-              class="btn btn-default"
-              href="/aluno/responder-simulado/<%= simulado.id %>?page=<%= currentPage + 1 %>"
-            >
-              <span>Próxima</span>
-              <svg width="16" height="16" fill="currentColor">
-                <!-- ícone direito -->
-              </svg>
-            </a>
-          </div>
-          <div>
-            <button
-              class="btn btn-secondary btn-block"
-              id="encerrar-simulado-btn"
-            >
-              Encerrar simulado
-            </button>
-          </div>
+        <div class="nav-buttons">
+          <% if (currentPage > 1) { %>
+          <a
+            class="btn btn-default"
+            href="/aluno/responder-simulado/<%= simulado.id %>?page=<%= currentPage - 1 %>"
+            >Anterior</a
+          >
+          <% } else { %>
+          <button class="btn btn-default" disabled>Anterior</button>
+          <% } %> <% if (currentPage < totalPages) { %>
+          <a
+            class="btn btn-default"
+            href="/aluno/responder-simulado/<%= simulado.id %>?page=<%= currentPage + 1 %>"
+            >Próxima</a
+          >
+          <% } else { %>
+          <button class="btn btn-default" disabled>Próxima</button>
+          <% } %>
+          <br />
+          <button class="btn btn-secondary" id="encerrar-simulado-btn">
+            Encerrar simulado
+          </button>
         </div>
       </main>
       <%- include('partials/aluno-footer') %>
     </div>
     <script>
-      // Lógica para seleção de alternativas
       document
         .querySelectorAll(".alternative-container")
         .forEach(function (el) {
@@ -167,7 +157,6 @@
             el.classList.add("alternative-selected");
           });
         });
-      // Evento para encerrar o simulado
       var encerrarBtn = document.getElementById("encerrar-simulado-btn");
       if (encerrarBtn) {
         encerrarBtn.addEventListener("click", function () {
