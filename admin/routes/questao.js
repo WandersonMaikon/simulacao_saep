@@ -186,7 +186,9 @@ router.post("/cadastrar-questao", verificarAutenticacao, (req, res) => {
     alternativa_b,
     alternativa_c,
     alternativa_d,
+    alternativa_e, // novo campo para a alternativa extra
     resposta_correta,
+    dificuldade, // novo campo para dificuldade (fácil, médio, difícil)
   } = req.body;
 
   if (
@@ -198,13 +200,15 @@ router.post("/cadastrar-questao", verificarAutenticacao, (req, res) => {
     !alternativa_b ||
     !alternativa_c ||
     !alternativa_d ||
-    !resposta_correta
+    !alternativa_e || // validação do novo campo
+    !resposta_correta ||
+    !dificuldade // validação do campo de dificuldade
   ) {
     return res.status(400).json({ error: "Todos os campos são obrigatórios." });
   }
 
   db.query(
-    "INSERT INTO questao (curso_id, materia_id, titulo, enunciado, alternativa_a, alternativa_b, alternativa_c, alternativa_d, resposta_correta) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+    "INSERT INTO questao (curso_id, materia_id, titulo, enunciado, alternativa_a, alternativa_b, alternativa_c, alternativa_d, alternativa_e, resposta_correta, dificuldade) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
     [
       curso_id,
       materia_id,
@@ -214,7 +218,9 @@ router.post("/cadastrar-questao", verificarAutenticacao, (req, res) => {
       alternativa_b,
       alternativa_c,
       alternativa_d,
+      alternativa_e,
       resposta_correta,
+      dificuldade,
     ],
     (err, result) => {
       if (err) {

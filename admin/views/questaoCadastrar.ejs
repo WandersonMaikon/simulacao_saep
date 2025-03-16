@@ -198,6 +198,21 @@
                     class="block w-full rounded py-2.5 px-4 border"
                     required
                   />
+                  <div class="space-y-1">
+                    <label
+                      for="questao_alternativa_e"
+                      class="text-sm font-medium text-default-900"
+                    >
+                      Alternativa E
+                    </label>
+                    <input
+                      type="text"
+                      name="alternativa_e"
+                      id="questao_alternativa_e"
+                      placeholder="Informe a alternativa E"
+                      class="block w-full rounded py-2.5 px-4 border"
+                    />
+                  </div>
                 </div>
                 <!-- Resposta Correta - Agora um select -->
                 <div class="space-y-1 md:col-span-2">
@@ -218,6 +233,27 @@
                     <option value="B">B</option>
                     <option value="C">C</option>
                     <option value="D">D</option>
+                    <option value="E">E</option>
+                  </select>
+                </div>
+                <!-- Dificuldade -->
+                <div class="space-y-1 md:col-span-2">
+                  <label
+                    for="questao_dificuldade"
+                    class="text-sm font-medium text-default-900"
+                  >
+                    Dificuldade
+                  </label>
+                  <select
+                    name="dificuldade"
+                    id="questao_dificuldade"
+                    class="block w-full rounded py-2.5 px-4 border"
+                    required
+                  >
+                    <option value="">Selecione</option>
+                    <option value="fácil">Fácil</option>
+                    <option value="médio">Médio</option>
+                    <option value="difícil">Difícil</option>
                   </select>
                 </div>
               </div>
