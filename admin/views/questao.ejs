@@ -5,7 +5,11 @@
     <title>Cadastrar Questões</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="shortcut icon" href="../assets/favicon-8fd74f43.ico" />
-    <script type="module" crossorigin src="../assets/theme-e4584917.js"></script>
+    <script
+      type="module"
+      crossorigin
+      src="../assets/theme-e4584917.js"
+    ></script>
     <link rel="stylesheet" href="../assets/theme-d32f8eb8.css" />
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <!-- SweetAlert2 -->
@@ -95,7 +99,7 @@
                     Matéria
                   </th>
                   <th class="px-6 py-3 text-left text-sm font-semibold">
-                    Enunciado
+                    Título
                   </th>
                   <th class="px-3 py-3 text-center text-sm font-semibold">
                     Ação
@@ -110,7 +114,7 @@
                   <td class="px-6 py-3"><%= questao.titulo %></td>
                   <td class="px-6 py-3"><%= questao.curso %></td>
                   <td class="px-6 py-3"><%= questao.materia %></td>
-                  <td class="px-6 py-3"><%= questao.enunciado %></td>
+                  <td class="px-6 py-3"><%= questao.titulo %></td>
                   <td class="px-3 py-3 text-center">
                     <div class="flex items-center justify-center gap-2">
                       <!-- Botão para abrir modal de edição -->
