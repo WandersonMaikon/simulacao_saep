@@ -7,7 +7,8 @@
     <link rel="stylesheet" href="/assets/theme-d32f8eb8.css" />
     <style>
       main {
-        margin-bottom: 100px;
+        max-width: 800px;
+        margin: auto 0 800px;
       }
       footer {
         position: fixed;
@@ -27,7 +28,6 @@
         display: flex;
         align-items: center;
       }
-      /* Aplica a seleção apenas no círculo */
       .alternative-toggle.alternative-selected {
         background-color: rgb(79 70 229 / var(--tw-bg-opacity));
         color: white;
@@ -68,7 +68,6 @@
         padding-left: 10px;
         flex-grow: 1;
       }
-      /* Estilos do popover do mapa de questões com animação */
       .map-popover {
         position: fixed;
         top: 50%;
@@ -144,10 +143,7 @@
   </head>
   <body>
     <div class="min-h-screen flex flex-col lg:ps-64 w-full">
-      <main class="p-6 space-y-6">
-        <h4 class="text-lg font-semibold text-default-900 text-center mb-6">
-          Responder Simulado
-        </h4>
+      <main class="p-6 space-y-2">
         <!-- Exibição do timer persistente -->
         <div id="timer">Tempo restante: --:--:--</div>
         <div class="container">
@@ -174,7 +170,6 @@
                     class="alternative-container p-3 my-2"
                     data-questao="<%= questao.id %>"
                   >
-                    <!-- Atribuímos o data-alternative diretamente no elemento que será marcado -->
                     <div
                       class="alternative-toggle text-center font-weight-bold"
                       data-alternative="<%= key %>"
@@ -209,14 +204,6 @@
       </main>
       <!-- Footer com navegação -->
       <footer>
-        <div
-          class="nav-buttons"
-          style="margin-bottom: 20px; justify-content: center"
-        >
-          <button type="button" class="btn-custom" id="encerrar-simulado-btn">
-            Encerrar simulado
-          </button>
-        </div>
         <div class="nav-buttons">
           <% if (currentPage > 1) { %>
           <button
@@ -260,7 +247,7 @@
         <% }); %>
       </div>
       <div style="margin-top: 20px; text-align: center">
-        <button class="btn-custom" id="encerrarSimuladoMap">
+        <button class="btn-custom" id="encerrarSimuladoMap" disabled>
           Encerrar simulado
         </button>
       </div>
@@ -269,10 +256,12 @@
     <script>
       // --- Timer persistente ---
       var examTimeInSeconds = Number("<%= simulado.tempo_prova %>");
-      var storedStartTime = localStorage.getItem("simulado_start_time");
+      var simuladoId = "<%= simulado.id %>";
+      var storedStartTimeKey = "simulado_start_time_" + simuladoId;
+      var storedStartTime = localStorage.getItem(storedStartTimeKey);
       if (!storedStartTime) {
         storedStartTime = Date.now();
-        localStorage.setItem("simulado_start_time", storedStartTime);
+        localStorage.setItem(storedStartTimeKey, storedStartTime);
       } else {
         storedStartTime = parseInt(storedStartTime, 10);
       }
@@ -302,12 +291,36 @@
         if (timeLeft <= 0) {
           clearInterval(timerInterval);
           alert("O tempo acabou! O simulado será encerrado.");
-          localStorage.removeItem("simulado_start_time");
+          localStorage.removeItem(storedStartTimeKey);
           window.location.href = "/aluno/encerrar-simulado/<%= simulado.id %>";
         }
       }
       var timerInterval = setInterval(updateTimer, 1000);
       updateTimer();
+
+      // --- Função para atualizar o estado do botão de Encerrar ---
+      function updateEncerrarButtonState() {
+        var answeredCount = 0;
+        var totalQuestions = document.querySelectorAll(
+          ".map-popover .map div"
+        ).length;
+        document
+          .querySelectorAll(".map-popover .map div")
+          .forEach(function (el) {
+            var qId = el.getAttribute("data-question-id");
+            var key = "simulado_" + simuladoId + "_questao_" + qId;
+            if (localStorage.getItem(key) !== null) {
+              answeredCount++;
+            }
+          });
+        // Atualiza os botões de encerrar se existirem
+        if (encerrarSimuladoMap) {
+          encerrarSimuladoMap.disabled = answeredCount !== totalQuestions;
+        }
+        if (encerrarBtn) {
+          encerrarBtn.disabled = answeredCount !== totalQuestions;
+        }
+      }
 
       // --- Função para restaurar a seleção de alternativas ---
       function restoreAlternatives() {
@@ -315,7 +328,8 @@
           .querySelectorAll(".alternative-container")
           .forEach(function (container) {
             var qId = container.getAttribute("data-questao");
-            var saved = localStorage.getItem("questao_" + qId);
+            var key = "simulado_" + simuladoId + "_questao_" + qId;
+            var saved = localStorage.getItem(key);
             if (saved) {
               container
                 .querySelectorAll(".alternative-toggle")
@@ -351,7 +365,8 @@
             var toggle = el.querySelector(".alternative-toggle");
             toggle.classList.add("alternative-selected");
             var alternative = toggle.getAttribute("data-alternative");
-            localStorage.setItem("questao_" + currentQuestao, alternative);
+            var key = "simulado_" + simuladoId + "_questao_" + currentQuestao;
+            localStorage.setItem(key, alternative);
             markAnsweredQuestions();
           });
         });
@@ -365,12 +380,14 @@
           .querySelectorAll(".map-popover .map div")
           .forEach(function (el) {
             var qId = el.getAttribute("data-question-id");
-            if (localStorage.getItem("questao_" + qId) !== null) {
+            var key = "simulado_" + simuladoId + "_questao_" + qId;
+            if (localStorage.getItem(key) !== null) {
               el.classList.add("answered");
             } else {
               el.classList.remove("answered");
             }
           });
+        updateEncerrarButtonState();
       }
 
       // --- Eventos para "Encerrar simulado" ---
@@ -378,7 +395,7 @@
       if (encerrarBtn) {
         encerrarBtn.addEventListener("click", function () {
           if (confirm("Tem certeza que deseja encerrar o simulado?")) {
-            localStorage.removeItem("simulado_start_time");
+            localStorage.removeItem(storedStartTimeKey);
             window.location.href =
               "/aluno/encerrar-simulado/<%= simulado.id %>";
           }
@@ -388,7 +405,7 @@
       if (encerrarSimuladoMap) {
         encerrarSimuladoMap.addEventListener("click", function () {
           if (confirm("Tem certeza que deseja encerrar o simulado?")) {
-            localStorage.removeItem("simulado_start_time");
+            localStorage.removeItem(storedStartTimeKey);
             window.location.href =
               "/aluno/encerrar-simulado/<%= simulado.id %>";
           }

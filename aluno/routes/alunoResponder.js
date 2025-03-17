@@ -9,7 +9,7 @@ const verificarAutenticacaoAluno = (req, res, next) => {
   next();
 };
 
-// Função para converter "HH:MM:SS" em segundos
+// Função para converter uma string de tempo (no formato "HH:MM:SS") em segundos.
 function timeStringToSeconds(timeString) {
   const parts = timeString.split(":");
   if (parts.length !== 3) return 0;
@@ -42,22 +42,17 @@ router.get(
         }
         const simulado = simuladoResult[0];
 
-        // Se o campo tempo_prova estiver no formato "HH:MM:SS", converte para segundos
-        if (
-          typeof simulado.tempo_prova === "string" &&
-          simulado.tempo_prova.indexOf(":") !== -1
-        ) {
+        // Converte simulado.tempo_prova (formato "HH:MM:SS") para segundos.
+        if (typeof simulado.tempo_prova === "string") {
           simulado.tempo_prova = timeStringToSeconds(simulado.tempo_prova);
         } else {
-          // Caso contrário, tenta converter diretamente (supondo que já seja um número)
           simulado.tempo_prova = parseInt(simulado.tempo_prova, 10);
         }
-        // Se a conversão falhar, define um valor padrão (por exemplo, 2 horas = 7200 segundos)
         if (isNaN(simulado.tempo_prova)) {
-          simulado.tempo_prova = 7200;
+          simulado.tempo_prova = 7200; // valor padrão (2 horas)
         }
 
-        // Busca todas as questões associadas a esse simulado, ordenadas por q.id ASC.
+        // Busca as questões associadas a esse simulado, ordenadas por q.id ASC.
         db.query(
           "SELECT q.* FROM simulado_questao sq JOIN questao q ON sq.questao_id = q.id WHERE sq.simulado_id = ? ORDER BY q.id ASC",
           [simuladoId],
