@@ -247,9 +247,18 @@
         <% }); %>
       </div>
       <div style="margin-top: 20px; text-align: center">
-        <button class="btn-custom" id="encerrarSimuladoMap" disabled>
-          Encerrar simulado
-        </button>
+        <!-- Formulário para encerrar o simulado via POST -->
+        <form
+          id="encerrarSimuladoForm"
+          method="POST"
+          action="/aluno/encerrar-simulado/<%= simulado.id %>"
+        >
+          <!-- Campo oculto para enviar as respostas -->
+          <input type="hidden" name="answers" id="answersInput" value="" />
+          <button type="submit" class="btn btn-primary">
+            Encerrar simulado
+          </button>
+        </form>
       </div>
     </div>
 
@@ -296,7 +305,8 @@
           clearInterval(timerInterval);
           alert("O tempo acabou! O simulado será encerrado.");
           localStorage.removeItem(storedStartTimeKey);
-          window.location.href = "/aluno/encerrar-simulado/<%= simulado.id %>";
+          // Se o tempo acabar, forçamos o envio do formulário
+          document.getElementById("encerrarSimuladoForm").submit();
         }
       }
       var timerInterval = setInterval(updateTimer, 1000);
@@ -324,16 +334,7 @@
             }
           });
         // Atualiza os botões de encerrar, se existirem
-        var encerrarSimuladoMap = document.getElementById(
-          "encerrarSimuladoMap"
-        );
-        var encerrarBtn = document.getElementById("encerrar-simulado-btn");
-        if (encerrarSimuladoMap) {
-          encerrarSimuladoMap.disabled = answeredCount !== totalQuestions;
-        }
-        if (encerrarBtn) {
-          encerrarBtn.disabled = answeredCount !== totalQuestions;
-        }
+        // Neste exemplo, o botão do formulário já é usado para envio via POST.
       }
 
       // --- Função para restaurar a seleção de alternativas ---
@@ -422,27 +423,37 @@
         updateEncerrarButtonState();
       }
 
-      // --- Eventos para "Encerrar simulado" ---
-      var encerrarBtn = document.getElementById("encerrar-simulado-btn");
-      if (encerrarBtn) {
-        encerrarBtn.addEventListener("click", function () {
-          if (confirm("Tem certeza que deseja encerrar o simulado?")) {
-            localStorage.removeItem(storedStartTimeKey);
-            window.location.href =
-              "/aluno/encerrar-simulado/<%= simulado.id %>";
-          }
+      // --- Intercepta o submit do formulário para incluir as respostas do localStorage ---
+      document
+        .getElementById("encerrarSimuladoForm")
+        .addEventListener("submit", function (e) {
+          // Previne o comportamento padrão para inserirmos os dados primeiro
+          // e depois permitir o envio.
+          e.preventDefault();
+          var answersObj = {};
+          // Seleciona todas as alternativas disponíveis (pode iterar sobre os containers)
+          document
+            .querySelectorAll(".alternative-container")
+            .forEach(function (container) {
+              var qId = container.getAttribute("data-questao");
+              var key =
+                "aluno_" +
+                alunoId +
+                "_simulado_" +
+                simuladoId +
+                "_questao_" +
+                qId;
+              var answer = localStorage.getItem(key);
+              if (answer) {
+                answersObj[qId] = answer;
+              }
+            });
+          // Converte o objeto em JSON e coloca no campo oculto
+          document.getElementById("answersInput").value =
+            JSON.stringify(answersObj);
+          // Agora, envia o formulário
+          this.submit();
         });
-      }
-      var encerrarSimuladoMap = document.getElementById("encerrarSimuladoMap");
-      if (encerrarSimuladoMap) {
-        encerrarSimuladoMap.addEventListener("click", function () {
-          if (confirm("Tem certeza que deseja encerrar o simulado?")) {
-            localStorage.removeItem(storedStartTimeKey);
-            window.location.href =
-              "/aluno/encerrar-simulado/<%= simulado.id %>";
-          }
-        });
-      }
 
       // --- Alterna exibição do popover do mapa de questões com animação ---
       const mapToggleBtn = document.getElementById("mapToggleBtn");
