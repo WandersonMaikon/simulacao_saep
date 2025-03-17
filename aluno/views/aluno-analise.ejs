@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Análise Geral</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Você pode incluir o Bootstrap para facilitar o layout -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      .title {
+        font-size: 2rem;
+        font-weight: bold;
+      }
+      .card {
+        background: #fff;
+        border-radius: 0.5rem;
+        padding: 1.5rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      }
+      .result-box {
+        font-size: 1.25rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container my-5">
+      <h2 class="title mb-3">Análise Geral</h2>
+      <div class="card">
+        <div class="row">
+          <!-- Coluna esquerda: descrição e botão do gabarito -->
+          <div class="col-lg-6">
+            <p class="h4 mb-3">Veja seu desempenho</p>
+            <p class="mb-4">
+              Confira o gabarito e acompanhe sua performance com comentários e
+              análises.
+            </p>
+            <button class="btn btn-secondary">Ver gabarito</button>
+          </div>
+          <!-- Coluna direita: resultados -->
+          <div class="col-lg-6">
+            <div class="bg-light p-4 rounded">
+              <ul class="list-unstyled mb-3">
+                <li><strong>Pontuação Normal:</strong> --</li>
+                <li><strong>Pontuação Líquida:</strong> --</li>
+              </ul>
+              <div class="d-flex justify-content-between result-box">
+                <div>
+                  <p class="mb-1">Nota final</p>
+                  <p><%= nota %> /100</p>
+                </div>
+                <div>
+                  <p class="mb-1">Acertos</p>
+                  <p><%= correctCount %> /<%= totalQuestions %></p>
+                </div>
+                <div>
+                  <p class="mb-1">Erros</p>
+                  <p><%= errors %> /<%= totalQuestions %></p>
+                </div>
+                <div>
+                  <p class="mb-1">Em branco</p>
+                  <p>0 /<%= totalQuestions %></p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bootstrap Bundle com Popper (para funcionalidades JS do Bootstrap) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  </body>
+</html>

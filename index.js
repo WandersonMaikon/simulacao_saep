@@ -92,10 +92,12 @@ app.use(simuladoRoutes);
 const alunoAuthRoutes = require("./aluno/routes/alunoAuth");
 const alunoSimuladoRoutes = require("./aluno/routes/alunoSimulado");
 const alunoResponderRoutes = require("./aluno/routes/alunoResponder");
+const alunoEncerrarSimuladoRoutes = require("./aluno/routes/alunoEncerrarSimulado");
 
 app.use(alunoAuthRoutes);
 app.use(alunoSimuladoRoutes);
 app.use(alunoResponderRoutes);
+app.use(alunoEncerrarSimuladoRoutes);
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
