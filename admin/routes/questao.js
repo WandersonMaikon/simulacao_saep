@@ -176,7 +176,6 @@ router.get(
 // Cadastro de nova questão
 // Cadastro de nova questão
 router.post("/cadastrar-questao", verificarAutenticacao, (req, res) => {
-  console.log("Dados recebidos:", req.body); // Log para depuração
   const db = req.db;
   const {
     curso_id,

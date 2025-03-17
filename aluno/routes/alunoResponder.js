@@ -9,6 +9,16 @@ const verificarAutenticacaoAluno = (req, res, next) => {
   next();
 };
 
+// Função para converter "HH:MM:SS" em segundos
+function timeStringToSeconds(timeString) {
+  const parts = timeString.split(":");
+  if (parts.length !== 3) return 0;
+  const hours = parseInt(parts[0], 10);
+  const minutes = parseInt(parts[1], 10);
+  const seconds = parseInt(parts[2], 10);
+  return hours * 3600 + minutes * 60 + seconds;
+}
+
 // Rota para exibir a tela de resposta do simulado
 router.get(
   "/aluno/responder-simulado/:id",
@@ -17,8 +27,6 @@ router.get(
     const db = req.db;
     const simuladoId = req.params.id;
     const page = parseInt(req.query.page) || 1;
-    const limit = 10; // número de questões por página
-    const offset = (page - 1) * limit;
 
     // Busca os dados do simulado
     db.query(
@@ -30,42 +38,42 @@ router.get(
           return res.status(500).send("Erro ao buscar simulado");
         }
         if (simuladoResult.length === 0) {
-          // Se não houver simulado, renderiza a view informando que não há simulado ativo.
           return res.render("aluno-responder-simulado", { simulado: null });
         }
         const simulado = simuladoResult[0];
 
-        // Conta o total de questões associadas a esse simulado.
-        db.query(
-          "SELECT COUNT(*) AS count FROM simulado_questao sq JOIN questao q ON sq.questao_id = q.id WHERE sq.simulado_id = ?",
-          [simuladoId],
-          (err, countResult) => {
-            if (err) {
-              console.error("Erro ao contar questões:", err);
-              return res.status(500).send("Erro ao contar questões");
-            }
-            const totalRows = countResult[0].count;
-            const totalPages = Math.ceil(totalRows / limit);
+        // Se o campo tempo_prova estiver no formato "HH:MM:SS", converte para segundos
+        if (
+          typeof simulado.tempo_prova === "string" &&
+          simulado.tempo_prova.indexOf(":") !== -1
+        ) {
+          simulado.tempo_prova = timeStringToSeconds(simulado.tempo_prova);
+        } else {
+          // Caso contrário, tenta converter diretamente (supondo que já seja um número)
+          simulado.tempo_prova = parseInt(simulado.tempo_prova, 10);
+        }
+        // Se a conversão falhar, define um valor padrão (por exemplo, 2 horas = 7200 segundos)
+        if (isNaN(simulado.tempo_prova)) {
+          simulado.tempo_prova = 7200;
+        }
 
-            // Busca as questões, com paginação, ordenadas por q.id ASC.
-            db.query(
-              "SELECT q.* FROM simulado_questao sq JOIN questao q ON sq.questao_id = q.id WHERE sq.simulado_id = ? ORDER BY q.id ASC LIMIT ? OFFSET ?",
-              [simuladoId, limit, offset],
-              (err, questoes) => {
-                if (err) {
-                  console.error("Erro ao buscar questões:", err);
-                  return res.status(500).send("Erro ao buscar questões");
-                }
-                // Renderiza a view "aluno-responder-simulado.ejs" (certifique-se de que o arquivo esteja em aluno/views)
-                return res.render("aluno-responder-simulado", {
-                  simulado,
-                  questoes,
-                  currentPage: page,
-                  totalPages,
-                  totalRows,
-                });
-              }
-            );
+        // Busca todas as questões associadas a esse simulado, ordenadas por q.id ASC.
+        db.query(
+          "SELECT q.* FROM simulado_questao sq JOIN questao q ON sq.questao_id = q.id WHERE sq.simulado_id = ? ORDER BY q.id ASC",
+          [simuladoId],
+          (err, questoes) => {
+            if (err) {
+              console.error("Erro ao buscar questões:", err);
+              return res.status(500).send("Erro ao buscar questões");
+            }
+            const totalPages = questoes.length;
+            return res.render("aluno-responder-simulado", {
+              simulado,
+              questoes,
+              currentPage: page,
+              totalPages,
+              totalRows: questoes.length,
+            });
           }
         );
       }

@@ -19,7 +19,6 @@ router.get("/aluno/login", (req, res) => {
 
 // Rota POST para processar o login de aluno usando comparação direta de senhas
 router.post("/aluno/login", (req, res) => {
-  console.log("Dados recebidos:", req.body); // Verifica os dados recebidos para depuração
   const { usuario, senha } = req.body;
 
   // Verifica se os campos obrigatórios foram enviados
