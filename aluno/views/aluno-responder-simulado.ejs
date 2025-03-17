@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="/assets/theme-d32f8eb8.css" />
     <style>
       main {
-        margin-bottom: 100px; /* Ajuste conforme a altura do footer */
+        margin-bottom: 100px;
       }
       footer {
         position: fixed;
@@ -42,9 +42,6 @@
         background-color: #f1f1f1;
         border-radius: 4px;
         margin-right: 10px;
-      }
-      header .btn-review {
-        margin-left: auto;
       }
       footer .nav-buttons {
         display: flex;
@@ -125,7 +122,6 @@
         font-size: 1.2rem;
         cursor: pointer;
       }
-      /* Botão fixo para alternar a exibição do mapa de questões */
       .map-toggle-btn {
         position: fixed;
         bottom: 100px;
@@ -138,7 +134,6 @@
         cursor: pointer;
         z-index: 1000;
       }
-      /* Estilos para o timer */
       #timer {
         text-align: center;
         font-size: 20px;
@@ -168,7 +163,6 @@
             </header>
             <div class="px-3 pb-3">
               <div class="mt-2">
-                <!-- Exibe o enunciado -->
                 <div class="font-size-2"><%- questao.enunciado %></div>
                 <div class="d-flex flex-column mt-3">
                   <% var alternativas = { A: questao.alternativa_a, B:
@@ -179,10 +173,11 @@
                   <div
                     class="alternative-container p-3 my-2"
                     data-questao="<%= questao.id %>"
-                    data-alternative="<%= key %>"
                   >
+                    <!-- Atribuímos o data-alternative diretamente no elemento que será marcado -->
                     <div
                       class="alternative-toggle text-center font-weight-bold"
+                      data-alternative="<%= key %>"
                       style="
                         font-weight: bold;
                         width: 40px;
@@ -259,11 +254,7 @@
       </header>
       <div class="map">
         <% questoes.forEach(function(q, index) { %>
-        <div
-          class=""
-          data-question="<%= index + 1 %>"
-          data-question-id="<%= q.id %>"
-        >
+        <div data-question="<%= index + 1 %>" data-question-id="<%= q.id %>">
           <%= index + 1 %>
         </div>
         <% }); %>
@@ -277,12 +268,7 @@
 
     <script>
       // --- Timer persistente ---
-      // O valor de simulado.tempo_prova já está em segundos (total da prova)
-      var examTimeInSeconds = (function () {
-        return Number("<%= simulado.tempo_prova %>");
-      })();
-
-      // Verifica se já existe o tempo de início no localStorage.
+      var examTimeInSeconds = Number("<%= simulado.tempo_prova %>");
       var storedStartTime = localStorage.getItem("simulado_start_time");
       if (!storedStartTime) {
         storedStartTime = Date.now();
@@ -291,7 +277,6 @@
         storedStartTime = parseInt(storedStartTime, 10);
       }
 
-      // Função para formatar o tempo no formato "hh:mm:ss"
       function formatTime(seconds) {
         var h = Math.floor(seconds / 3600);
         var m = Math.floor((seconds % 3600) / 60);
@@ -311,11 +296,9 @@
       var timerElement = document.getElementById("timer");
 
       function updateTimer() {
-        // Calcula o tempo decorrido (em segundos) desde o início
         var elapsedSeconds = Math.floor((Date.now() - storedStartTime) / 1000);
         var timeLeft = examTimeInSeconds - elapsedSeconds;
         timerElement.innerHTML = "Tempo restante: " + formatTime(timeLeft);
-
         if (timeLeft <= 0) {
           clearInterval(timerInterval);
           alert("O tempo acabou! O simulado será encerrado.");
@@ -326,13 +309,36 @@
       var timerInterval = setInterval(updateTimer, 1000);
       updateTimer();
 
+      // --- Função para restaurar a seleção de alternativas ---
+      function restoreAlternatives() {
+        document
+          .querySelectorAll(".alternative-container")
+          .forEach(function (container) {
+            var qId = container.getAttribute("data-questao");
+            var saved = localStorage.getItem("questao_" + qId);
+            if (saved) {
+              container
+                .querySelectorAll(".alternative-toggle")
+                .forEach(function (elem) {
+                  elem.classList.remove("alternative-selected");
+                });
+              var selected = container.querySelector(
+                '.alternative-toggle[data-alternative="' + saved + '"]'
+              );
+              if (selected) {
+                selected.classList.add("alternative-selected");
+              }
+            }
+          });
+        markAnsweredQuestions();
+      }
+
       // --- Seleção de alternativas ---
       document
         .querySelectorAll(".alternative-container")
         .forEach(function (el) {
           el.addEventListener("click", function () {
             var currentQuestao = el.getAttribute("data-questao");
-            // Remove a seleção dos círculos dos irmãos
             document
               .querySelectorAll(
                 '.alternative-container[data-questao="' +
@@ -344,39 +350,22 @@
               });
             var toggle = el.querySelector(".alternative-toggle");
             toggle.classList.add("alternative-selected");
-            var alternative = el.getAttribute("data-alternative");
+            var alternative = toggle.getAttribute("data-alternative");
             localStorage.setItem("questao_" + currentQuestao, alternative);
-            // Atualiza o mapa de questões
             markAnsweredQuestions();
           });
         });
 
-      window.addEventListener("load", function () {
-        var questaoId = "<%= questao.id %>";
-        var savedAlternative = localStorage.getItem("questao_" + questaoId);
-        if (savedAlternative) {
-          var toggle = document.querySelector(
-            '.alternative-container[data-questao="' +
-              questaoId +
-              '"] .alternative-toggle[data-alternative="' +
-              savedAlternative +
-              '"]'
-          );
-          if (toggle) {
-            toggle.classList.add("alternative-selected");
-          }
-        }
-        // Marca as questões já respondidas no mapa
-        markAnsweredQuestions();
-      });
+      window.addEventListener("load", restoreAlternatives);
+      window.addEventListener("pageshow", restoreAlternatives);
 
-      // Função para marcar as questões respondidas no mapa
+      // --- Função para marcar as questões respondidas no mapa ---
       function markAnsweredQuestions() {
         document
           .querySelectorAll(".map-popover .map div")
           .forEach(function (el) {
             var qId = el.getAttribute("data-question-id");
-            if (localStorage.getItem("questao_" + qId)) {
+            if (localStorage.getItem("questao_" + qId) !== null) {
               el.classList.add("answered");
             } else {
               el.classList.remove("answered");
