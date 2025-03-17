@@ -63,6 +63,7 @@ router.get(
             }
             const totalPages = questoes.length;
             return res.render("aluno-responder-simulado", {
+              aluno: req.session.user, // Adicionado para disponibilizar o aluno no template
               simulado,
               questoes,
               currentPage: page,

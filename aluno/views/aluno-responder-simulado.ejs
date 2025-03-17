@@ -254,10 +254,14 @@
     </div>
 
     <script>
+      // Variáveis necessárias: ID do simulado e do aluno
+      var simuladoId = "<%= simulado.id %>";
+      var alunoId = "<%= aluno.id %>"; // Certifique-se de que o ID do aluno está disponível no template
+
       // --- Timer persistente ---
       var examTimeInSeconds = Number("<%= simulado.tempo_prova %>");
-      var simuladoId = "<%= simulado.id %>";
-      var storedStartTimeKey = "simulado_start_time_" + simuladoId;
+      var storedStartTimeKey =
+        "aluno_" + alunoId + "_simulado_start_time_" + simuladoId;
       var storedStartTime = localStorage.getItem(storedStartTimeKey);
       if (!storedStartTime) {
         storedStartTime = Date.now();
@@ -308,12 +312,22 @@
           .querySelectorAll(".map-popover .map div")
           .forEach(function (el) {
             var qId = el.getAttribute("data-question-id");
-            var key = "simulado_" + simuladoId + "_questao_" + qId;
+            var key =
+              "aluno_" +
+              alunoId +
+              "_simulado_" +
+              simuladoId +
+              "_questao_" +
+              qId;
             if (localStorage.getItem(key) !== null) {
               answeredCount++;
             }
           });
-        // Atualiza os botões de encerrar se existirem
+        // Atualiza os botões de encerrar, se existirem
+        var encerrarSimuladoMap = document.getElementById(
+          "encerrarSimuladoMap"
+        );
+        var encerrarBtn = document.getElementById("encerrar-simulado-btn");
         if (encerrarSimuladoMap) {
           encerrarSimuladoMap.disabled = answeredCount !== totalQuestions;
         }
@@ -328,7 +342,13 @@
           .querySelectorAll(".alternative-container")
           .forEach(function (container) {
             var qId = container.getAttribute("data-questao");
-            var key = "simulado_" + simuladoId + "_questao_" + qId;
+            var key =
+              "aluno_" +
+              alunoId +
+              "_simulado_" +
+              simuladoId +
+              "_questao_" +
+              qId;
             var saved = localStorage.getItem(key);
             if (saved) {
               container
@@ -365,7 +385,13 @@
             var toggle = el.querySelector(".alternative-toggle");
             toggle.classList.add("alternative-selected");
             var alternative = toggle.getAttribute("data-alternative");
-            var key = "simulado_" + simuladoId + "_questao_" + currentQuestao;
+            var key =
+              "aluno_" +
+              alunoId +
+              "_simulado_" +
+              simuladoId +
+              "_questao_" +
+              currentQuestao;
             localStorage.setItem(key, alternative);
             markAnsweredQuestions();
           });
@@ -380,7 +406,13 @@
           .querySelectorAll(".map-popover .map div")
           .forEach(function (el) {
             var qId = el.getAttribute("data-question-id");
-            var key = "simulado_" + simuladoId + "_questao_" + qId;
+            var key =
+              "aluno_" +
+              alunoId +
+              "_simulado_" +
+              simuladoId +
+              "_questao_" +
+              qId;
             if (localStorage.getItem(key) !== null) {
               el.classList.add("answered");
             } else {
