@@ -16,7 +16,7 @@ router.post(
     const db = req.db;
     const simuladoId = req.params.id;
     const alunoId = req.session.user.id; // ID do aluno logado
-    const answers = req.body.answers; // Dados enviados (em formato JSON, por exemplo)
+    const answers = req.body.answers; // Espera um objeto com respostas, por exemplo: { "1": "A", "2": "C", ... }
 
     if (!answers || Object.keys(answers).length === 0) {
       return res.status(400).json({ error: "Nenhuma resposta enviada." });
@@ -41,6 +41,7 @@ router.post(
           return res.status(500).json({ error: "Erro ao verificar respostas" });
         }
 
+        // Função para converter letra para número (se necessário)
         function convertLetter(letter) {
           const mapping = { A: 1, B: 2, C: 3, D: 4, E: 5 };
           return mapping[letter] || 0;
