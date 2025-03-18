@@ -52,24 +52,44 @@ router.get(
           simulado.tempo_prova = 7200; // valor padrão (2 horas)
         }
 
-        // Busca as questões associadas a esse simulado, ordenadas por q.id ASC.
+        // Verifica se o simulado já foi finalizado pelo aluno
+        const checkQuery =
+          "SELECT finalizado FROM simulado_aluno WHERE simulado_id = ? AND aluno_id = ?";
         db.query(
-          "SELECT q.* FROM simulado_questao sq JOIN questao q ON sq.questao_id = q.id WHERE sq.simulado_id = ? ORDER BY q.id ASC",
-          [simuladoId],
-          (err, questoes) => {
+          checkQuery,
+          [simuladoId, req.session.user.id],
+          (err, result) => {
             if (err) {
-              console.error("Erro ao buscar questões:", err);
-              return res.status(500).send("Erro ao buscar questões");
+              console.error("Erro ao verificar finalização do simulado:", err);
+              return res
+                .status(500)
+                .send("Erro ao verificar finalização do simulado");
             }
-            const totalPages = questoes.length;
-            return res.render("aluno-responder-simulado", {
-              aluno: req.session.user, // Adicionado para disponibilizar o aluno no template
-              simulado,
-              questoes,
-              currentPage: page,
-              totalPages,
-              totalRows: questoes.length,
-            });
+            if (result.length > 0 && result[0].finalizado == 1) {
+              // Se o simulado já estiver finalizado, redireciona para a tela de análise
+              return res.redirect("/aluno/analise/" + simuladoId);
+            }
+
+            // Caso não esteja finalizado, busca as questões associadas a esse simulado
+            db.query(
+              "SELECT q.* FROM simulado_questao sq JOIN questao q ON sq.questao_id = q.id WHERE sq.simulado_id = ? ORDER BY q.id ASC",
+              [simuladoId],
+              (err, questoes) => {
+                if (err) {
+                  console.error("Erro ao buscar questões:", err);
+                  return res.status(500).send("Erro ao buscar questões");
+                }
+                const totalPages = questoes.length;
+                return res.render("aluno-responder-simulado", {
+                  aluno: req.session.user, // Disponibiliza o aluno no template
+                  simulado,
+                  questoes,
+                  currentPage: page,
+                  totalPages,
+                  totalRows: questoes.length,
+                });
+              }
+            );
           }
         );
       }

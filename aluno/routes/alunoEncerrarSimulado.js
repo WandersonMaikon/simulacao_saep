@@ -9,15 +9,14 @@ const verificarAutenticacaoAluno = (req, res, next) => {
   next();
 };
 
-// Rota POST para encerrar o simulado, registrar as respostas e exibir a tela de análise
 router.post(
   "/aluno/encerrar-simulado/:id",
   verificarAutenticacaoAluno,
   (req, res) => {
     const db = req.db;
     const simuladoId = req.params.id;
-    const alunoId = req.session.user.id; // Obtém o ID do aluno logado
-    const answers = req.body.answers; // Espera um objeto com respostas, ex: { "1": "A", "2": "C", ... }
+    const alunoId = req.session.user.id; // ID do aluno logado
+    const answers = req.body.answers; // Dados enviados (em formato JSON, por exemplo)
 
     if (!answers || Object.keys(answers).length === 0) {
       return res.status(400).json({ error: "Nenhuma resposta enviada." });
@@ -42,7 +41,6 @@ router.post(
           return res.status(500).json({ error: "Erro ao verificar respostas" });
         }
 
-        // Função para converter letra para número, se necessário.
         function convertLetter(letter) {
           const mapping = { A: 1, B: 2, C: 3, D: 4, E: 5 };
           return mapping[letter] || 0;
@@ -50,7 +48,6 @@ router.post(
 
         let inserts = [];
         let correctCount = 0;
-        // Para cada questão, verifica se a resposta do aluno está correta.
         questions.forEach((q) => {
           const chosenLetter = answers[q.id]; // Exemplo: "A"
           const chosen = convertLetter(chosenLetter);
@@ -59,7 +56,6 @@ router.post(
           inserts.push([tentativaId, q.id, chosen, isCorrect]);
         });
 
-        // Insere as respostas do aluno na tabela resposta_aluno
         const insertRespostas =
           "INSERT INTO resposta_aluno (tentativa_id, questao_id, resposta_escolhida, correta) VALUES ?";
         db.query(insertRespostas, [inserts], (err, result) => {
@@ -69,12 +65,10 @@ router.post(
               .status(500)
               .json({ error: "Erro ao registrar respostas" });
           }
-          // Calcula a nota (por exemplo, percentual de acertos)
           const totalQuestions = questions.length;
           const score = (correctCount / totalQuestions) * 100;
-          const errors = totalQuestions - correctCount; // Supondo que todas as questões foram respondidas
+          const errors = totalQuestions - correctCount;
 
-          // Atualiza a tentativa com a nota
           const updateTentativa =
             "UPDATE tentativa_simulado SET nota = ? WHERE id = ?";
           db.query(updateTentativa, [score, tentativaId], (err, result) => {
@@ -82,13 +76,28 @@ router.post(
               console.error("Erro ao atualizar nota:", err);
               return res.status(500).json({ error: "Erro ao registrar nota" });
             }
-            // Renderiza a tela de análise geral com os dados calculados
-            return res.render("aluno-analise", {
-              nota: score.toFixed(2),
-              correctCount,
-              errors,
-              totalQuestions,
-            });
+            // Atualiza o campo finalizado na tabela simulado_aluno para o aluno atual
+            const updateSimuladoAluno =
+              "UPDATE simulado_aluno SET finalizado = 1 WHERE simulado_id = ? AND aluno_id = ?";
+            db.query(
+              updateSimuladoAluno,
+              [simuladoId, alunoId],
+              (err, result) => {
+                if (err) {
+                  console.error("Erro ao atualizar simulado_aluno:", err);
+                  return res
+                    .status(500)
+                    .json({ error: "Erro ao finalizar simulado" });
+                }
+                // Renderiza a tela de análise com os resultados
+                return res.render("aluno-analise", {
+                  nota: score.toFixed(2),
+                  correctCount,
+                  errors,
+                  totalQuestions,
+                });
+              }
+            );
           });
         });
       });
