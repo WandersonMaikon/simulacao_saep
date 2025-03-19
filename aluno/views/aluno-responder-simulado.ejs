@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="stylesheet" href="/assets/theme-d32f8eb8.css" />
     <style>
-      /* Conteúdo principal: ajustado conforme necessário */
+      /* Conteúdo principal */
       main {
         max-width: 800px;
       }
@@ -235,7 +235,7 @@
 
       // --- Timer persistente ---
       var examTimeInSeconds = Number("<%= simulado.tempo_prova %>");
-      // Se o simulado tiver um início global, use-o; caso contrário, usa o armazenamento individual
+      // Se o simulado tiver um início global definido, utilize-o
       var globalStartTime = "<%= simulado.inicio_prova %>"
         ? new Date("<%= simulado.inicio_prova %>").getTime()
         : null;

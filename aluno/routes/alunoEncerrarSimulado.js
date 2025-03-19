@@ -16,7 +16,7 @@ router.post(
     const db = req.db;
     const simuladoId = req.params.id;
     const alunoId = req.session.user.id; // ID do aluno logado
-    const answers = req.body.answers; // Espera um objeto com respostas, por exemplo: { "1": "A", "2": "C", ... }
+    const answers = req.body.answers; // Dados enviados (em formato JSON)
 
     if (!answers || Object.keys(answers).length === 0) {
       return res.status(400).json({ error: "Nenhuma resposta enviada." });
@@ -41,7 +41,6 @@ router.post(
           return res.status(500).json({ error: "Erro ao verificar respostas" });
         }
 
-        // Função para converter letra para número (se necessário)
         function convertLetter(letter) {
           const mapping = { A: 1, B: 2, C: 3, D: 4, E: 5 };
           return mapping[letter] || 0;
@@ -77,7 +76,7 @@ router.post(
               console.error("Erro ao atualizar nota:", err);
               return res.status(500).json({ error: "Erro ao registrar nota" });
             }
-            // Atualiza o campo finalizado na tabela simulado_aluno para o aluno atual
+            // Atualiza o registro do aluno na tabela simulado_aluno para marcar como finalizado
             const updateSimuladoAluno =
               "UPDATE simulado_aluno SET finalizado = 1 WHERE simulado_id = ? AND aluno_id = ?";
             db.query(
@@ -90,12 +89,65 @@ router.post(
                     .status(500)
                     .json({ error: "Erro ao finalizar simulado" });
                 }
-                // Renderiza a tela de análise com os resultados
-                return res.render("aluno-analise", {
-                  nota: score.toFixed(2),
-                  correctCount,
-                  errors,
-                  totalQuestions,
+
+                // Agora, verifica se todos os alunos cadastrados para esse simulado finalizaram
+                const countQuery =
+                  "SELECT COUNT(*) AS total FROM simulado_aluno WHERE simulado_id = ?";
+                db.query(countQuery, [simuladoId], (err, countResult) => {
+                  if (err) {
+                    console.error("Erro ao contar alunos do simulado:", err);
+                    // Mesmo que ocorra erro aqui, já redirecionamos o aluno atual
+                    return res.redirect(
+                      "/aluno/encerrar-simulado/" + simuladoId
+                    );
+                  }
+                  const totalAlunos = countResult[0].total;
+                  const finishedQuery =
+                    "SELECT COUNT(*) AS finished FROM simulado_aluno WHERE simulado_id = ? AND finalizado = 1";
+                  db.query(
+                    finishedQuery,
+                    [simuladoId],
+                    (err, finishedResult) => {
+                      if (err) {
+                        console.error(
+                          "Erro ao contar alunos finalizados:",
+                          err
+                        );
+                        return res.redirect(
+                          "/aluno/encerrar-simulado/" + simuladoId
+                        );
+                      }
+                      const finishedCount = finishedResult[0].finished;
+                      console.log(
+                        "Total de alunos:",
+                        totalAlunos,
+                        "Finalizados:",
+                        finishedCount
+                      );
+                      // Se todos os alunos finalizaram, atualiza o simulado para finalizado
+                      if (finishedCount === totalAlunos) {
+                        db.query(
+                          "UPDATE simulado SET finalizado = 1 WHERE id = ?",
+                          [simuladoId],
+                          (err, updateResult) => {
+                            if (err) {
+                              console.error(
+                                "Erro ao atualizar simulado para finalizado:",
+                                err
+                              );
+                            }
+                            return res.redirect(
+                              "/aluno/encerrar-simulado/" + simuladoId
+                            );
+                          }
+                        );
+                      } else {
+                        return res.redirect(
+                          "/aluno/encerrar-simulado/" + simuladoId
+                        );
+                      }
+                    }
+                  );
                 });
               }
             );
