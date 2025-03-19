@@ -410,6 +410,27 @@
               questionNum;
           });
         });
+      function updateTimer() {
+        var elapsedSeconds = Math.floor((Date.now() - storedStartTime) / 1000);
+        var timeLeft = examTimeInSeconds - elapsedSeconds;
+        timerElement.innerHTML = "Tempo restante: " + formatTime(timeLeft);
+        if (timeLeft <= 0) {
+          clearInterval(timerInterval);
+          alert("O tempo acabou! O simulado será encerrado.");
+          localStorage.removeItem(storedStartTimeKey);
+          // Seta o campo de timeout para "true" para indicar que o encerramento ocorreu por tempo
+          document.getElementById("answersInput").value = JSON.stringify({});
+          // Acrescenta um campo hidden para timeout
+          var timeoutInput = document.createElement("input");
+          timeoutInput.type = "hidden";
+          timeoutInput.name = "timeout";
+          timeoutInput.value = "true";
+          document
+            .getElementById("encerrarSimuladoForm")
+            .appendChild(timeoutInput);
+          document.getElementById("encerrarSimuladoForm").submit();
+        }
+      }
     </script>
   </body>
 </html>
