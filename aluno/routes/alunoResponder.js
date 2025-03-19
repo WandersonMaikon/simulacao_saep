@@ -28,9 +28,9 @@ router.get(
     const simuladoId = req.params.id;
     const page = parseInt(req.query.page) || 1;
 
-    // Busca os dados do simulado
+    // Busca os dados do simulado, incluindo o campo global de início
     db.query(
-      "SELECT * FROM simulado WHERE id = ?",
+      "SELECT *, inicio_prova FROM simulado WHERE id = ?",
       [simuladoId],
       (err, simuladoResult) => {
         if (err) {
@@ -70,7 +70,7 @@ router.get(
               return res.redirect("/aluno/analise/" + simuladoId);
             }
 
-            // Caso não esteja finalizado, busca as questões associadas a esse simulado
+            // Busca as questões associadas a esse simulado, ordenadas por q.id ASC.
             db.query(
               "SELECT q.* FROM simulado_questao sq JOIN questao q ON sq.questao_id = q.id WHERE sq.simulado_id = ? ORDER BY q.id ASC",
               [simuladoId],

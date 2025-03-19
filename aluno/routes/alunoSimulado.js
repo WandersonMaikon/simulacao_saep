@@ -14,6 +14,9 @@ router.get("/aluno/simulado", verificarAutenticacaoAluno, (req, res) => {
   const db = req.db;
   // Supondo que o usuário do aluno tem um campo "turma_id"
   const turmaId = req.session.user.turma_id;
+  // Recupera a mensagem de sucesso, se existir, e em seguida a remove da sessão
+  const successMessage = req.session.successMessage || "";
+  delete req.session.successMessage;
 
   // Query para buscar o simulado ativo para a turma do aluno
   const query = `
@@ -25,7 +28,6 @@ router.get("/aluno/simulado", verificarAutenticacaoAluno, (req, res) => {
     ORDER BY s.data_criacao DESC
     LIMIT 1
   `;
-
   db.query(query, [turmaId], (err, results) => {
     if (err) {
       console.error("Erro ao buscar simulado ativo:", err);
@@ -36,7 +38,7 @@ router.get("/aluno/simulado", verificarAutenticacaoAluno, (req, res) => {
     }
     const simulado = results[0] || null;
     res.render("aluno-simulado", {
-      message: "",
+      message: successMessage,
       simulado,
     });
   });

@@ -287,15 +287,15 @@ router.post("/cadastrar-simulado-steps", verificarAutenticacao, (req, res) => {
 // PUT /ativar-simulado/:id - Atualiza o status do simulado para ativo (1) ou inativo (0)
 // PUT /ativar-simulado/:id - Ativa um simulado somente se não houver outro simulado ativo para a mesma turma
 // e se o simulado ainda não foi finalizado.
+// PUT /ativar-simulado/:id - Ativa o simulado e define o início global da prova
 router.put("/ativar-simulado/:id", verificarAutenticacao, (req, res) => {
   const db = req.db;
   const simuladoId = req.params.id;
   const professorId = req.session.user.id;
 
-  // Primeiro, buscamos o simulado para identificar a turma à qual ele pertence
-  // e verificar se ele já foi finalizado.
+  // Busca os dados do simulado: turma_id, finalizado e inicio_prova
   const selectQuery = `
-    SELECT s.turma_id, s.finalizado
+    SELECT s.turma_id, s.finalizado, s.inicio_prova
     FROM simulado s
     INNER JOIN turma t ON s.turma_id = t.id
     WHERE s.id = ? AND t.professor_id = ?
@@ -311,7 +311,7 @@ router.put("/ativar-simulado/:id", verificarAutenticacao, (req, res) => {
         .json({ error: "Acesso negado ou simulado inexistente." });
     }
 
-    // Se o simulado já estiver finalizado, não permite alterar o status de ativo.
+    // Se o simulado já estiver finalizado, não permite alteração.
     if (simuladoResult[0].finalizado == 1) {
       return res.status(400).json({
         error:
@@ -319,10 +319,10 @@ router.put("/ativar-simulado/:id", verificarAutenticacao, (req, res) => {
       });
     }
 
-    // Obtemos o ID da turma
+    // Obtemos o ID da turma do simulado
     const turmaId = simuladoResult[0].turma_id;
 
-    // Verificamos se já existe um simulado ativo para essa mesma turma
+    // Verifica se já existe outro simulado ativo para essa mesma turma
     const checkQuery = `
       SELECT COUNT(*) AS activeCount
       FROM simulado s
@@ -336,19 +336,17 @@ router.put("/ativar-simulado/:id", verificarAutenticacao, (req, res) => {
           .status(500)
           .json({ error: "Erro ao verificar simulado ativo." });
       }
-      // Se já existir um simulado ativo para essa turma, não permitimos a ativação de outro
       if (checkResult[0].activeCount > 0) {
         return res
           .status(400)
           .json({ error: "Já existe um simulado ativo para esta turma." });
       }
 
-      // Caso não exista outro simulado ativo e o simulado não esteja finalizado,
-      // prosseguimos com a ativação
+      // Atualiza o simulado: define ativa = 1 e, se inicio_prova for NULL, define NOW()
       const updateQuery = `
         UPDATE simulado s 
         INNER JOIN turma t ON s.turma_id = t.id
-        SET s.ativa = 1
+        SET s.ativa = 1, s.inicio_prova = COALESCE(s.inicio_prova, NOW())
         WHERE s.id = ? AND t.professor_id = ?
       `;
       db.query(updateQuery, [simuladoId, professorId], (err, result) => {

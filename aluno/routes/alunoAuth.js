@@ -52,7 +52,8 @@ router.post("/aluno/login", (req, res) => {
       }
       req.session.user = user;
       req.session.successMessage = "Logado com sucesso!";
-      res.redirect("/aluno/dashboard");
+      // Redireciona para a rota /aluno/simulado após o login
+      res.redirect("/aluno/simulado");
     }
   );
 });

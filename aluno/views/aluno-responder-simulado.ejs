@@ -6,9 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="stylesheet" href="/assets/theme-d32f8eb8.css" />
     <style>
+      /* Conteúdo principal: ajustado conforme necessário */
       main {
         max-width: 800px;
-        margin: auto 0 800px;
       }
       footer {
         position: fixed;
@@ -68,71 +68,43 @@
         padding-left: 10px;
         flex-grow: 1;
       }
-      .map-popover {
+      /* Sidebar fixa no lado direito */
+      .sidebar {
         position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%) scale(0.9);
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: 200px;
         background: #f8f9fa;
-        border: 1px solid #ccc;
-        border-radius: 4px;
+        border-left: 1px solid #ccc;
         padding: 20px;
-        z-index: 1000;
-        width: 300px;
-        max-height: 80vh;
         overflow-y: auto;
-        opacity: 0;
-        visibility: hidden;
-        transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s;
       }
-      .map-popover.active {
-        opacity: 1;
-        visibility: visible;
-        transform: translate(-50%, -50%) scale(1);
-      }
-      .map-popover header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
+      .sidebar h3 {
+        margin-top: 0;
         margin-bottom: 10px;
       }
-      .map-popover .map {
+      /* Container do mapa de questões alinhado horizontalmente */
+      .sidebar .question-map {
         display: flex;
         flex-wrap: wrap;
-        gap: 5px;
+        gap: 10px;
       }
-      .map-popover .map div {
-        width: 30px;
-        height: 30px;
-        border: 1px solid #ccc;
+      .sidebar .question-map div {
+        width: 40px;
+        height: 40px;
         display: flex;
-        justify-content: center;
         align-items: center;
+        justify-content: center;
+        border: 1px solid #ccc;
         border-radius: 4px;
         cursor: pointer;
       }
-      .map-popover .map div.answered {
+      .sidebar .question-map div.answered {
         background-color: #28a745;
         color: #fff;
       }
-      .map-popover .close-btn {
-        background: none;
-        border: none;
-        font-size: 1.2rem;
-        cursor: pointer;
-      }
-      .map-toggle-btn {
-        position: fixed;
-        bottom: 100px;
-        right: 20px;
-        padding: 10px 15px;
-        background: #007bff;
-        color: #fff;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        z-index: 1000;
-      }
+      /* Timer */
       #timer {
         text-align: center;
         font-size: 20px;
@@ -142,6 +114,32 @@
     </style>
   </head>
   <body>
+    <!-- Sidebar fixa no lado direito para o mapa de questões e formulário de encerramento -->
+    <div class="sidebar">
+      <h3>Mapa de Questões</h3>
+      <div class="question-map">
+        <% questoes.forEach(function(q, index) { %>
+        <div data-question="<%= index + 1 %>" data-question-id="<%= q.id %>">
+          <%= index + 1 %>
+        </div>
+        <% }); %>
+      </div>
+      <div style="margin-top: 20px; text-align: center">
+        <!-- Formulário para encerrar o simulado via POST -->
+        <form
+          id="encerrarSimuladoForm"
+          method="POST"
+          action="/aluno/encerrar-simulado/<%= simulado.id %>"
+        >
+          <!-- Campo oculto para enviar as respostas -->
+          <input type="hidden" name="answers" id="answersInput" value="" />
+          <button type="submit" class="btn btn-primary" style="width: 100%">
+            Encerrar simulado
+          </button>
+        </form>
+      </div>
+    </div>
+
     <div class="min-h-screen flex flex-col lg:ps-64 w-full">
       <main class="p-6 space-y-2">
         <!-- Exibição do timer persistente -->
@@ -230,38 +228,6 @@
       </footer>
     </div>
 
-    <!-- Botão fixo para alternar a exibição do mapa de questões -->
-    <button class="map-toggle-btn" id="mapToggleBtn">Mapa de Questões</button>
-
-    <!-- Popover do mapa de questões com animação -->
-    <div class="map-popover" id="mapPopover">
-      <header>
-        <span>Mapa de Questões</span>
-        <button class="close-btn" id="closeMapPopover">&times;</button>
-      </header>
-      <div class="map">
-        <% questoes.forEach(function(q, index) { %>
-        <div data-question="<%= index + 1 %>" data-question-id="<%= q.id %>">
-          <%= index + 1 %>
-        </div>
-        <% }); %>
-      </div>
-      <div style="margin-top: 20px; text-align: center">
-        <!-- Formulário para encerrar o simulado via POST -->
-        <form
-          id="encerrarSimuladoForm"
-          method="POST"
-          action="/aluno/encerrar-simulado/<%= simulado.id %>"
-        >
-          <!-- Campo oculto para enviar as respostas -->
-          <input type="hidden" name="answers" id="answersInput" value="" />
-          <button type="submit" class="btn btn-primary">
-            Encerrar simulado
-          </button>
-        </form>
-      </div>
-    </div>
-
     <script>
       // Variáveis necessárias: ID do simulado e do aluno
       var simuladoId = "<%= simulado.id %>";
@@ -269,14 +235,24 @@
 
       // --- Timer persistente ---
       var examTimeInSeconds = Number("<%= simulado.tempo_prova %>");
+      // Se o simulado tiver um início global, use-o; caso contrário, usa o armazenamento individual
+      var globalStartTime = "<%= simulado.inicio_prova %>"
+        ? new Date("<%= simulado.inicio_prova %>").getTime()
+        : null;
+
+      var storedStartTime;
       var storedStartTimeKey =
         "aluno_" + alunoId + "_simulado_start_time_" + simuladoId;
-      var storedStartTime = localStorage.getItem(storedStartTimeKey);
-      if (!storedStartTime) {
-        storedStartTime = Date.now();
-        localStorage.setItem(storedStartTimeKey, storedStartTime);
+      if (globalStartTime) {
+        storedStartTime = globalStartTime;
       } else {
-        storedStartTime = parseInt(storedStartTime, 10);
+        storedStartTime = localStorage.getItem(storedStartTimeKey);
+        if (!storedStartTime) {
+          storedStartTime = Date.now();
+          localStorage.setItem(storedStartTimeKey, storedStartTime);
+        } else {
+          storedStartTime = parseInt(storedStartTime, 10);
+        }
       }
 
       function formatTime(seconds) {
@@ -305,37 +281,11 @@
           clearInterval(timerInterval);
           alert("O tempo acabou! O simulado será encerrado.");
           localStorage.removeItem(storedStartTimeKey);
-          // Se o tempo acabar, forçamos o envio do formulário
           document.getElementById("encerrarSimuladoForm").submit();
         }
       }
       var timerInterval = setInterval(updateTimer, 1000);
       updateTimer();
-
-      // --- Função para atualizar o estado do botão de Encerrar ---
-      function updateEncerrarButtonState() {
-        var answeredCount = 0;
-        var totalQuestions = document.querySelectorAll(
-          ".map-popover .map div"
-        ).length;
-        document
-          .querySelectorAll(".map-popover .map div")
-          .forEach(function (el) {
-            var qId = el.getAttribute("data-question-id");
-            var key =
-              "aluno_" +
-              alunoId +
-              "_simulado_" +
-              simuladoId +
-              "_questao_" +
-              qId;
-            if (localStorage.getItem(key) !== null) {
-              answeredCount++;
-            }
-          });
-        // Atualiza os botões de encerrar, se existirem
-        // Neste exemplo, o botão do formulário já é usado para envio via POST.
-      }
 
       // --- Função para restaurar a seleção de alternativas ---
       function restoreAlternatives() {
@@ -401,10 +351,10 @@
       window.addEventListener("load", restoreAlternatives);
       window.addEventListener("pageshow", restoreAlternatives);
 
-      // --- Função para marcar as questões respondidas no mapa ---
+      // --- Função para marcar as questões respondidas no mapa (na sidebar) ---
       function markAnsweredQuestions() {
         document
-          .querySelectorAll(".map-popover .map div")
+          .querySelectorAll(".sidebar .question-map div")
           .forEach(function (el) {
             var qId = el.getAttribute("data-question-id");
             var key =
@@ -420,18 +370,14 @@
               el.classList.remove("answered");
             }
           });
-        updateEncerrarButtonState();
       }
 
       // --- Intercepta o submit do formulário para incluir as respostas do localStorage ---
       document
         .getElementById("encerrarSimuladoForm")
         .addEventListener("submit", function (e) {
-          // Previne o comportamento padrão para inserirmos os dados primeiro
-          // e depois permitir o envio.
           e.preventDefault();
           var answersObj = {};
-          // Seleciona todas as alternativas disponíveis (pode iterar sobre os containers)
           document
             .querySelectorAll(".alternative-container")
             .forEach(function (container) {
@@ -448,34 +394,22 @@
                 answersObj[qId] = answer;
               }
             });
-          // Converte o objeto em JSON e coloca no campo oculto
           document.getElementById("answersInput").value =
             JSON.stringify(answersObj);
-          // Agora, envia o formulário
           this.submit();
         });
 
-      // --- Alterna exibição do popover do mapa de questões com animação ---
-      const mapToggleBtn = document.getElementById("mapToggleBtn");
-      const mapPopover = document.getElementById("mapPopover");
-      const closeMapPopover = document.getElementById("closeMapPopover");
-
-      mapToggleBtn.addEventListener("click", function () {
-        mapPopover.classList.toggle("active");
-      });
-
-      closeMapPopover.addEventListener("click", function () {
-        mapPopover.classList.remove("active");
-      });
-
-      // --- Navega para a questão correspondente ao clicar no número do mapa ---
-      document.querySelectorAll(".map-popover .map div").forEach((el) => {
-        el.addEventListener("click", () => {
-          const questionNum = el.getAttribute("data-question");
-          window.location.href =
-            "/aluno/responder-simulado/<%= simulado.id %>?page=" + questionNum;
+      // --- Navega para a questão correspondente ao clicar no item da sidebar ---
+      document
+        .querySelectorAll(".sidebar .question-map div")
+        .forEach(function (el) {
+          el.addEventListener("click", function () {
+            const questionNum = el.getAttribute("data-question");
+            window.location.href =
+              "/aluno/responder-simulado/<%= simulado.id %>?page=" +
+              questionNum;
+          });
         });
-      });
     </script>
   </body>
 </html>
