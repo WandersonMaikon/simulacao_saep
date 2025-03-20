@@ -17,7 +17,7 @@ router.post(
     const simuladoId = req.params.id;
     const alunoId = req.session.user.id; // ID do aluno logado
     const answers = req.body.answers; // Dados enviados (em formato JSON)
-    const timeoutFlag = req.body.timeout === "true"; // Flag para indicar que o encerramento ocorreu por tempo
+    const timeoutFlag = req.body.timeout === "true"; // Se o encerramento ocorreu por timeout
 
     if (!answers || Object.keys(answers).length === 0) {
       return res.status(400).json({ error: "Nenhuma resposta enviada." });
@@ -77,7 +77,7 @@ router.post(
               console.error("Erro ao atualizar nota:", err);
               return res.status(500).json({ error: "Erro ao registrar nota" });
             }
-            // Atualiza o registro do aluno na tabela simulado_aluno para marcar como finalizado
+            // Marca o simulado como finalizado para o aluno atual
             const updateSimuladoAluno =
               "UPDATE simulado_aluno SET finalizado = 1 WHERE simulado_id = ? AND aluno_id = ?";
             db.query(
@@ -91,8 +91,8 @@ router.post(
                     .json({ error: "Erro ao finalizar simulado" });
                 }
 
-                // Se o encerramento foi por timeout, forçamos o encerramento global
                 if (timeoutFlag) {
+                  // Se o encerramento foi por timeout, força o encerramento global
                   db.query(
                     "UPDATE simulado SET finalizado = 1, ativa = 0 WHERE id = ?",
                     [simuladoId],
@@ -109,7 +109,7 @@ router.post(
                     }
                   );
                 } else {
-                  // Caso contrário, verifica se todos os alunos cadastrados finalizaram
+                  // Se não foi por timeout, verifica se todos os alunos cadastrados finalizaram
                   const countQuery =
                     "SELECT COUNT(*) AS total FROM simulado_aluno WHERE simulado_id = ?";
                   db.query(countQuery, [simuladoId], (err, countResult) => {
