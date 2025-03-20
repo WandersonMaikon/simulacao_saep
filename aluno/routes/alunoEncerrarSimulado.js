@@ -92,20 +92,18 @@ router.post(
                 }
 
                 if (timeoutFlag) {
-                  // Se o encerramento foi por timeout, força o encerramento global
+                  // Se o encerramento foi por timeout, força o encerramento global imediatamente
                   db.query(
                     "UPDATE simulado SET finalizado = 1, ativa = 0 WHERE id = ?",
                     [simuladoId],
                     (err, updateResult) => {
                       if (err) {
                         console.error(
-                          "Erro ao atualizar simulado para finalizado:",
+                          "Erro ao atualizar simulado para finalizado (timeout):",
                           err
                         );
                       }
-                      return res.redirect(
-                        "/aluno/encerrar-simulado/" + simuladoId
-                      );
+                      return res.redirect("/aluno/analise/" + simuladoId);
                     }
                   );
                 } else {
@@ -155,14 +153,12 @@ router.post(
                                 );
                               }
                               return res.redirect(
-                                "/aluno/encerrar-simulado/" + simuladoId
+                                "/aluno/analise/" + simuladoId
                               );
                             }
                           );
                         } else {
-                          return res.redirect(
-                            "/aluno/encerrar-simulado/" + simuladoId
-                          );
+                          return res.redirect("/aluno/analise/" + simuladoId);
                         }
                       }
                     );
