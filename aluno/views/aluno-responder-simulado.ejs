@@ -233,13 +233,29 @@
       var simuladoId = "<%= simulado.id %>";
       var alunoId = "<%= aluno.id %>"; // Certifique-se de que o ID do aluno está disponível no template
 
+      // --- Função para coletar todas as respostas do localStorage ---
+      function collectAllAnswers() {
+        var answersObj = {};
+        var prefix =
+          "aluno_" + alunoId + "_simulado_" + simuladoId + "_questao_";
+        for (var i = 0; i < localStorage.length; i++) {
+          var key = localStorage.key(i);
+          if (key.indexOf(prefix) === 0) {
+            var qId = key.substring(prefix.length);
+            var answer = localStorage.getItem(key);
+            if (answer) {
+              answersObj[qId] = answer;
+            }
+          }
+        }
+        return answersObj;
+      }
+
       // --- Timer persistente ---
       var examTimeInSeconds = Number("<%= simulado.tempo_prova %>");
-      // Se o simulado tiver um início global definido, utilize-o
       var globalStartTime = "<%= simulado.inicio_prova %>"
         ? new Date("<%= simulado.inicio_prova %>").getTime()
         : null;
-
       var storedStartTime;
       var storedStartTimeKey =
         "aluno_" + alunoId + "_simulado_start_time_" + simuladoId;
@@ -254,7 +270,6 @@
           storedStartTime = parseInt(storedStartTime, 10);
         }
       }
-
       function formatTime(seconds) {
         var h = Math.floor(seconds / 3600);
         var m = Math.floor((seconds % 3600) / 60);
@@ -270,9 +285,7 @@
           s
         );
       }
-
       var timerElement = document.getElementById("timer");
-
       function updateTimer() {
         var elapsedSeconds = Math.floor((Date.now() - storedStartTime) / 1000);
         var timeLeft = examTimeInSeconds - elapsedSeconds;
@@ -281,6 +294,16 @@
           clearInterval(timerInterval);
           alert("O tempo acabou! O simulado será encerrado.");
           localStorage.removeItem(storedStartTimeKey);
+          var answersObj = collectAllAnswers();
+          document.getElementById("answersInput").value =
+            JSON.stringify(answersObj);
+          var timeoutInput = document.createElement("input");
+          timeoutInput.type = "hidden";
+          timeoutInput.name = "timeout";
+          timeoutInput.value = "true";
+          document
+            .getElementById("encerrarSimuladoForm")
+            .appendChild(timeoutInput);
           document.getElementById("encerrarSimuladoForm").submit();
         }
       }
@@ -372,28 +395,12 @@
           });
       }
 
-      // --- Intercepta o submit do formulário para incluir as respostas do localStorage ---
+      // --- Intercepta o submit do formulário para incluir todas as respostas do localStorage ---
       document
         .getElementById("encerrarSimuladoForm")
         .addEventListener("submit", function (e) {
           e.preventDefault();
-          var answersObj = {};
-          document
-            .querySelectorAll(".alternative-container")
-            .forEach(function (container) {
-              var qId = container.getAttribute("data-questao");
-              var key =
-                "aluno_" +
-                alunoId +
-                "_simulado_" +
-                simuladoId +
-                "_questao_" +
-                qId;
-              var answer = localStorage.getItem(key);
-              if (answer) {
-                answersObj[qId] = answer;
-              }
-            });
+          var answersObj = collectAllAnswers();
           document.getElementById("answersInput").value =
             JSON.stringify(answersObj);
           this.submit();
@@ -410,27 +417,6 @@
               questionNum;
           });
         });
-      function updateTimer() {
-        var elapsedSeconds = Math.floor((Date.now() - storedStartTime) / 1000);
-        var timeLeft = examTimeInSeconds - elapsedSeconds;
-        timerElement.innerHTML = "Tempo restante: " + formatTime(timeLeft);
-        if (timeLeft <= 0) {
-          clearInterval(timerInterval);
-          alert("O tempo acabou! O simulado será encerrado.");
-          localStorage.removeItem(storedStartTimeKey);
-          // Seta o campo de timeout para "true" para indicar que o encerramento ocorreu por tempo
-          document.getElementById("answersInput").value = JSON.stringify({});
-          // Acrescenta um campo hidden para timeout
-          var timeoutInput = document.createElement("input");
-          timeoutInput.type = "hidden";
-          timeoutInput.name = "timeout";
-          timeoutInput.value = "true";
-          document
-            .getElementById("encerrarSimuladoForm")
-            .appendChild(timeoutInput);
-          document.getElementById("encerrarSimuladoForm").submit();
-        }
-      }
     </script>
   </body>
 </html>

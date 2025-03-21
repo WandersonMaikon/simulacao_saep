@@ -9,13 +9,12 @@ const verificarAutenticacaoAluno = (req, res, next) => {
   next();
 };
 
-// Rota GET para exibir a tela de análise geral do simulado
 router.get("/aluno/analise/:id", verificarAutenticacaoAluno, (req, res) => {
   const db = req.db;
   const simuladoId = req.params.id;
   const alunoId = req.session.user.id;
 
-  // Primeiro, verifica se o aluno já finalizou o simulado
+  // Verifica se o aluno já finalizou o simulado
   const checkQuery =
     "SELECT finalizado FROM simulado_aluno WHERE simulado_id = ? AND aluno_id = ?";
   db.query(checkQuery, [simuladoId, alunoId], (err, result) => {
@@ -24,7 +23,6 @@ router.get("/aluno/analise/:id", verificarAutenticacaoAluno, (req, res) => {
       return res.status(500).send("Erro ao verificar finalização do simulado");
     }
     if (result.length === 0 || result[0].finalizado != 1) {
-      // Se não houver registro ou se não estiver finalizado, redireciona para a página de resposta
       return res.redirect("/aluno/responder-simulado/" + simuladoId);
     }
 
@@ -58,23 +56,52 @@ router.get("/aluno/analise/:id", verificarAutenticacaoAluno, (req, res) => {
         }
         const totalQuestions = totalResult[0].total;
 
-        // Consulta a quantidade de respostas corretas para essa tentativa
-        const correctQuery =
-          "SELECT COUNT(*) AS correctCount FROM resposta_aluno WHERE tentativa_id = ? AND correta = 1";
-        db.query(correctQuery, [tentativa.id], (err, correctResult) => {
+        // Consulta o total de respostas fornecidas (agrupando por questão)
+        const answeredQuery = `
+          SELECT COUNT(*) AS answeredCount 
+          FROM (
+            SELECT questao_id 
+            FROM resposta_aluno 
+            WHERE tentativa_id = ? 
+            GROUP BY questao_id
+          ) AS sub
+        `;
+        db.query(answeredQuery, [tentativa.id], (err, answeredResult) => {
           if (err) {
-            console.error("Erro ao buscar respostas corretas:", err);
-            return res.status(500).send("Erro ao buscar respostas corretas");
+            console.error("Erro ao buscar respostas fornecidas:", err);
+            return res.status(500).send("Erro ao buscar respostas fornecidas");
           }
-          const correctCount = correctResult[0].correctCount;
-          const errors = totalQuestions - correctCount;
-          // Converte nota para número (caso seja string) e formata para duas casas decimais
-          const nota = parseFloat(tentativa.nota) || 0;
-          return res.render("aluno-analise", {
-            nota: nota.toFixed(2),
-            correctCount,
-            errors,
-            totalQuestions,
+          const answeredCount = answeredResult[0].answeredCount;
+
+          // Consulta a quantidade de respostas corretas (agrupando por questão e considerando correta se houver pelo menos um registro com correta = 1)
+          const correctQuery = `
+            SELECT COUNT(*) AS correctCount 
+            FROM (
+              SELECT questao_id, MAX(correta) AS maxCorreta 
+              FROM resposta_aluno 
+              WHERE tentativa_id = ? 
+              GROUP BY questao_id
+            ) AS sub
+            WHERE maxCorreta = 1
+          `;
+          db.query(correctQuery, [tentativa.id], (err, correctResult) => {
+            if (err) {
+              console.error("Erro ao buscar respostas corretas:", err);
+              return res.status(500).send("Erro ao buscar respostas corretas");
+            }
+            const correctCount = correctResult[0].correctCount;
+
+            const wrongAnswers = answeredCount - correctCount;
+            const blank = totalQuestions - answeredCount;
+            const nota = parseFloat(tentativa.nota) || 0;
+
+            return res.render("aluno-analise", {
+              nota: nota.toFixed(2),
+              correctCount,
+              wrongAnswers,
+              blank,
+              totalQuestions,
+            });
           });
         });
       });

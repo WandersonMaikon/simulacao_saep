@@ -16,10 +16,32 @@ router.post(
     const db = req.db;
     const simuladoId = req.params.id;
     const alunoId = req.session.user.id; // ID do aluno logado
-    const answers = req.body.answers; // Dados enviados (em formato JSON)
+
+    // Converte o campo "answers" de string para objeto JSON
+    let answers;
+    try {
+      answers = JSON.parse(req.body.answers);
+    } catch (e) {
+      console.error("Erro ao parsear answers:", e);
+      return res.status(400).json({ error: "Formato de respostas inválido." });
+    }
+
     const timeoutFlag = req.body.timeout === "true"; // Se o encerramento ocorreu por timeout
 
+    console.log("Answers recebidas:", answers);
+    console.log("Chaves de answers:", Object.keys(answers));
+
     if (!answers || Object.keys(answers).length === 0) {
+      return res.status(400).json({ error: "Nenhuma resposta enviada." });
+    }
+
+    // Use as chaves de 'answers' diretamente como IDs das questões
+    const processedAnswers = answers;
+    const questionIds = Object.keys(processedAnswers);
+    console.log("IDs extraídos das questões:", questionIds);
+
+    // Se não houver nenhuma questão identificada, retorna erro
+    if (!questionIds.length) {
       return res.status(400).json({ error: "Nenhuma resposta enviada." });
     }
 
@@ -33,8 +55,7 @@ router.post(
       }
       const tentativaId = result.insertId;
 
-      // Busca as questões correspondentes às respostas enviadas
-      const questionIds = Object.keys(answers);
+      // Busca as questões correspondentes aos IDs extraídos
       const query = "SELECT id, resposta_correta FROM questao WHERE id IN (?)";
       db.query(query, [questionIds], (err, questions) => {
         if (err) {
@@ -42,23 +63,29 @@ router.post(
           return res.status(500).json({ error: "Erro ao verificar respostas" });
         }
 
-        function convertLetter(letter) {
-          const mapping = { A: 1, B: 2, C: 3, D: 4, E: 5 };
-          return mapping[letter] || 0;
-        }
-
         let inserts = [];
         let correctCount = 0;
         questions.forEach((q) => {
-          const chosenLetter = answers[q.id]; // Exemplo: "A"
-          const chosen = convertLetter(chosenLetter);
-          const isCorrect = q.resposta_correta === chosenLetter ? 1 : 0;
+          // Obtém a resposta enviada para a questão com ID q.id (usando processedAnswers)
+          const chosenLetter = processedAnswers[q.id];
+          // Compara se a resposta enviada é igual à resposta correta (ignorando case)
+          const isCorrect =
+            q.resposta_correta.toUpperCase() === chosenLetter.toUpperCase()
+              ? 1
+              : 0;
           if (isCorrect === 1) correctCount++;
-          inserts.push([tentativaId, q.id, chosen, isCorrect]);
+          // Prepara os dados para inserção: [tentativa_id, questao_id, resposta_escolhida, correta]
+          inserts.push([tentativaId, q.id, chosenLetter, isCorrect]);
         });
 
-        const insertRespostas =
-          "INSERT INTO resposta_aluno (tentativa_id, questao_id, resposta_escolhida, correta) VALUES ?";
+        // Insere ou atualiza as respostas na tabela resposta_aluno
+        const insertRespostas = `
+          INSERT INTO resposta_aluno (tentativa_id, questao_id, resposta_escolhida, correta)
+          VALUES ?
+          ON DUPLICATE KEY UPDATE 
+            resposta_escolhida = VALUES(resposta_escolhida),
+            correta = VALUES(correta)
+        `;
         db.query(insertRespostas, [inserts], (err, result) => {
           if (err) {
             console.error("Erro ao inserir respostas:", err);
@@ -68,8 +95,7 @@ router.post(
           }
           const totalQuestions = questions.length;
           const score = (correctCount / totalQuestions) * 100;
-          const errors = totalQuestions - correctCount;
-
+          // Atualiza a nota na tentativa
           const updateTentativa =
             "UPDATE tentativa_simulado SET nota = ? WHERE id = ?";
           db.query(updateTentativa, [score, tentativaId], (err, result) => {
@@ -90,16 +116,15 @@ router.post(
                     .status(500)
                     .json({ error: "Erro ao finalizar simulado" });
                 }
-
                 if (timeoutFlag) {
-                  // Se o encerramento foi por timeout, força o encerramento global imediatamente
+                  // Se o encerramento foi por timeout, encerra o simulado globalmente
                   db.query(
                     "UPDATE simulado SET finalizado = 1, ativa = 0 WHERE id = ?",
                     [simuladoId],
                     (err, updateResult) => {
                       if (err) {
                         console.error(
-                          "Erro ao atualizar simulado para finalizado (timeout):",
+                          "Erro ao atualizar simulado (timeout):",
                           err
                         );
                       }
@@ -107,7 +132,7 @@ router.post(
                     }
                   );
                 } else {
-                  // Se não foi por timeout, verifica se todos os alunos cadastrados finalizaram
+                  // Se não foi por timeout, verifica se todos os alunos finalizaram
                   const countQuery =
                     "SELECT COUNT(*) AS total FROM simulado_aluno WHERE simulado_id = ?";
                   db.query(countQuery, [simuladoId], (err, countResult) => {
@@ -140,7 +165,6 @@ router.post(
                           "Finalizados:",
                           finishedCount
                         );
-                        // Se todos os alunos finalizaram, atualiza o simulado para finalizado e desativa (ativa = 0)
                         if (finishedCount === totalAlunos) {
                           db.query(
                             "UPDATE simulado SET finalizado = 1, ativa = 0 WHERE id = ?",
