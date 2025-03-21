@@ -4,6 +4,12 @@
     <meta charset="UTF-8" />
     <title>Responder Simulado</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      http-equiv="Cache-Control"
+      content="no-store, no-cache, must-revalidate, proxy-revalidate"
+    />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
     <link rel="stylesheet" href="/assets/theme-d32f8eb8.css" />
     <style>
       /* Conteúdo principal */
@@ -338,19 +344,27 @@
       timerElement.innerHTML = "Tempo restante: " + formatTime(timeLeft);
       if (timeLeft <= 0) {
         clearInterval(timerInterval);
-        alert("O tempo acabou! O simulado será encerrado.");
-        localStorage.removeItem(storedStartTimeKey);
-        var answersObj = collectAllAnswers();
-        document.getElementById("answersInput").value =
-          JSON.stringify(answersObj);
-        var timeoutInput = document.createElement("input");
-        timeoutInput.type = "hidden";
-        timeoutInput.name = "timeout";
-        timeoutInput.value = "true";
-        document
-          .getElementById("encerrarSimuladoForm")
-          .appendChild(timeoutInput);
-        document.getElementById("encerrarSimuladoForm").submit();
+        // Em vez de alert(), usa SweetAlert2
+        Swal.fire({
+          title: "Tempo esgotado",
+          text: "O tempo acabou! Simulado encerrado.",
+          icon: "warning",
+          confirmButtonColor: "#2563eb",
+          confirmButtonText: "Ok",
+        }).then(() => {
+          localStorage.removeItem(storedStartTimeKey);
+          var answersObj = collectAllAnswers();
+          document.getElementById("answersInput").value =
+            JSON.stringify(answersObj);
+          var timeoutInput = document.createElement("input");
+          timeoutInput.type = "hidden";
+          timeoutInput.name = "timeout";
+          timeoutInput.value = "true";
+          document
+            .getElementById("encerrarSimuladoForm")
+            .appendChild(timeoutInput);
+          document.getElementById("encerrarSimuladoForm").submit();
+        });
       }
     }
     var timerInterval = setInterval(updateTimer, 1000);

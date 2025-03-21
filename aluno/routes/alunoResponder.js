@@ -70,6 +70,14 @@ router.get(
               return res.redirect("/aluno/analise/" + simuladoId);
             }
 
+            // Define cabeçalhos para evitar cache e forçar o recarregamento da página
+            res.setHeader(
+              "Cache-Control",
+              "no-store, no-cache, must-revalidate, proxy-revalidate"
+            );
+            res.setHeader("Pragma", "no-cache");
+            res.setHeader("Expires", "0");
+
             // Busca as questões associadas a esse simulado, ordenadas por q.id ASC.
             db.query(
               "SELECT q.* FROM simulado_questao sq JOIN questao q ON sq.questao_id = q.id WHERE sq.simulado_id = ? ORDER BY q.id ASC",
