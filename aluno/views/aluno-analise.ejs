@@ -23,10 +23,24 @@
       .result-box {
         font-size: 1.25rem;
       }
+      .link-voltar {
+        cursor: pointer;
+        display: inline-block;
+        margin-bottom: 1rem;
+      }
+      .link-voltar:hover {
+        text-decoration: underline;
+      }
     </style>
   </head>
   <body>
     <div class="container my-5">
+      <!-- Link de voltar na parte superior -->
+      <div class="mb-3">
+        <a href="/aluno/simulado" class="link-voltar">
+          <span class="font-weight-normal font-size-2">Voltar para inicio</span>
+        </a>
+      </div>
       <h2 class="title mb-3">Análise Geral</h2>
       <div class="card">
         <div class="row">
@@ -34,10 +48,8 @@
           <div class="col-lg-6">
             <p class="h4 mb-3">Veja seu desempenho</p>
             <p class="mb-4">
-              Confira o gabarito e acompanhe sua performance com comentários e
-              análises.
+              Acompanhe sua performance com comentários e análises.
             </p>
-            <button class="btn btn-secondary">Ver gabarito</button>
           </div>
           <!-- Coluna direita: resultados -->
           <div class="col-lg-6">
