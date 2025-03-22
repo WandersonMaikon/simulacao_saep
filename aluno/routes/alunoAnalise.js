@@ -138,6 +138,9 @@ router.get("/aluno/analise/:id", verificarAutenticacaoAluno, (req, res) => {
                   blank,
                   totalQuestions,
                   duracaoAluno,
+                  ucLabels: ["UC1", "UC2", "UC3", "UC4"], // Exemplo
+                  acertosData: [2, 1, 4, 3], // Exemplo
+                  errosData: [1, 2, 0, 1], // Exemplo
                 });
               });
             });
