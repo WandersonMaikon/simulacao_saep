@@ -94,12 +94,14 @@ const alunoSimuladoRoutes = require("./aluno/routes/alunoSimulado");
 const alunoResponderRoutes = require("./aluno/routes/alunoResponder");
 const alunoEncerrarSimuladoRoutes = require("./aluno/routes/alunoEncerrarSimulado");
 const alunoAnaliseRoutes = require("./aluno/routes/alunoAnalise");
+const alunoSimuladoConcluidoRoutes = require("./aluno/routes/alunoSimuladoConcluido");
 
 app.use(alunoAuthRoutes);
 app.use(alunoSimuladoRoutes);
 app.use(alunoResponderRoutes);
 app.use(alunoEncerrarSimuladoRoutes);
 app.use(alunoAnaliseRoutes);
+app.use(alunoSimuladoConcluidoRoutes);
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {

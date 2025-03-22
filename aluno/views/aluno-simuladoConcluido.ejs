@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <title>Simulados Concluídos</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="shortcut icon" href="../assets/favicon-8fd74f43.ico" />
+    <script
+      type="module"
+      crossorigin
+      src="../assets/theme-e4584917.js"
+    ></script>
+    <link rel="stylesheet" href="../assets/theme-d32f8eb8.css" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+      .modal-overlay {
+        z-index: 9999;
+      }
+      .swal2-container {
+        z-index: 100000 !important;
+      }
+    </style>
+  </head>
+  <body>
+    <%- include('partials/sidebar') %>
+    <div class="min-h-screen flex flex-col lg:ps-64 w-full">
+      <%- include('partials/header') %>
+      <div class="p-6 space-y-6">
+        <!-- Título -->
+        <div class="flex items-center justify-between w-full print:hidden">
+          <h4 class="text-lg font-semibold text-default-900">
+            Simulados Concluídos
+          </h4>
+        </div>
+        <!-- Cartão com total de Simulados Concluídos -->
+        <div class="grid lg:grid-cols-4 md:grid-cols-2 grid-cols-1 gap-6">
+          <div class="shadow rounded-lg bg-white dark:bg-default-50">
+            <div class="p-5">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-base font-semibold text-default-600">
+                    Total de Simulados Concluídos
+                  </p>
+                  <h4 class="text-2xl font-semibold text-default-900 mt-4">
+                    <%= totalSimulados %>
+                  </h4>
+                </div>
+                <span
+                  class="shrink h-18 w-18 inline-flex items-center justify-center rounded-lg bg-primary/20 text-primary"
+                >
+                  <i class="ph ph-clipboard-text text-4xl"></i>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Área de busca -->
+        <div class="flex flex-wrap items-center justify-between py-4 px-5">
+          <div class="relative flex">
+            <input
+              type="search"
+              class="ps-12 pe-4 py-2.5 block lg:w-64 border-none bg-default-100 text-default-700 rounded-lg text-sm focus:border-primary focus:ring-primary"
+              placeholder="Procurar simulado..."
+            />
+            <span class="absolute start-4 top-2.5">
+              <i
+                class="ph-duotone ph-magnifying-glass text-lg text-default-600"
+              ></i>
+            </span>
+          </div>
+        </div>
+        <!-- Tabela de Simulados Concluídos -->
+        <div class="shadow rounded-lg bg-white dark:bg-default-50 h-fit">
+          <div
+            class="border-t border-dashed border-default-200 relative overflow-x-auto"
+          >
+            <table class="min-w-full">
+              <thead class="border-b border-dashed border-default-200">
+                <tr>
+                  <th class="px-6 py-3 text-left text-sm font-semibold">Id</th>
+                  <th class="px-6 py-3 text-left text-sm font-semibold">
+                    Data
+                  </th>
+                  <th class="px-6 py-3 text-left text-sm font-semibold">
+                    Nota Final
+                  </th>
+                  <th class="px-6 py-3 text-left text-sm font-semibold">
+                    Acertos
+                  </th>
+                  <th class="px-6 py-3 text-left text-sm font-semibold">
+                    Duração
+                  </th>
+                  <th class="px-3 py-3 text-center text-sm font-semibold">
+                    Ação
+                  </th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-dashed divide-default-200">
+                <% if (simulados && simulados.length > 0) { %> <%
+                simulados.forEach(function(simulado) { %>
+                <tr>
+                  <td class="px-6 py-3"><%= simulado.id %></td>
+                  <td class="px-6 py-3"><%= simulado.data %></td>
+                  <td class="px-6 py-3"><%= simulado.nota %> / 100</td>
+                  <td class="px-6 py-3">
+                    <%= simulado.acertos %> / <%= simulado.totalQuestoes %>
+                  </td>
+                  <td class="px-6 py-3"><%= simulado.duracao %></td>
+                  <td class="px-3 py-3 text-center">
+                    <a
+                      href="/analise/<%= simulado.id %>"
+                      class="py-2 px-4 inline-flex items-center justify-center font-semibold tracking-wide text-xs bg-primary hover:bg-primary-500 text-white rounded"
+                    >
+                      Ver Análise
+                    </a>
+                  </td>
+                </tr>
+                <% }); %> <% } else { %>
+                <tr>
+                  <td colspan="6" class="text-center py-6">
+                    Nenhum simulado concluído.
+                  </td>
+                </tr>
+                <% } %>
+              </tbody>
+            </table>
+          </div>
+          <!-- Paginação -->
+          <div
+            class="flex items-center justify-between py-3 px-6 border-t border-dashed border-default-200"
+          >
+            <h6 class="text-default-600">
+              Mostrando <%= (currentPage - 1) * 10 + 1 %> a <%= (currentPage *
+              10 > totalSimulados ? totalSimulados : currentPage * 10) %> de <%=
+              totalSimulados %>
+            </h6>
+            <nav class="flex items-center gap-1">
+              <% if (currentPage > 1) { %>
+              <a
+                class="inline-flex items-center justify-center h-8 w-8 border rounded-md transition-all duration-200 hover:bg-primary hover:text-white"
+                href="/simulados?page=<%= currentPage - 1 %>"
+              >
+                <i class="ph ph-caret-left text-base"></i>
+              </a>
+              <% } %> <% for (let i = 1; i <= totalPages; i++) { %>
+              <a
+                class="inline-flex items-center justify-center h-8 w-8 border rounded-md transition-all duration-200 <%= currentPage === i ? 'bg-primary text-white' : 'hover:bg-primary hover:text-white' %>"
+                href="/simulados?page=<%= i %>"
+              >
+                <%= i %>
+              </a>
+              <% } %> <% if (currentPage < totalPages) { %>
+              <a
+                class="inline-flex items-center justify-center h-8 w-8 border rounded-md transition-all duration-200 hover:bg-primary hover:text-white"
+                href="/simulados?page=<%= currentPage + 1 %>"
+              >
+                <i class="ph ph-caret-right text-base"></i>
+              </a>
+              <% } %>
+            </nav>
+          </div>
+        </div>
+      </div>
+      <%- include('partials/footer') %>
+    </div>
+    <script src="../js/simulados.js"></script>
+  </body>
+</html>
