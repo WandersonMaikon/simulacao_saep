@@ -2,7 +2,7 @@
 <html lang="pt-BR">
   <head>
     <meta charset="utf-8" />
-    <title>Simulados Concluídos</title>
+    <title>Simulados Concluídos - Aluno</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="shortcut icon" href="../assets/favicon-8fd74f43.ico" />
     <script
@@ -24,9 +24,9 @@
     </style>
   </head>
   <body>
-    <%- include('partials/sidebar') %>
+    <%- include('partials/aluno-sidebar') %>
     <div class="min-h-screen flex flex-col lg:ps-64 w-full">
-      <%- include('partials/header') %>
+      <%- include('partials/aluno-header') %>
       <div class="p-6 space-y-6">
         <!-- Título -->
         <div class="flex items-center justify-between w-full print:hidden">
@@ -140,14 +140,14 @@
               <% if (currentPage > 1) { %>
               <a
                 class="inline-flex items-center justify-center h-8 w-8 border rounded-md transition-all duration-200 hover:bg-primary hover:text-white"
-                href="/aluno/simulados?page=<%= currentPage - 1 %>"
+                href="/aluno/simulados-concluidos?page=<%= currentPage - 1 %>"
               >
                 <i class="ph ph-caret-left text-base"></i>
               </a>
               <% } %> <% for (let i = 1; i <= totalPages; i++) { %>
               <a
                 class="inline-flex items-center justify-center h-8 w-8 border rounded-md transition-all duration-200 <%= currentPage === i ? 'bg-primary text-white' : 'hover:bg-primary hover:text-white' %>"
-                href="/aluno/simulados?page=<%= i %>"
+                href="/aluno/simulados-concluidos?page=<%= i %>"
               >
                 <%= i %>
               </a>
@@ -163,7 +163,7 @@
           </div>
         </div>
       </div>
-      <%- include('partials/footer') %>
+      <%- include('partials/aluno-footer') %>
     </div>
     <script src="../js/simulados.js"></script>
   </body>
