@@ -46,65 +46,104 @@ router.get("/aluno/analise/:id", verificarAutenticacaoAluno, (req, res) => {
       }
       const tentativa = tentativas[0];
 
-      // Consulta o total de questões do simulado
-      const totalQuery =
-        "SELECT COUNT(*) AS total FROM simulado_questao WHERE simulado_id = ?";
-      db.query(totalQuery, [simuladoId], (err, totalResult) => {
-        if (err) {
-          console.error("Erro ao buscar total de questões:", err);
-          return res.status(500).send("Erro ao buscar total de questões");
-        }
-        const totalQuestions = totalResult[0].total;
-
-        // Consulta o total de respostas fornecidas (agrupando por questão)
-        const answeredQuery = `
-          SELECT COUNT(*) AS answeredCount 
-          FROM (
-            SELECT questao_id 
-            FROM resposta_aluno 
-            WHERE tentativa_id = ? 
-            GROUP BY questao_id
-          ) AS sub
-        `;
-        db.query(answeredQuery, [tentativa.id], (err, answeredResult) => {
+      // Consulta o simulado para obter o início da prova
+      db.query(
+        "SELECT inicio_prova FROM simulado WHERE id = ?",
+        [simuladoId],
+        (err, simuladoResult) => {
           if (err) {
-            console.error("Erro ao buscar respostas fornecidas:", err);
-            return res.status(500).send("Erro ao buscar respostas fornecidas");
+            console.error("Erro ao buscar simulado:", err);
+            return res.status(500).send("Erro ao buscar simulado");
           }
-          const answeredCount = answeredResult[0].answeredCount;
+          if (simuladoResult.length === 0) {
+            return res.status(404).send("Simulado não encontrado");
+          }
+          const inicioProva = new Date(simuladoResult[0].inicio_prova);
+          const dataTentativa = new Date(tentativa.data_tentativa);
+          const diffMs = dataTentativa - inicioProva;
+          function msToTime(duration) {
+            var seconds = Math.floor((duration / 1000) % 60),
+              minutes = Math.floor((duration / (1000 * 60)) % 60),
+              hours = Math.floor(duration / (1000 * 60 * 60));
+            return (
+              (hours < 10 ? "0" : "") +
+              hours +
+              ":" +
+              (minutes < 10 ? "0" : "") +
+              minutes +
+              ":" +
+              (seconds < 10 ? "0" : "") +
+              seconds
+            );
+          }
+          const duracaoAluno = msToTime(diffMs);
 
-          // Consulta a quantidade de respostas corretas (agrupando por questão e considerando correta se houver pelo menos um registro com correta = 1)
-          const correctQuery = `
-            SELECT COUNT(*) AS correctCount 
+          // Consulta o total de questões do simulado
+          const totalQuery =
+            "SELECT COUNT(*) AS total FROM simulado_questao WHERE simulado_id = ?";
+          db.query(totalQuery, [simuladoId], (err, totalResult) => {
+            if (err) {
+              console.error("Erro ao buscar total de questões:", err);
+              return res.status(500).send("Erro ao buscar total de questões");
+            }
+            const totalQuestions = totalResult[0].total;
+
+            // Consulta o total de respostas fornecidas (agrupando por questão)
+            const answeredQuery = `
+            SELECT COUNT(*) AS answeredCount 
             FROM (
-              SELECT questao_id, MAX(correta) AS maxCorreta 
+              SELECT questao_id 
               FROM resposta_aluno 
               WHERE tentativa_id = ? 
               GROUP BY questao_id
             ) AS sub
-            WHERE maxCorreta = 1
           `;
-          db.query(correctQuery, [tentativa.id], (err, correctResult) => {
-            if (err) {
-              console.error("Erro ao buscar respostas corretas:", err);
-              return res.status(500).send("Erro ao buscar respostas corretas");
-            }
-            const correctCount = correctResult[0].correctCount;
+            db.query(answeredQuery, [tentativa.id], (err, answeredResult) => {
+              if (err) {
+                console.error("Erro ao buscar respostas fornecidas:", err);
+                return res
+                  .status(500)
+                  .send("Erro ao buscar respostas fornecidas");
+              }
+              const answeredCount = answeredResult[0].answeredCount;
 
-            const wrongAnswers = answeredCount - correctCount;
-            const blank = totalQuestions - answeredCount;
-            const nota = parseFloat(tentativa.nota) || 0;
+              // Consulta a quantidade de respostas corretas (agrupando por questão)
+              const correctQuery = `
+              SELECT COUNT(*) AS correctCount 
+              FROM (
+                SELECT questao_id, MAX(correta) AS maxCorreta 
+                FROM resposta_aluno 
+                WHERE tentativa_id = ? 
+                GROUP BY questao_id
+              ) AS sub
+              WHERE maxCorreta = 1
+            `;
+              db.query(correctQuery, [tentativa.id], (err, correctResult) => {
+                if (err) {
+                  console.error("Erro ao buscar respostas corretas:", err);
+                  return res
+                    .status(500)
+                    .send("Erro ao buscar respostas corretas");
+                }
+                const correctCount = correctResult[0].correctCount;
 
-            return res.render("aluno-analise", {
-              nota: nota.toFixed(2),
-              correctCount,
-              wrongAnswers,
-              blank,
-              totalQuestions,
+                const wrongAnswers = answeredCount - correctCount;
+                const blank = totalQuestions - answeredCount;
+                const nota = parseFloat(tentativa.nota) || 0;
+
+                return res.render("aluno-analise", {
+                  nota: nota.toFixed(2),
+                  correctCount,
+                  wrongAnswers,
+                  blank,
+                  totalQuestions,
+                  duracaoAluno,
+                });
+              });
             });
           });
-        });
-      });
+        }
+      );
     });
   });
 });
