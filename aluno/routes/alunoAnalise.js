@@ -126,22 +126,53 @@ router.get("/aluno/analise/:id", verificarAutenticacaoAluno, (req, res) => {
                     .send("Erro ao buscar respostas corretas");
                 }
                 const correctCount = correctResult[0].correctCount;
-
                 const wrongAnswers = answeredCount - correctCount;
                 const blank = totalQuestions - answeredCount;
                 const nota = parseFloat(tentativa.nota) || 0;
 
-                return res.render("aluno-analise", {
-                  nota: nota.toFixed(2),
-                  correctCount,
-                  wrongAnswers,
-                  blank,
-                  totalQuestions,
-                  duracaoAluno,
-                  ucLabels: ["UC1", "UC2", "UC3", "UC4"], // Exemplo
-                  acertosData: [2, 1, 4, 3], // Exemplo
-                  errosData: [1, 2, 0, 1], // Exemplo
-                });
+                // Agora, consulta os dados por UC (matérias)
+                const ucQuery = `
+                SELECT m.nome AS materia,
+                       COUNT(q.id) AS total_questions,
+                       SUM(CASE WHEN r.correta = 1 THEN 1 ELSE 0 END) AS acertos,
+                       SUM(CASE WHEN r.correta = 0 THEN 1 ELSE 0 END) AS erros
+                FROM simulado_questao sq
+                JOIN questao q ON sq.questao_id = q.id
+                JOIN materia m ON q.materia_id = m.id
+                LEFT JOIN resposta_aluno r ON r.questao_id = q.id AND r.tentativa_id = ?
+                WHERE sq.simulado_id = ?
+                GROUP BY m.nome
+              `;
+                db.query(
+                  ucQuery,
+                  [tentativa.id, simuladoId],
+                  (err, ucResults) => {
+                    if (err) {
+                      console.error("Erro ao buscar dados por UC:", err);
+                      return res
+                        .status(500)
+                        .send("Erro ao buscar dados por UC");
+                    }
+                    // Gera os arrays dinamicamente
+                    const ucLabels = ucResults.map((row) => row.materia);
+                    const acertosData = ucResults.map(
+                      (row) => row.acertos || 0
+                    );
+                    const errosData = ucResults.map((row) => row.erros || 0);
+
+                    return res.render("aluno-analise", {
+                      nota: nota.toFixed(2),
+                      correctCount,
+                      wrongAnswers,
+                      blank,
+                      totalQuestions,
+                      duracaoAluno,
+                      ucLabels,
+                      acertosData,
+                      errosData,
+                    });
+                  }
+                );
               });
             });
           });
