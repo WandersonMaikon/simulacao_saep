@@ -9,7 +9,7 @@ const verificarAutenticacaoAluno = (req, res, next) => {
   next();
 };
 
-// Rota para listar os simulados concluídos
+// Rota para listar os simulados concluídos (apenas a tentativa mais recente de cada simulado)
 router.get(
   "/aluno/simulados-concluidos",
   verificarAutenticacaoAluno,
@@ -20,17 +20,21 @@ router.get(
     const limit = 10;
     const offset = (page - 1) * limit;
 
-    // Consulta para obter os simulados concluídos do aluno.
-    // Essa query junta a tabela tentativa_simulado (que armazena as tentativas)
-    // com a tabela simulado_aluno (para verificar se o simulado foi finalizado)
+    // Modificação: Seleciona o simulado_id com alias "id" para que o id exibido corresponda ao simulado
     const simuladosQuery = `
-    SELECT ts.id, ts.simulado_id, ts.nota, ts.data_tentativa
+    SELECT ts.simulado_id AS id, ts.nota, ts.data_tentativa
     FROM tentativa_simulado ts
     JOIN simulado_aluno sa ON ts.simulado_id = sa.simulado_id
     WHERE ts.aluno_id = ? AND sa.finalizado = 1
+      AND ts.data_tentativa = (
+        SELECT MAX(ts2.data_tentativa)
+        FROM tentativa_simulado ts2
+        WHERE ts2.simulado_id = ts.simulado_id AND ts2.aluno_id = ts.aluno_id
+      )
     ORDER BY ts.data_tentativa DESC
     LIMIT ?, ?
   `;
+
     db.query(
       simuladosQuery,
       [alunoId, offset, limit],
@@ -40,12 +44,20 @@ router.get(
           return res.status(500).send("Erro ao buscar simulados concluídos");
         }
 
-        // Consulta para contar o total de simulados concluídos do aluno
+        // Query para contar os simulados concluídos, agrupando pelo simulado_id
         const countQuery = `
-      SELECT COUNT(*) AS total
-      FROM tentativa_simulado ts
-      JOIN simulado_aluno sa ON ts.simulado_id = sa.simulado_id
-      WHERE ts.aluno_id = ? AND sa.finalizado = 1
+      SELECT COUNT(*) AS total FROM (
+        SELECT ts.simulado_id
+        FROM tentativa_simulado ts
+        JOIN simulado_aluno sa ON ts.simulado_id = sa.simulado_id
+        WHERE ts.aluno_id = ? AND sa.finalizado = 1
+          AND ts.data_tentativa = (
+            SELECT MAX(ts2.data_tentativa)
+            FROM tentativa_simulado ts2
+            WHERE ts2.simulado_id = ts.simulado_id AND ts2.aluno_id = ts.aluno_id
+          )
+        GROUP BY ts.simulado_id
+      ) AS sub
     `;
         db.query(countQuery, [alunoId], (err, countResults) => {
           if (err) {
@@ -55,7 +67,6 @@ router.get(
           const totalSimulados = countResults[0].total;
           const totalPages = Math.ceil(totalSimulados / limit);
 
-          // Renderiza a view 'simulados-concluidos' passando os dados necessários para o layout
           res.render("aluno-simuladoConcluido", {
             simulados: simuladosResults,
             totalSimulados,
