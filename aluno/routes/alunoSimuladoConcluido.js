@@ -20,26 +20,16 @@ router.get(
     const offset = (page - 1) * limit;
 
     /* 
-    Essa query faz o seguinte:
-    - Usa simulado_aluno (sa) como base, garantindo que todos os simulados finalizados
-      para o aluno (finalizado = 1) sejam retornados.
-    - Junta com simulado (s) para obter dados do simulado (por exemplo, s.inicio_prova).
-    - Realiza um LEFT JOIN com uma subquery (alias ts) que retorna a tentativa mais recente 
-      (baseada em data_tentativa) para cada simulado do aluno.
-    - Se não houver tentativa registrada para um simulado, os campos da tentativa (nota, data, etc.)
-      serão nulos ou terão valores padrão (usando COALESCE).
-    - Ordena os registros pelo id do simulado (s.id) em ordem decrescente e, em seguida, pela data
-      da tentativa (ts.data_tentativa) também em ordem decrescente.
+    A query agora retorna:
+    - s.descricao AS descricao: a descrição do simulado
+    - ts.nota, a data (formatada), a duração, acertos e total de questões
   */
     const simuladosQuery = `
-    SELECT 
-      s.id AS id,
-      COALESCE(ts.nota, 0) AS nota,
-      CASE 
-        WHEN ts.data_tentativa IS NOT NULL 
-          THEN DATE_FORMAT(ts.data_tentativa, '%d/%m/%Y') 
-        ELSE 'N/A' 
-      END AS data,
+    SELECT
+      s.id AS id, 
+      s.descricao AS descricao, 
+      ts.nota, 
+      DATE_FORMAT(ts.data_tentativa, '%d/%m/%Y') AS data,
       COALESCE(TIMEDIFF(ts.data_tentativa, s.inicio_prova), '00:00:00') AS duracao,
       COALESCE((
         SELECT COUNT(*) 
@@ -78,7 +68,8 @@ router.get(
           console.error("Erro ao buscar simulados concluídos:", err);
           return res.status(500).send("Erro ao buscar simulados concluídos");
         }
-        // Query de contagem simples a partir da tabela simulado_aluno
+
+        // Contagem simples a partir da tabela simulado_aluno
         const countQuery = `
       SELECT COUNT(*) AS total
       FROM simulado_aluno

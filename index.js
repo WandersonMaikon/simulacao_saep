@@ -16,7 +16,6 @@ const io = new Server(server);
 
 // Configura a conexão do Socket.IO
 io.on("connection", (socket) => {});
-
 // Disponibiliza o objeto io para ser utilizado em outras partes da aplicação (rotas, etc.)
 app.set("io", io);
 
@@ -102,6 +101,11 @@ app.use(alunoResponderRoutes);
 app.use(alunoEncerrarSimuladoRoutes);
 app.use(alunoAnaliseRoutes);
 app.use(alunoSimuladoConcluidoRoutes);
+
+// Middleware para tratar 404 - Página não encontrada
+app.use((req, res, next) => {
+  res.status(404).render("404", { url: req.url });
+});
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {

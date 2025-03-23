@@ -79,9 +79,11 @@
             <table class="min-w-full">
               <thead class="border-b border-dashed border-default-200">
                 <tr>
-                  <th class="px-6 py-3 text-left text-sm font-semibold">Id</th>
                   <th class="px-6 py-3 text-left text-sm font-semibold">
                     Data
+                  </th>
+                  <th class="px-6 py-3 text-left text-sm font-semibold">
+                    Descrição
                   </th>
                   <th class="px-6 py-3 text-left text-sm font-semibold">
                     Nota Final
@@ -90,7 +92,7 @@
                     Acertos
                   </th>
                   <th class="px-6 py-3 text-left text-sm font-semibold">
-                    Duração
+                    Duração da prova
                   </th>
                   <th class="px-3 py-3 text-center text-sm font-semibold">
                     Ação
@@ -101,8 +103,8 @@
                 <% if (simulados && simulados.length > 0) { %> <%
                 simulados.forEach(function(simulado) { %>
                 <tr>
-                  <td class="px-6 py-3"><%= simulado.id %></td>
                   <td class="px-6 py-3"><%= simulado.data %></td>
+                  <td class="px-6 py-3"><%= simulado.descricao %></td>
                   <td class="px-6 py-3"><%= simulado.nota %> / 100</td>
                   <td class="px-6 py-3">
                     <%= simulado.acertos %> / <%= simulado.totalQuestoes %>
