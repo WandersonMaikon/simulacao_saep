@@ -5,90 +5,151 @@
     <title>Importar Alunos</title>
     <link rel="stylesheet" href="/assets/theme-d32f8eb8.css" />
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <!-- Adicione outras dependências se necessário -->
+    <!-- Inclua a biblioteca SheetJS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   </head>
   <body>
     <%- include('partials/sidebar') %>
     <div class="min-h-screen flex flex-col lg:ps-64 w-full">
       <%- include('partials/header') %>
-      <main
-        class="flex items-center justify-center min-h-screen bg-gray-50 py-12"
-      >
-        <section
-          id="import-section"
-          class="w-full max-w-2xl bg-gray-100 rounded-lg shadow-lg p-10"
-        >
-          <h2 class="text-2xl font-bold mb-6 text-center">Importar Alunos</h2>
-          <div class="mb-6 text-center text-base text-gray-700">
-            Carregue um arquivo CSV com as informações dos seus alunos do seu
-            computador. Para saber mais sobre como preparar sua planilha CSV,
-            <a
-              target="_blank"
-              rel="noopener noreferrer"
-              href="/m/corp2/other/example-student-import.csv"
-              class="text-blue-600 hover:underline"
-              >baixe um modelo de arquivo CSV</a
-            >
-            ou confira nossa documentação sobre
-            <a
-              target="_blank"
-              rel="noopener noreferrer"
-              href="https://s.typingclub.com/docs/student-management/student-account-setup/add-many-students.html"
-              class="text-blue-600 hover:underline"
-              >como preparar os seus dados</a
-            >.
-          </div>
-          <form
-            action="/admin/aluno/importar"
-            method="POST"
-            enctype="multipart/form-data"
-            class="space-y-6"
+      <main class="bg-gray-50 py-12">
+        <div class="container mx-auto flex items-center justify-center">
+          <section
+            id="import-section"
+            class="w-full max-w-2xl bg-gray-100 rounded-lg shadow-lg p-10"
           >
-            <div>
-              <label
-                for="arquivo"
-                class="block text-base font-semibold text-gray-800 mb-3"
-              >
-                Selecione o arquivo CSV
-              </label>
-              <input
-                type="file"
-                id="arquivo"
-                name="arquivo"
-                accept=".csv"
-                required
-                class="w-full border border-gray-300 rounded-md p-3"
-              />
-            </div>
-            <div class="flex justify-center gap-6">
-              <button
-                type="submit"
-                class="py-3 px-6 font-semibold tracking-wide text-sm bg-blue-600 hover:bg-blue-700 border border-blue-600 hover:border-blue-700 text-white rounded-md"
-              >
-                Importar
-              </button>
+            <h2 class="text-2xl font-bold mb-6 text-center">Importar Alunos</h2>
+            <div class="mb-6 text-center text-base text-gray-700">
+              Carregue um arquivo Excel (XLS ou XLSX) com as informações dos
+              seus alunos. Para saber mais sobre como preparar sua planilha,
               <a
-                href="/admin/aluno/cadastrar"
-                class="py-3 px-6 font-semibold tracking-wide text-sm bg-red-600 hover:bg-red-700 border border-red-600 hover:border-red-700 text-white rounded-md"
+                target="_blank"
+                rel="noopener noreferrer"
+                href="/m/corp2/other/example-student-import.csv"
+                class="text-blue-600 hover:underline"
               >
-                Cancelar
+                baixe um modelo
               </a>
+              ou confira nossa documentação.
             </div>
-          </form>
-        </section>
+            <!-- Formulário para seleção do arquivo -->
+            <form
+              id="import-form"
+              action="#"
+              method="POST"
+              enctype="multipart/form-data"
+              class="space-y-6"
+            >
+              <div>
+                <label
+                  for="arquivo"
+                  class="block text-base font-semibold text-gray-800 mb-3"
+                >
+                  Selecione o arquivo Excel
+                </label>
+                <input
+                  type="file"
+                  id="arquivo"
+                  name="arquivo"
+                  accept=".xls,.xlsx"
+                  required
+                  class="w-full border border-gray-300 rounded-md p-3"
+                />
+              </div>
+              <div class="flex justify-center gap-6">
+                <button
+                  type="button"
+                  id="processar"
+                  class="py-3 px-6 font-semibold tracking-wide text-sm bg-blue-600 hover:bg-blue-700 border border-blue-600 hover:border-blue-700 text-white rounded-md"
+                >
+                  Processar
+                </button>
+                <a
+                  href="/admin/aluno/cadastrar"
+                  class="py-3 px-6 font-semibold tracking-wide text-sm bg-red-600 hover:bg-red-700 border border-red-600 hover:border-red-700 text-white rounded-md"
+                >
+                  Cancelar
+                </a>
+              </div>
+            </form>
+            <!-- Área para exibir os alunos processados -->
+            <div id="lista-nomes" class="mt-6 text-center text-gray-800"></div>
+          </section>
+        </div>
       </main>
-
       <%- include('partials/footer') %>
     </div>
     <script>
-      // Atualiza o texto com o nome do arquivo selecionado
+      // Função para gerar o usuário a partir do nome completo: primeiro.último nome
+      function gerarUsuario(nomeCompleto) {
+        const partes = nomeCompleto.trim().split(" ");
+        if (partes.length === 0) return "";
+        const primeiro = partes[0];
+        const ultimo = partes[partes.length - 1];
+        return primeiro.toLowerCase() + "." + ultimo.toLowerCase();
+      }
+
+      // Ao clicar no botão "Processar", lê o arquivo Excel, extrai os dados e envia para o back-end
       document
-        .getElementById("arquivo")
-        .addEventListener("change", function () {
-          var fileName = this.files[0]
-            ? this.files[0].name
-            : "Nenhum arquivo selecionado";
-          document.getElementById("nome-arquivo").textContent = fileName;
+        .getElementById("processar")
+        .addEventListener("click", function () {
+          var input = document.getElementById("arquivo");
+          var file = input.files[0];
+          if (!file) {
+            alert("Por favor, selecione um arquivo.");
+            return;
+          }
+          var reader = new FileReader();
+          reader.onload = function (evt) {
+            var data = evt.target.result;
+            // Lê o arquivo Excel usando SheetJS
+            var workbook = XLSX.read(data, { type: "binary" });
+            var firstSheetName = workbook.SheetNames[0];
+            var worksheet = workbook.Sheets[firstSheetName];
+            // Converte a planilha para um array de arrays (cada subarray representa uma linha)
+            var sheetData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+            var alunos = [];
+            // Itera a partir da linha 16 (índice 15) até encontrar uma linha sem nome na coluna A
+            for (var i = 15; i < sheetData.length; i++) {
+              var row = sheetData[i];
+              if (!row || !row[0]) break;
+              var nomeCompleto = row[0];
+              var usuario = gerarUsuario(nomeCompleto);
+              alunos.push({
+                nome: nomeCompleto,
+                usuario: usuario,
+                senha: "senha_default", // Defina a senha padrão ou implemente sua lógica de geração
+                turma_id: 1, // Ajuste conforme a turma desejada
+              });
+            }
+            console.log("Alunos processados:", alunos);
+            // Exibe os alunos processados na página
+            var lista = document.getElementById("lista-nomes");
+            lista.innerHTML =
+              "<strong>Alunos processados:</strong><br>" +
+              alunos.map((a) => a.nome + " (" + a.usuario + ")").join("<br>");
+
+            // Envia os dados para o back-end via AJAX
+            $.ajax({
+              url: "/admin/importar_alunos",
+              method: "POST",
+              contentType: "application/json",
+              data: JSON.stringify({ alunos: alunos }),
+              success: function (response) {
+                alert(
+                  "Alunos importados com sucesso! Total inserido: " +
+                    response.inserted
+                );
+              },
+              error: function (err) {
+                console.error("Erro ao importar alunos", err);
+                alert(
+                  "Erro ao importar alunos. Confira o console para mais detalhes."
+                );
+              },
+            });
+          };
+          reader.readAsBinaryString(file);
         });
     </script>
   </body>

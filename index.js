@@ -22,7 +22,7 @@ app.set("io", io);
 // Configura o body-parser embutido do Express com um limite maior
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 app.use(express.json({ limit: "50mb" }));
-
+app.use(express.json());
 // Configuração do banco de dados
 const db = mysql.createConnection({
   host: process.env.DB_HOST,
@@ -78,6 +78,7 @@ const materiasRoutes = require("./admin/routes/materias");
 const alunoRoutes = require("./admin/routes/aluno");
 const questaoRoutes = require("./admin/routes/questao");
 const simuladoRoutes = require("./admin/routes/simulado");
+const alunoImportarRoutes = require("./admin/routes/importar");
 
 app.use(authRoutes);
 app.use(registroRoutes);
@@ -86,6 +87,7 @@ app.use(materiasRoutes);
 app.use(alunoRoutes);
 app.use(questaoRoutes);
 app.use(simuladoRoutes);
+app.use(alunoImportarRoutes);
 
 // Importando as rotas alunos
 const alunoAuthRoutes = require("./aluno/routes/alunoAuth");
@@ -106,7 +108,6 @@ app.use(alunoSimuladoConcluidoRoutes);
 app.use((req, res, next) => {
   res.status(404).render("404", { url: req.url });
 });
-
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
