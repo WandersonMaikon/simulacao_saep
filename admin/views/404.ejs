@@ -4,11 +4,19 @@
     <meta charset="utf-8" />
     <title>404 - Page Not Found</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="shortcut icon" href="assets/favicon-8fd74f43.ico" />
-    <script type="module" crossorigin src="assets/theme-e4584917.js"></script>
-    <link rel="stylesheet" href="assets/theme-d32f8eb8.css" />
+    <link rel="shortcut icon" href="../assets/favicon-8fd74f43.ico" />
+    <script
+      type="module"
+      crossorigin
+      src="../assets/theme-e4584917.js"
+    ></script>
+    <link rel="stylesheet" href="../assets/theme-d32f8eb8.css" />
     <style>
       body {
+        background-image: url("/assets/auth-bg-f57aaf4d.png");
+        background-size: cover;
+        background-repeat: no-repeat;
+        background-position: center;
         margin: 0;
         display: flex;
         align-items: center;
@@ -51,7 +59,11 @@
   <body>
     <div class="error-container">
       <img src="../assets/error-404-6c5960b9.png" alt="Error 404" />
-      <h1>404 - página não encontrada</h1>
+      <h1
+        class="text-3xl font-semibold text-default-800 dark:text-default-100 mb-4"
+      >
+        404 - página não encontrada
+      </h1>
       <p>A página que você solicitou não foi encontrada.</p>
       <a href="/aluno/login">Voltar para a Home</a>
     </div>
