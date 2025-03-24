@@ -78,6 +78,7 @@
         <div class="flex flex-wrap items-center justify-between py-4 px-5">
           <div class="relative flex">
             <input
+              id="searchAluno"
               type="search"
               class="ps-12 pe-4 py-2.5 block lg:w-64 border-none bg-default-100 text-default-700 rounded-lg text-sm focus:border-primary focus:ring-primary"
               placeholder="Procurar aluno..."
@@ -403,6 +404,36 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="../../js/alunoCadastrar.js"></script>
     <script>
+      // Função para filtrar a tabela apenas pelo nome e pelo usuário
+      document
+        .getElementById("searchAluno")
+        .addEventListener("input", function () {
+          var filter = this.value.toLowerCase();
+          var tableBody = document.getElementById("aluno-table-body");
+          var rows = tableBody.getElementsByTagName("tr");
+
+          for (var i = 0; i < rows.length; i++) {
+            // Assumindo que a coluna do nome é a segunda (index 1)
+            // e a coluna do usuário é a terceira (index 2)
+            var nameCell = rows[i].cells[1];
+            var userCell = rows[i].cells[2];
+
+            if (nameCell && userCell) {
+              var nameText = nameCell.textContent.toLowerCase();
+              var userText = userCell.textContent.toLowerCase();
+
+              // Exibe a linha se o filtro corresponder a qualquer um dos valores
+              if (
+                nameText.indexOf(filter) > -1 ||
+                userText.indexOf(filter) > -1
+              ) {
+                rows[i].style.display = "";
+              } else {
+                rows[i].style.display = "none";
+              }
+            }
+          }
+        });
       function openAddAlunoModal() {
         // Verifica se o modal de cadastro existe e o exibe removendo a classe 'modal-hidden'
         var modal = document.getElementById("modal-aluno");
