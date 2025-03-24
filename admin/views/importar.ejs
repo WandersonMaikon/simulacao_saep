@@ -5,7 +5,7 @@
     <title>Importar Alunos</title>
     <link rel="stylesheet" href="/assets/theme-d32f8eb8.css" />
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <!-- Inclua a biblioteca SheetJS -->
+    <!-- Biblioteca SheetJS para manipulação de arquivos Excel -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   </head>
   <body>
@@ -20,26 +20,27 @@
           >
             <h2 class="text-2xl font-bold mb-6 text-center">Importar Alunos</h2>
             <div class="mb-6 text-center text-base text-gray-700">
-              Carregue um arquivo Excel (XLS ou XLSX) com as informações dos
-              seus alunos. Para saber mais sobre como preparar sua planilha,
-              <a
-                target="_blank"
-                rel="noopener noreferrer"
-                href="/m/corp2/other/example-student-import.csv"
-                class="text-blue-600 hover:underline"
-              >
-                baixe um modelo
-              </a>
-              ou confira nossa documentação.
+              Carregue um arquivo Excel (XLS ou XLSX) com os nomes dos alunos a
+              partir da linha 16 da coluna A. <br />
+              O campo <strong>nome</strong> utilizará o nome completo; <br />
+              o <strong>usuário</strong> será formado pelo primeiro nome e o
+              último nome (ex.: "Joao.Silva"); <br />
+              e a <strong>senha</strong> será o último nome. <br /><br />
+              O valor da turma (extraído da URL) será incluído em cada linha.
             </div>
-            <!-- Formulário para seleção do arquivo -->
+            <!-- O input hidden é opcional -->
             <form
               id="import-form"
-              action="#"
+              action="/admin/aluno/importar"
               method="POST"
               enctype="multipart/form-data"
               class="space-y-6"
             >
+              <input
+                type="hidden"
+                name="turma_id"
+                value="<%= typeof turma_id !== 'undefined' ? turma_id : '' %>"
+              />
               <div>
                 <label
                   for="arquivo"
@@ -72,7 +73,6 @@
                 </a>
               </div>
             </form>
-            <!-- Área para exibir os alunos processados -->
             <div id="lista-nomes" class="mt-6 text-center text-gray-800"></div>
           </section>
         </div>
@@ -80,16 +80,12 @@
       <%- include('partials/footer') %>
     </div>
     <script>
-      // Função para gerar o usuário a partir do nome completo: primeiro.último nome
-      function gerarUsuario(nomeCompleto) {
-        const partes = nomeCompleto.trim().split(" ");
-        if (partes.length === 0) return "";
-        const primeiro = partes[0];
-        const ultimo = partes[partes.length - 1];
-        return primeiro.toLowerCase() + "." + ultimo.toLowerCase();
-      }
+      // Extrai o parâmetro "turma_id" da URL, ex.: /admin/aluno/importar?turma_id=2
+      const urlParams = new URLSearchParams(window.location.search);
+      const turmaParam = urlParams.get("turma_id");
+      const turma_id = turmaParam ? parseInt(turmaParam, 10) : 1;
+      console.log("Turma id no front-end:", turma_id);
 
-      // Ao clicar no botão "Processar", lê o arquivo Excel, extrai os dados e envia para o back-end
       document
         .getElementById("processar")
         .addEventListener("click", function () {
@@ -100,41 +96,49 @@
             return;
           }
           var reader = new FileReader();
-          reader.onload = function (evt) {
-            var data = evt.target.result;
-            // Lê o arquivo Excel usando SheetJS
+          reader.onload = function (e) {
+            var data = e.target.result;
             var workbook = XLSX.read(data, { type: "binary" });
             var firstSheetName = workbook.SheetNames[0];
             var worksheet = workbook.Sheets[firstSheetName];
-            // Converte a planilha para um array de arrays (cada subarray representa uma linha)
-            var sheetData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-            var alunos = [];
-            // Itera a partir da linha 16 (índice 15) até encontrar uma linha sem nome na coluna A
-            for (var i = 15; i < sheetData.length; i++) {
-              var row = sheetData[i];
-              if (!row || !row[0]) break;
-              var nomeCompleto = row[0];
-              var usuario = gerarUsuario(nomeCompleto);
-              alunos.push({
-                nome: nomeCompleto,
-                usuario: usuario,
-                senha: "senha_default", // Defina a senha padrão ou implemente sua lógica de geração
-                turma_id: 1, // Ajuste conforme a turma desejada
-              });
-            }
-            console.log("Alunos processados:", alunos);
-            // Exibe os alunos processados na página
-            var lista = document.getElementById("lista-nomes");
-            lista.innerHTML =
-              "<strong>Alunos processados:</strong><br>" +
-              alunos.map((a) => a.nome + " (" + a.usuario + ")").join("<br>");
-
-            // Envia os dados para o back-end via AJAX
+            // Lê a partir da linha 16 (range: 15, pois é zero-indexado)
+            var rows = XLSX.utils.sheet_to_json(worksheet, {
+              header: 1,
+              range: 15,
+            });
+            console.log("Linhas lidas a partir da linha 16:", rows);
+            // Gera novo array com cabeçalho: nome, usuario, turma_id, senha
+            var newRows = [];
+            newRows.push(["nome", "usuario", "turma_id", "senha"]);
+            rows.forEach(function (row) {
+              if (row && row[0]) {
+                var nomeCompleto = row[0].toString().trim();
+                if (nomeCompleto !== "") {
+                  var parts = nomeCompleto.split(/\s+/);
+                  var firstName = parts[0];
+                  var lastName = parts[parts.length - 1];
+                  var usuario = firstName + "." + lastName;
+                  var senha = lastName;
+                  // Adiciona o valor fixo de turma_id
+                  newRows.push([nomeCompleto, usuario, turma_id, senha]);
+                }
+              }
+            });
+            console.log("Nova estrutura (CSV):", newRows);
+            var newWorksheet = XLSX.utils.aoa_to_sheet(newRows);
+            var csv = XLSX.utils.sheet_to_csv(newWorksheet);
+            var blob = new Blob([csv], { type: "text/csv" });
+            var formData = new FormData();
+            formData.append("arquivo", blob, "converted.csv");
+            // Também adiciona turma_id no FormData (opcional)
+            formData.append("turma_id", turma_id);
+            console.log("FormData turma_id:", formData.get("turma_id"));
             $.ajax({
-              url: "/admin/importar_alunos",
+              url: "/admin/aluno/importar?turma_id=" + turma_id,
               method: "POST",
-              contentType: "application/json",
-              data: JSON.stringify({ alunos: alunos }),
+              data: formData,
+              processData: false,
+              contentType: false,
               success: function (response) {
                 alert(
                   "Alunos importados com sucesso! Total inserido: " +
