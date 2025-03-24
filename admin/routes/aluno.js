@@ -328,11 +328,12 @@ router.post("/admin/aluno/importar", upload.single("arquivo"), (req, res) => {
       let insertPromises = alunos.map((aluno) => {
         return new Promise((resolve, reject) => {
           db.query(
-            "INSERT INTO aluno (nome, usuario, senha, data_cadastro) VALUES (?, ?, ?, ?)",
+            "INSERT INTO aluno (nome, usuario, senha, turma_id, data_cadastro) VALUES (?, ?, ?,?, ?)",
             [
               aluno.nome,
               aluno.usuario,
               aluno.senha,
+              req.query.turma_id,
               aluno.data_cadastro || new Date(), // Se não houver data, utiliza a data atual
             ],
             (err, results) => {

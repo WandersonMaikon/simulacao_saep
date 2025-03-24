@@ -80,7 +80,7 @@
       <%- include('partials/footer') %>
     </div>
     <script>
-      // Extrai o parâmetro "turma_id" da URL, ex.: /admin/aluno/importar?turma_id=2
+      // Extrai o parâmetro "turma_id" da URL, por exemplo: /admin/aluno/importar?turma_id=2
       const urlParams = new URLSearchParams(window.location.search);
       const turmaParam = urlParams.get("turma_id");
       const turma_id = turmaParam ? parseInt(turmaParam, 10) : 1;
@@ -101,7 +101,7 @@
             var workbook = XLSX.read(data, { type: "binary" });
             var firstSheetName = workbook.SheetNames[0];
             var worksheet = workbook.Sheets[firstSheetName];
-            // Lê a partir da linha 16 (range: 15, pois é zero-indexado)
+            // Lê a partir da linha 16 (range: 15, zero-indexado)
             var rows = XLSX.utils.sheet_to_json(worksheet, {
               header: 1,
               range: 15,
@@ -109,7 +109,7 @@
             console.log("Linhas lidas a partir da linha 16:", rows);
             // Gera novo array com cabeçalho: nome, usuario, turma_id, senha
             var newRows = [];
-            newRows.push(["nome", "usuario", "senha", "turma_id"]);
+            newRows.push(["nome", "usuario", "turma_id", "senha"]);
             rows.forEach(function (row) {
               if (row && row[0]) {
                 var nomeCompleto = row[0].toString().trim();
@@ -119,8 +119,8 @@
                   var lastName = parts[parts.length - 1];
                   var usuario = firstName + "." + lastName;
                   var senha = lastName;
-                  // Adiciona o valor fixo de turma_id
-                  newRows.push([nomeCompleto, usuario, senha, turma_id]);
+                  // Adiciona o valor fixo da turma extraído da URL
+                  newRows.push([nomeCompleto, usuario, turma_id, senha]);
                 }
               }
             });
@@ -130,7 +130,7 @@
             var blob = new Blob([csv], { type: "text/csv" });
             var formData = new FormData();
             formData.append("arquivo", blob, "converted.csv");
-            // Também adiciona turma_id no FormData (opcional)
+            // Adiciona também turma_id no FormData
             formData.append("turma_id", turma_id);
             console.log("FormData turma_id:", formData.get("turma_id"));
             $.ajax({

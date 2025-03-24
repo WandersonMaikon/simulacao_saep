@@ -11,9 +11,9 @@ router.post("/admin/aluno/importar", upload.single("arquivo"), (req, res) => {
   console.log("POST /admin/aluno/importar - req.body:", req.body);
   console.log("POST /admin/aluno/importar - req.query:", req.query);
 
-  // Força o uso do valor da query string
-  const turmaId = req.query.turma_id || 1;
-  console.log("Turma id usado no back-end:", turmaId);
+  // Forçamos a pegar o valor de turma_id da query string e armazenamos em insertTurma
+  const insertTurma = req.query.turma_id || 1;
+  console.log("Valor de turma para INSERT (insertTurma):", insertTurma);
 
   const file = req.file;
   if (!file) {
@@ -24,7 +24,7 @@ router.post("/admin/aluno/importar", upload.single("arquivo"), (req, res) => {
   fs.createReadStream(file.path)
     .pipe(csvParser({ mapHeaders: ({ header }) => header.toLowerCase() }))
     .on("data", (row) => {
-      console.log("Linha CSV:", row);
+      console.log("Linha CSV lida:", row);
       alunos.push(row);
     })
     .on("end", () => {
@@ -51,17 +51,16 @@ router.post("/admin/aluno/importar", upload.single("arquivo"), (req, res) => {
               aluno.nome,
               aluno.usuario,
               aluno.senha,
-              turmaId,
+              insertTurma,
               dataCadastro,
             ];
           } else {
             query =
               "INSERT INTO aluno (nome, usuario, senha, turma_id, data_cadastro) VALUES (?, ?, ?, ?, NOW())";
-            params = [aluno.nome, aluno.usuario, aluno.senha, turmaId];
+            params = [aluno.nome, aluno.usuario, aluno.senha, insertTurma];
           }
-          // Log da query e dos parâmetros para confirmar
           console.log("Executando query:", query);
-          console.log("Com params:", params);
+          console.log("Com parâmetros:", params);
           db.query(query, params, (err, results) => {
             if (err) {
               console.error("Erro na inserção do aluno:", aluno, err);
