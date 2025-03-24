@@ -7,6 +7,21 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <!-- Biblioteca SheetJS para manipulação de arquivos Excel -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- SweetAlert2 CSS -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css"
+    />
+    <!-- SweetAlert2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Estilo customizado para o botão "Voltar" -->
+    <style>
+      .swal2-confirm.btn-voltar {
+        background-color: #4caf50 !important; /* exemplo: verde */
+        border-color: #4caf50 !important;
+        color: #fff !important;
+      }
+    </style>
   </head>
   <body>
     <%- include('partials/sidebar') %>
@@ -92,7 +107,11 @@
           var input = document.getElementById("arquivo");
           var file = input.files[0];
           if (!file) {
-            alert("Por favor, selecione um arquivo.");
+            Swal.fire({
+              icon: "warning",
+              title: "Atenção",
+              text: "Por favor, selecione um arquivo.",
+            });
             return;
           }
           var reader = new FileReader();
@@ -107,11 +126,23 @@
               range: 15,
             });
             console.log("Linhas lidas a partir da linha 16:", rows);
-            // Gera novo array com cabeçalho: nome, usuario, turma_id, senha
+
+            // Cria novo array com cabeçalho: nome, usuario, turma_id, senha
             var newRows = [];
             newRows.push(["nome", "usuario", "turma_id", "senha"]);
+            // Contador de alunos que serão inseridos
+            var count = 0;
             rows.forEach(function (row) {
+              // Verifica se a linha possui dados na coluna A (nome)
               if (row && row[0]) {
+                // Se existir coluna G (índice 6), obtém o valor e verifica se é "cancelou" ou "desistiu"
+                if (row.length >= 7 && row[6]) {
+                  var status = row[6].toString().toLowerCase().trim();
+                  if (status === "cancelou" || status === "desistiu") {
+                    // Ignora esta linha e não insere o aluno
+                    return;
+                  }
+                }
                 var nomeCompleto = row[0].toString().trim();
                 if (nomeCompleto !== "") {
                   var parts = nomeCompleto.split(/\s+/);
@@ -121,10 +152,12 @@
                   var senha = lastName;
                   // Adiciona o valor fixo da turma extraído da URL
                   newRows.push([nomeCompleto, usuario, turma_id, senha]);
+                  count++;
                 }
               }
             });
             console.log("Nova estrutura (CSV):", newRows);
+            // Converte para uma nova worksheet e gera o CSV
             var newWorksheet = XLSX.utils.aoa_to_sheet(newRows);
             var csv = XLSX.utils.sheet_to_csv(newWorksheet);
             var blob = new Blob([csv], { type: "text/csv" });
@@ -133,6 +166,7 @@
             // Adiciona também turma_id no FormData
             formData.append("turma_id", turma_id);
             console.log("FormData turma_id:", formData.get("turma_id"));
+            // Envia os dados via AJAX para o backend
             $.ajax({
               url: "/admin/aluno/importar?turma_id=" + turma_id,
               method: "POST",
@@ -140,16 +174,32 @@
               processData: false,
               contentType: false,
               success: function (response) {
-                alert(
-                  "Alunos importados com sucesso! Total inserido: " +
-                    response.inserted
-                );
+                // Aqui pode ser usado response.inserted ou o contador 'count' (se o backend não calcular)
+                Swal.fire({
+                  icon: "success",
+                  title: "Sucesso",
+                  html:
+                    "Total de alunos inserido: " + (response.inserted || count),
+                  allowOutsideClick: false,
+                  allowEscapeKey: false,
+                  confirmButtonText: "Voltar",
+                  customClass: {
+                    confirmButton: "btn-voltar",
+                  },
+                }).then((result) => {
+                  if (result.isConfirmed) {
+                    window.location.href =
+                      "/admin/aluno/cadastrar?turma_id=" + turma_id;
+                  }
+                });
               },
               error: function (err) {
                 console.error("Erro ao importar alunos", err);
-                alert(
-                  "Erro ao importar alunos. Confira o console para mais detalhes."
-                );
+                Swal.fire({
+                  icon: "error",
+                  title: "Erro",
+                  text: "Erro ao importar alunos. Confira o console para mais detalhes.",
+                });
               },
             });
           };
