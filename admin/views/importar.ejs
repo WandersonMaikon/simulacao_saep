@@ -109,7 +109,7 @@
             console.log("Linhas lidas a partir da linha 16:", rows);
             // Gera novo array com cabeçalho: nome, usuario, turma_id, senha
             var newRows = [];
-            newRows.push(["nome", "usuario", "turma_id", "senha"]);
+            newRows.push(["nome", "usuario", "senha", "turma_id"]);
             rows.forEach(function (row) {
               if (row && row[0]) {
                 var nomeCompleto = row[0].toString().trim();
@@ -120,7 +120,7 @@
                   var usuario = firstName + "." + lastName;
                   var senha = lastName;
                   // Adiciona o valor fixo de turma_id
-                  newRows.push([nomeCompleto, usuario, turma_id, senha]);
+                  newRows.push([nomeCompleto, usuario, senha, turma_id]);
                 }
               }
             });
