@@ -320,11 +320,10 @@ router.post("/admin/aluno/importar", upload.single("arquivo"), (req, res) => {
   fs.createReadStream(file.path)
     .pipe(csvParser())
     .on("data", (row) => {
-      // Suponha que seu CSV possua as colunas: nome, usuario, senha e opcionalmente data_cadastro
       alunos.push(row);
     })
     .on("end", () => {
-      const db = req.db; // Certifique-se de disponibilizar a conexão no req (por exemplo, via middleware)
+      const db = req.db;
       let insertPromises = alunos.map((aluno) => {
         return new Promise((resolve, reject) => {
           db.query(
@@ -334,7 +333,7 @@ router.post("/admin/aluno/importar", upload.single("arquivo"), (req, res) => {
               aluno.usuario,
               aluno.senha,
               req.query.turma_id,
-              aluno.data_cadastro || new Date(), // Se não houver data, utiliza a data atual
+              aluno.data_cadastro || new Date(),
             ],
             (err, results) => {
               if (err) return reject(err);
