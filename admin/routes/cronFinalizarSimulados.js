@@ -17,18 +17,7 @@ function inserirRespostasEmBrancoParaAluno(simuladoId, alunoId) {
           WHERE r.tentativa_id = t.id AND r.questao_id = sq.questao_id
       )
   `;
-  db.query(insertBlankQuery, [simuladoId, alunoId], (err, result) => {
-    if (err) {
-      console.error(
-        `Erro ao inserir respostas em branco para aluno ${alunoId} no simulado ${simuladoId}:`,
-        err
-      );
-    } else {
-      console.log(
-        `Inseridas ${result.affectedRows} respostas em branco para aluno ${alunoId} no simulado ${simuladoId}.`
-      );
-    }
-  });
+  db.query(insertBlankQuery, [simuladoId, alunoId], (err, result) => {});
 }
 
 // Função que processa os alunos que já foram inseridos no simulado (na tabela simulado_aluno)
@@ -42,7 +31,6 @@ function processarRespostasEmBranco(simuladoId) {
   `;
   db.query(selectAlunosQuery, [simuladoId], (err, alunos) => {
     if (err) {
-      console.error("Erro ao selecionar alunos do simulado:", err);
     } else {
       alunos.forEach((row) => {
         inserirRespostasEmBrancoParaAluno(simuladoId, row.aluno_id);
@@ -53,8 +41,6 @@ function processarRespostasEmBranco(simuladoId) {
 
 // Agendar uma tarefa para rodar a cada minuto
 cron.schedule("* * * * *", () => {
-  console.log("Verificando simulados para finalização automática...");
-
   // Atualiza os simulados que já ultrapassaram o tempo de prova
   const updateQuery = `
     UPDATE simulado
@@ -66,12 +52,7 @@ cron.schedule("* * * * *", () => {
   `;
   db.query(updateQuery, (err, result) => {
     if (err) {
-      console.error("Erro ao finalizar simulados expirados:", err);
     } else if (result.affectedRows > 0) {
-      console.log(
-        `Finalizados ${result.affectedRows} simulado(s) que excederam o tempo de prova.`
-      );
-
       // Após finalizar os simulados, selecione cada simulado finalizado nesta verificação e processe os alunos
       const selectQuery = `
         SELECT id, turma_id, inicio_prova, tempo_prova
@@ -83,16 +64,12 @@ cron.schedule("* * * * *", () => {
       `;
       db.query(selectQuery, (err, simulados) => {
         if (err) {
-          console.error("Erro ao selecionar simulados finalizados:", err);
         } else {
           simulados.forEach((simulado) => {
-            // Para cada simulado finalizado, processa os alunos associados
             processarRespostasEmBranco(simulado.id);
           });
         }
       });
-    } else {
-      console.log("Nenhum simulado expirado para finalizar.");
     }
   });
 });

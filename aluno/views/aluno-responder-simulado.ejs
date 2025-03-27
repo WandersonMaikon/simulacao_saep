@@ -55,7 +55,6 @@
         align-items: center;
         gap: 20px;
       }
-      /* Botão habilitado */
       .btn-enabled {
         padding: 0.5rem 1rem;
         font-weight: 600;
@@ -71,17 +70,6 @@
         background-color: #1d4ed8;
         border-color: #1d4ed8;
       }
-      /* Botão desabilitado */
-      .btn-disabled {
-        padding: 0.5rem 1rem;
-        font-weight: 600;
-        font-size: 0.875rem;
-        text-align: center;
-        border: 1px solid #d1d5db;
-        background-color: #d1d5db;
-        color: #6b7280;
-        border-radius: 0.375rem;
-      }
       .alternative-toggle {
         flex-shrink: 0;
       }
@@ -89,7 +77,6 @@
         padding-left: 10px;
         flex-grow: 1;
       }
-      /* Sidebar fixa no lado direito */
       .sidebar {
         position: fixed;
         top: 0;
@@ -105,7 +92,6 @@
         margin-top: 0;
         margin-bottom: 10px;
       }
-      /* Container do mapa de questões alinhado horizontalmente */
       .sidebar .question-map {
         display: flex;
         flex-wrap: wrap;
@@ -125,7 +111,6 @@
         background-color: #28a745;
         color: #fff;
       }
-      /* Timer */
       #timer {
         text-align: center;
         font-size: 20px;
@@ -164,9 +149,8 @@
           <button
             type="submit"
             id="submitBtn"
-            class="btn-disabled"
+            class="btn-enabled"
             style="width: 100%"
-            disabled
           >
             Encerrar simulado
           </button>
@@ -195,8 +179,8 @@
                 <div class="d-flex flex-column mt-3">
                   <% var alternativas = { A: questao.alternativa_a, B:
                   questao.alternativa_b, C: questao.alternativa_c, D:
-                  questao.alternativa_d, E: questao.alternativa_e }; %> <%
-                  Object.keys(alternativas).forEach(function(key) { %> <% if
+                  questao.alternativa_d, E: questao.alternativa_e };
+                  Object.keys(alternativas).forEach(function(key) { if
                   (alternativas[key]) { %>
                   <div
                     class="alternative-container p-3 my-2"
@@ -222,7 +206,7 @@
                     </div>
                     <div class="alternative-text"><%= alternativas[key] %></div>
                   </div>
-                  <% } %> <% }); %>
+                  <% } }); %>
                 </div>
               </div>
             </div>
@@ -264,13 +248,64 @@
   </body>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script>
-    // Variáveis necessárias: ID do simulado, do aluno.
+    // Variáveis necessárias: ID do simulado e do aluno.
     var simuladoId = "<%= simulado.id %>";
     var alunoId = "<%= aluno.id %>";
     // Recupera o total de questões a partir do elemento oculto.
     var totalQuestions = Number(
       document.getElementById("simuladoData").getAttribute("data-total")
     );
+
+    // --- Função para converter string de tempo ("HH:MM:SS") para segundos ---
+    // --- Função para converter string de tempo para segundos ---
+    function timeStringToSeconds(timeString) {
+      if (!timeString || timeString.trim() === "") {
+        console.error("Tempo de prova inválido:", timeString);
+        return 0;
+      }
+      // Se o tempo contiver ":", assume o formato HH:MM:SS
+      if (timeString.indexOf(":") !== -1) {
+        var parts = timeString.split(":");
+        if (parts.length !== 3) {
+          console.error("Formato de tempo inválido:", timeString);
+          return 0;
+        }
+        return (
+          parseInt(parts[0], 10) * 3600 +
+          parseInt(parts[1], 10) * 60 +
+          parseInt(parts[2], 10)
+        );
+      } else {
+        // Se não contiver ":", tenta interpretar como segundos
+        var seconds = parseInt(timeString, 10);
+        if (isNaN(seconds)) {
+          console.error("Formato de tempo inválido:", timeString);
+          return 0;
+        }
+        return seconds;
+      }
+    }
+
+    // Converte o tempo de prova para segundos
+    var examTimeInSeconds = timeStringToSeconds("<%= simulado.tempo_prova %>");
+    console.log("Tempo de prova em segundos:", examTimeInSeconds);
+
+    // --- Função para limpar automaticamente o localStorage se for um novo simulado ---
+    function clearSimuladoStorageIfNew() {
+      var storedSimuladoIdKey = "aluno_" + alunoId + "_simulado_id";
+      var storedSimuladoId = localStorage.getItem(storedSimuladoIdKey);
+      if (storedSimuladoId !== simuladoId) {
+        Object.keys(localStorage).forEach(function (key) {
+          if (key.indexOf("aluno_" + alunoId + "_simulado_") === 0) {
+            localStorage.removeItem(key);
+          }
+        });
+        localStorage.setItem(storedSimuladoIdKey, simuladoId);
+      }
+    }
+
+    // Executa a limpeza automaticamente ao carregar a página
+    clearSimuladoStorageIfNew();
 
     // --- Função para coletar todas as respostas do localStorage ---
     function collectAllAnswers() {
@@ -291,84 +326,10 @@
 
     // --- Função para atualizar o estado do botão de submit ---
     function updateSubmitButton() {
-      var answersObj = collectAllAnswers();
-      var answeredCount = Object.keys(answersObj).length;
-      var submitBtn = document.getElementById("submitBtn");
-      if (answeredCount === totalQuestions) {
-        submitBtn.disabled = false;
-        submitBtn.className = "btn-enabled";
-      } else {
-        submitBtn.disabled = true;
-        submitBtn.className = "btn-disabled";
-      }
+      // O botão ficará sempre habilitado
+      document.getElementById("submitBtn").disabled = false;
+      document.getElementById("submitBtn").className = "btn-enabled";
     }
-
-    // --- Timer persistente ---
-    var examTimeInSeconds = Number("<%= simulado.tempo_prova %>");
-    var globalStartTime = "<%= simulado.inicio_prova %>"
-      ? new Date("<%= simulado.inicio_prova %>").getTime()
-      : null;
-    var storedStartTime;
-    var storedStartTimeKey =
-      "aluno_" + alunoId + "_simulado_start_time_" + simuladoId;
-    if (globalStartTime) {
-      storedStartTime = globalStartTime;
-    } else {
-      storedStartTime = localStorage.getItem(storedStartTimeKey);
-      if (!storedStartTime) {
-        storedStartTime = Date.now();
-        localStorage.setItem(storedStartTimeKey, storedStartTime);
-      } else {
-        storedStartTime = parseInt(storedStartTime, 10);
-      }
-    }
-    function formatTime(seconds) {
-      var h = Math.floor(seconds / 3600);
-      var m = Math.floor((seconds % 3600) / 60);
-      var s = seconds % 60;
-      return (
-        (h < 10 ? "0" : "") +
-        h +
-        ":" +
-        (m < 10 ? "0" : "") +
-        m +
-        ":" +
-        (s < 10 ? "0" : "") +
-        s
-      );
-    }
-    var timerElement = document.getElementById("timer");
-    function updateTimer() {
-      var elapsedSeconds = Math.floor((Date.now() - storedStartTime) / 1000);
-      var timeLeft = examTimeInSeconds - elapsedSeconds;
-      timerElement.innerHTML = "Tempo restante: " + formatTime(timeLeft);
-      if (timeLeft <= 0) {
-        clearInterval(timerInterval);
-        // Em vez de alert(), usa SweetAlert2
-        Swal.fire({
-          title: "Tempo esgotado",
-          text: "O tempo acabou! Simulado encerrado.",
-          icon: "warning",
-          confirmButtonColor: "#2563eb",
-          confirmButtonText: "Ok",
-        }).then(() => {
-          localStorage.removeItem(storedStartTimeKey);
-          var answersObj = collectAllAnswers();
-          document.getElementById("answersInput").value =
-            JSON.stringify(answersObj);
-          var timeoutInput = document.createElement("input");
-          timeoutInput.type = "hidden";
-          timeoutInput.name = "timeout";
-          timeoutInput.value = "true";
-          document
-            .getElementById("encerrarSimuladoForm")
-            .appendChild(timeoutInput);
-          document.getElementById("encerrarSimuladoForm").submit();
-        });
-      }
-    }
-    var timerInterval = setInterval(updateTimer, 1000);
-    updateTimer();
 
     // --- Função para restaurar a seleção de alternativas ---
     function restoreAlternatives() {
@@ -445,7 +406,72 @@
         });
     }
 
-    // --- Listener único para o submit do formulário com confirmação do SweetAlert2 ---
+    // --- Timer persistente ---
+    var globalStartTime = "<%= simulado.inicio_prova %>"
+      ? new Date("<%= simulado.inicio_prova %>").getTime()
+      : null;
+    var storedStartTime;
+    var storedStartTimeKey =
+      "aluno_" + alunoId + "_simulado_start_time_" + simuladoId;
+    if (globalStartTime) {
+      storedStartTime = globalStartTime;
+    } else {
+      storedStartTime = localStorage.getItem(storedStartTimeKey);
+      if (!storedStartTime) {
+        storedStartTime = Date.now();
+        localStorage.setItem(storedStartTimeKey, storedStartTime);
+      } else {
+        storedStartTime = parseInt(storedStartTime, 10);
+      }
+    }
+    function formatTime(seconds) {
+      var h = Math.floor(seconds / 3600);
+      var m = Math.floor((seconds % 3600) / 60);
+      var s = seconds % 60;
+      return (
+        (h < 10 ? "0" : "") +
+        h +
+        ":" +
+        (m < 10 ? "0" : "") +
+        m +
+        ":" +
+        (s < 10 ? "0" : "") +
+        s
+      );
+    }
+    var timerElement = document.getElementById("timer");
+    function updateTimer() {
+      var elapsedSeconds = Math.floor((Date.now() - storedStartTime) / 1000);
+      var timeLeft = examTimeInSeconds - elapsedSeconds;
+      timerElement.innerHTML = "Tempo restante: " + formatTime(timeLeft);
+      if (timeLeft <= 0) {
+        clearInterval(timerInterval);
+        Swal.fire({
+          title: "Tempo esgotado",
+          text: "O tempo acabou! Simulado encerrado.",
+          icon: "warning",
+          confirmButtonColor: "#2563eb",
+          confirmButtonText: "Ok",
+        }).then(() => {
+          localStorage.removeItem(storedStartTimeKey);
+          var answersObj = collectAllAnswers();
+          document.getElementById("answersInput").value =
+            JSON.stringify(answersObj);
+          var timeoutInput = document.createElement("input");
+          timeoutInput.type = "hidden";
+          timeoutInput.name = "timeout";
+          timeoutInput.value = "true";
+          document
+            .getElementById("encerrarSimuladoForm")
+            .appendChild(timeoutInput);
+          document.getElementById("encerrarSimuladoForm").submit();
+        });
+      }
+    }
+    var timerInterval = setInterval(updateTimer, 1000);
+    updateTimer();
+
+    // --- Listener para o submit do formulário com confirmação do SweetAlert2 ---
     document
       .getElementById("encerrarSimuladoForm")
       .addEventListener("submit", function (e) {
@@ -453,10 +479,14 @@
         var answersObj = collectAllAnswers();
         document.getElementById("answersInput").value =
           JSON.stringify(answersObj);
-
+        var answeredCount = Object.keys(answersObj).length;
+        var warningText =
+          answeredCount < totalQuestions
+            ? "Você não respondeu todas as questões. "
+            : "";
         Swal.fire({
           title: "Tem certeza?",
-          text: "Ao encerrar, não será possível voltar atrás!",
+          text: warningText + "Ao encerrar, não será possível voltar atrás!",
           icon: "warning",
           showCancelButton: true,
           confirmButtonColor: "#2563eb",
@@ -464,7 +494,6 @@
           confirmButtonText: "Sim, encerrar simulado",
         }).then((result) => {
           if (result.isConfirmed) {
-            // Se confirmado, envia o formulário
             e.target.submit();
           }
         });
