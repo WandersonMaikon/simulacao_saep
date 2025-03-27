@@ -70,6 +70,16 @@
         background-color: #1d4ed8;
         border-color: #1d4ed8;
       }
+      .btn-disabled {
+        padding: 0.5rem 1rem;
+        font-weight: 600;
+        font-size: 0.875rem;
+        text-align: center;
+        border: 1px solid #d1d5db;
+        background-color: #d1d5db;
+        color: #6b7280;
+        border-radius: 0.375rem;
+      }
       .alternative-toggle {
         flex-shrink: 0;
       }
@@ -149,8 +159,9 @@
           <button
             type="submit"
             id="submitBtn"
-            class="btn-enabled"
+            class="btn-disabled"
             style="width: 100%"
+            disabled
           >
             Encerrar simulado
           </button>
@@ -257,7 +268,6 @@
     );
 
     // --- Função para converter string de tempo ("HH:MM:SS") para segundos ---
-    // --- Função para converter string de tempo para segundos ---
     function timeStringToSeconds(timeString) {
       if (!timeString || timeString.trim() === "") {
         console.error("Tempo de prova inválido:", timeString);
@@ -276,7 +286,7 @@
           parseInt(parts[2], 10)
         );
       } else {
-        // Se não contiver ":", tenta interpretar como segundos
+        // Se não contiver ":", interpreta como segundos
         var seconds = parseInt(timeString, 10);
         if (isNaN(seconds)) {
           console.error("Formato de tempo inválido:", timeString);
@@ -311,24 +321,31 @@
     function collectAllAnswers() {
       var answersObj = {};
       var prefix = "aluno_" + alunoId + "_simulado_" + simuladoId + "_questao_";
-      for (var i = 0; i < localStorage.length; i++) {
-        var key = localStorage.key(i);
-        if (key.indexOf(prefix) === 0) {
-          var qId = key.substring(prefix.length);
+      // Itera por cada item do mapa de questões na sidebar
+      document
+        .querySelectorAll(".sidebar .question-map div")
+        .forEach(function (el) {
+          var qId = el.getAttribute("data-question-id");
+          var key = prefix + qId;
           var answer = localStorage.getItem(key);
-          if (answer) {
-            answersObj[qId] = answer;
-          }
-        }
-      }
+          // Se não houver resposta salva, define como string vazia
+          answersObj[qId] = answer !== null ? answer : "";
+        });
       return answersObj;
     }
 
     // --- Função para atualizar o estado do botão de submit ---
     function updateSubmitButton() {
-      // O botão ficará sempre habilitado
-      document.getElementById("submitBtn").disabled = false;
-      document.getElementById("submitBtn").className = "btn-enabled";
+      var answersObj = collectAllAnswers();
+      var answeredCount = Object.keys(answersObj).length;
+      var submitBtn = document.getElementById("submitBtn");
+      if (answeredCount === totalQuestions) {
+        submitBtn.disabled = false;
+        submitBtn.className = "btn-enabled";
+      } else {
+        submitBtn.disabled = true;
+        submitBtn.className = "btn-disabled";
+      }
     }
 
     // --- Função para restaurar a seleção de alternativas ---
@@ -480,13 +497,19 @@
         document.getElementById("answersInput").value =
           JSON.stringify(answersObj);
         var answeredCount = Object.keys(answersObj).length;
-        var warningText =
-          answeredCount < totalQuestions
-            ? "Você não respondeu todas as questões. "
-            : "";
+        if (answeredCount < totalQuestions) {
+          Swal.fire({
+            title: "Atenção!",
+            text: "Você precisa responder todas as questões para encerrar o simulado.",
+            icon: "warning",
+            confirmButtonColor: "#2563eb",
+            confirmButtonText: "Ok",
+          });
+          return;
+        }
         Swal.fire({
           title: "Tem certeza?",
-          text: warningText + "Ao encerrar, não será possível voltar atrás!",
+          text: "Ao encerrar, não será possível voltar atrás!",
           icon: "warning",
           showCancelButton: true,
           confirmButtonColor: "#2563eb",
