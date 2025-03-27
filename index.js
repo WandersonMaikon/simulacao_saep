@@ -5,7 +5,7 @@ const mysql = require("mysql2");
 const http = require("http"); // Necessário para criar o servidor HTTP
 const { Server } = require("socket.io"); // Importa o Socket.IO
 require("dotenv").config();
-
+require("./admin/routes/cronFinalizarSimulados"); // Inicia o cron job para finalização de simulados
 const app = express();
 
 // Cria o servidor HTTP a partir do app Express
