@@ -88,16 +88,16 @@ router.get("/aluno/analise/:id", verificarAutenticacaoAluno, (req, res) => {
             }
             const totalQuestions = totalResult[0].total;
 
-            // Consulta o total de respostas fornecidas (agrupando por questão)
+            // Consulta o total de respostas fornecidas (somente as que possuem resposta preenchida)
             const answeredQuery = `
-            SELECT COUNT(*) AS answeredCount 
-            FROM (
-              SELECT questao_id 
-              FROM resposta_aluno 
-              WHERE tentativa_id = ? 
-              GROUP BY questao_id
-            ) AS sub
-          `;
+              SELECT COUNT(*) AS answeredCount 
+              FROM (
+                SELECT questao_id 
+                FROM resposta_aluno 
+                WHERE tentativa_id = ? AND resposta_escolhida <> ''
+                GROUP BY questao_id
+              ) AS sub
+            `;
             db.query(answeredQuery, [tentativa.id], (err, answeredResult) => {
               if (err) {
                 console.error("Erro ao buscar respostas fornecidas:", err);
@@ -109,15 +109,15 @@ router.get("/aluno/analise/:id", verificarAutenticacaoAluno, (req, res) => {
 
               // Consulta a quantidade de respostas corretas (agrupando por questão)
               const correctQuery = `
-              SELECT COUNT(*) AS correctCount 
-              FROM (
-                SELECT questao_id, MAX(correta) AS maxCorreta 
-                FROM resposta_aluno 
-                WHERE tentativa_id = ? 
-                GROUP BY questao_id
-              ) AS sub
-              WHERE maxCorreta = 1
-            `;
+                SELECT COUNT(*) AS correctCount 
+                FROM (
+                  SELECT questao_id, MAX(correta) AS maxCorreta 
+                  FROM resposta_aluno 
+                  WHERE tentativa_id = ? 
+                  GROUP BY questao_id
+                ) AS sub
+                WHERE maxCorreta = 1
+              `;
               db.query(correctQuery, [tentativa.id], (err, correctResult) => {
                 if (err) {
                   console.error("Erro ao buscar respostas corretas:", err);
@@ -132,17 +132,17 @@ router.get("/aluno/analise/:id", verificarAutenticacaoAluno, (req, res) => {
 
                 // Agora, consulta os dados por UC (matérias)
                 const ucQuery = `
-                SELECT m.nome AS materia,
-                       COUNT(q.id) AS total_questions,
-                       SUM(CASE WHEN r.correta = 1 THEN 1 ELSE 0 END) AS acertos,
-                       SUM(CASE WHEN r.correta = 0 THEN 1 ELSE 0 END) AS erros
-                FROM simulado_questao sq
-                JOIN questao q ON sq.questao_id = q.id
-                JOIN materia m ON q.materia_id = m.id
-                LEFT JOIN resposta_aluno r ON r.questao_id = q.id AND r.tentativa_id = ?
-                WHERE sq.simulado_id = ?
-                GROUP BY m.nome
-              `;
+                  SELECT m.nome AS materia,
+                         COUNT(q.id) AS total_questions,
+                         SUM(CASE WHEN r.correta = 1 THEN 1 ELSE 0 END) AS acertos,
+                         SUM(CASE WHEN r.correta = 0 THEN 1 ELSE 0 END) AS erros
+                  FROM simulado_questao sq
+                  JOIN questao q ON sq.questao_id = q.id
+                  JOIN materia m ON q.materia_id = m.id
+                  LEFT JOIN resposta_aluno r ON r.questao_id = q.id AND r.tentativa_id = ?
+                  WHERE sq.simulado_id = ?
+                  GROUP BY m.nome
+                `;
                 db.query(
                   ucQuery,
                   [tentativa.id, simuladoId],
