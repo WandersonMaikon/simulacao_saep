@@ -184,11 +184,12 @@ router.get("/questao-por-curso/:cursoId", verificarAutenticacao, (req, res) => {
 
 // POST /cadastrar-simulado-steps - Processa o cadastro multi‑etapas de simulado
 router.post("/cadastrar-simulado-steps", verificarAutenticacao, (req, res) => {
+  // Recupera a conexão com o banco de dados e os dados enviados no corpo da requisição.
   const db = req.db;
   const { curso, turma, alunos, questoes, tempo_prova, descricao } = req.body;
-  const professorId = req.session.user.id; // Corrigido erro na atribuição
+  const professorId = req.session.user.id; // Identifica o professor autenticado.
 
-  // Verifica os campos obrigatórios
+  // Valida os campos obrigatórios para o cadastro do simulado.
   if (!curso || !turma) {
     return res.status(400).json({ error: "Curso e Turma são obrigatórios." });
   }
@@ -198,88 +199,110 @@ router.post("/cadastrar-simulado-steps", verificarAutenticacao, (req, res) => {
       .json({ error: "Tempo de prova e Descrição são obrigatórios." });
   }
 
-  // Define o título (pode ser customizado)
-  const titulo = "Simulado - Turma " + turma;
-
-  // Insere o simulado, incluindo o tempo_prova
+  // Executa uma consulta SQL com JOIN entre as tabelas "curso" e "turma" para obter os nomes do curso e da turma.
   db.query(
-    "INSERT INTO simulado (curso_id, turma_id, professor_id, titulo, descricao, tempo_prova, data_criacao) VALUES (?, ?, ?, ?, ?, ?, NOW())",
-    [curso, turma, professorId, titulo, descricao, tempo_prova],
-    (err, result) => {
-      if (err) {
-        console.error("Erro ao cadastrar simulado:", err);
-        return res.status(500).json({ error: "Erro ao cadastrar simulado." });
+    "SELECT curso.nome AS cursoNome, turma.nome AS turmaNome FROM curso JOIN turma ON curso.id = turma.curso_id WHERE curso.id = ? AND turma.id = ?",
+    [curso, turma],
+    (err, results) => {
+      if (err || !results || results.length === 0) {
+        console.error("Erro ao buscar informações do curso e da turma:", err);
+        return res
+          .status(500)
+          .json({ error: "Erro ao buscar informações do curso e da turma." });
       }
-      const simuladoId = result.insertId;
 
-      // Garante que os campos alunos e questoes sejam arrays
-      const alunosArray = Array.isArray(alunos)
-        ? alunos
-        : alunos
-        ? [alunos]
-        : [];
-      const questoesArray = Array.isArray(questoes)
-        ? questoes
-        : questoes
-        ? [questoes]
-        : [];
+      // Armazena os nomes do curso e da turma retornados pela consulta.
+      const nomeCurso = results[0].cursoNome;
+      const nomeTurma = results[0].turmaNome;
 
-      let totalQueries = alunosArray.length + questoesArray.length;
-      if (totalQueries === 0) {
-        return res.json({
-          success: true,
-          message: "Simulado cadastrado com sucesso!",
-        });
-      }
-      let completed = 0;
-      let responded = false;
+      // Monta o título do simulado utilizando os nomes do curso e da turma.
+      const titulo = `${nomeCurso} - Turma ${nomeTurma}`;
 
-      function checkFinished() {
-        completed++;
-        if (completed === totalQueries && !responded) {
-          responded = true;
-          res.json({
-            success: true,
-            message: "Simulado cadastrado com sucesso!",
+      // Insere o registro do simulado no banco de dados, incluindo o tempo de prova e a data de criação (NOW()).
+      db.query(
+        "INSERT INTO simulado (curso_id, turma_id, professor_id, titulo, descricao, tempo_prova, data_criacao) VALUES (?, ?, ?, ?, ?, ?, NOW())",
+        [curso, turma, professorId, titulo, descricao, tempo_prova],
+        (err, result) => {
+          if (err) {
+            console.error("Erro ao cadastrar simulado:", err);
+            return res
+              .status(500)
+              .json({ error: "Erro ao cadastrar simulado." });
+          }
+          const simuladoId = result.insertId;
+
+          // Converte os campos "alunos" e "questoes" para arrays, garantindo que possam ser processados mesmo se enviados como um único valor.
+          const alunosArray = Array.isArray(alunos)
+            ? alunos
+            : alunos
+            ? [alunos]
+            : [];
+          const questoesArray = Array.isArray(questoes)
+            ? questoes
+            : questoes
+            ? [questoes]
+            : [];
+
+          // Verifica se há alunos ou questões para associar ao simulado. Se não houver, retorna uma resposta de sucesso.
+          let totalQueries = alunosArray.length + questoesArray.length;
+          if (totalQueries === 0) {
+            return res.json({
+              success: true,
+              message: "Simulado cadastrado com sucesso!",
+            });
+          }
+          let completed = 0;
+          let responded = false;
+
+          // Função auxiliar para verificar se todas as associações foram concluídas.
+          function checkFinished() {
+            completed++;
+            if (completed === totalQueries && !responded) {
+              responded = true;
+              res.json({
+                success: true,
+                message: "Simulado cadastrado com sucesso!",
+              });
+            }
+          }
+
+          // Associa cada aluno ao simulado inserido, iterando sobre o array de alunos.
+          alunosArray.forEach((alunoId) => {
+            db.query(
+              "INSERT INTO simulado_aluno (simulado_id, aluno_id) VALUES (?, ?)",
+              [simuladoId, alunoId],
+              (err, result) => {
+                if (err && !responded) {
+                  responded = true;
+                  console.error("Erro ao associar alunos:", err);
+                  return res
+                    .status(500)
+                    .json({ error: "Erro ao associar alunos." });
+                }
+                checkFinished();
+              }
+            );
+          });
+
+          // Associa cada questão ao simulado inserido, iterando sobre o array de questões.
+          questoesArray.forEach((questaoId) => {
+            db.query(
+              "INSERT INTO simulado_questao (simulado_id, questao_id) VALUES (?, ?)",
+              [simuladoId, questaoId],
+              (err, result) => {
+                if (err && !responded) {
+                  responded = true;
+                  console.error("Erro ao associar questões:", err);
+                  return res
+                    .status(500)
+                    .json({ error: "Erro ao associar questões." });
+                }
+                checkFinished();
+              }
+            );
           });
         }
-      }
-
-      // Associa alunos ao simulado
-      alunosArray.forEach((alunoId) => {
-        db.query(
-          "INSERT INTO simulado_aluno (simulado_id, aluno_id) VALUES (?, ?)",
-          [simuladoId, alunoId],
-          (err, result) => {
-            if (err && !responded) {
-              responded = true;
-              console.error("Erro ao associar alunos:", err);
-              return res
-                .status(500)
-                .json({ error: "Erro ao associar alunos." });
-            }
-            checkFinished();
-          }
-        );
-      });
-
-      // Associa questões ao simulado
-      questoesArray.forEach((questaoId) => {
-        db.query(
-          "INSERT INTO simulado_questao (simulado_id, questao_id) VALUES (?, ?)",
-          [simuladoId, questaoId],
-          (err, result) => {
-            if (err && !responded) {
-              responded = true;
-              console.error("Erro ao associar questões:", err);
-              return res
-                .status(500)
-                .json({ error: "Erro ao associar questões." });
-            }
-            checkFinished();
-          }
-        );
-      });
+      );
     }
   );
 });
