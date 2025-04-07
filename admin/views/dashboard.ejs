@@ -4,14 +4,14 @@
     <meta charset="UTF-8" />
     <title>Dashboard - Análise Geral</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <!-- Bootstrap CSS -->
+    <!-- Inclusão do Bootstrap CSS para layout responsivo e estilização -->
     <link
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
       rel="stylesheet"
     />
-    <!-- ApexCharts -->
+    <!-- Inclusão do ApexCharts para renderização dos gráficos -->
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-    <!-- CSS personalizado (pode ser ajustado conforme a necessidade) -->
+    <!-- Inclusão de CSS personalizado (pode ser ajustado conforme a identidade visual do projeto) -->
     <link rel="stylesheet" href="../assets/theme-d32f8eb8.css" />
     <style>
       /* Estilização básica do layout */
@@ -92,22 +92,26 @@
       #bar_chart {
         min-height: 287px;
       }
+      /* Define o tamanho do novo gráfico de desempenho individual */
+      #student_chart {
+        min-height: 350px;
+      }
     </style>
   </head>
   <body>
-    <!-- Inclusão do Sidebar -->
+    <!-- Inclusão do Sidebar (via partial) -->
     <%- include('partials/sidebar') %>
 
-    <!-- Conteúdo principal com header, conteúdo e footer -->
+    <!-- Container principal que engloba header, conteúdo e footer -->
     <div class="min-h-screen flex flex-col lg:ps-64 w-full">
-      <!-- Inclusão do Header -->
+      <!-- Inclusão do Header (via partial) -->
       <%- include('partials/header') %>
 
-      <!-- Área de conteúdo (espaço vago da tela) -->
+      <!-- Área de conteúdo onde ficam os filtros, cards e gráficos -->
       <div class="container my-5">
         <!-- Formulário de Filtro -->
         <div class="mb-4">
-          <!-- O formulário de filtro está posicionado no espaço de conteúdo, permitindo selecionar Curso e Turma -->
+          <!-- Formulário para seleção de Curso e Turma; os dados são enviados via GET para a rota /admin/dashboard -->
           <form method="GET" action="/admin/dashboard" class="row g-3">
             <div class="col-md-4">
               <label for="curso" class="form-label">Selecione o Curso</label>
@@ -142,15 +146,15 @@
         <!-- Título da Página -->
         <h2 class="title mb-3">Análise Geral</h2>
 
-        <!-- Card de Performance do Simulado -->
+        <!-- Card de Performance: exibe a média das notas dos alunos de todos os simulados -->
         <div class="card-custom">
           <div class="row">
-            <!-- Cabeçalho com texto explicativo -->
+            <!-- Primeira coluna: contém o título e a descrição do card -->
             <div class="col-lg-5">
-              <h5>Resultados do Simulado</h5>
-              <p class="text-muted">Confira abaixo a sua performance.</p>
+              <h5>Média das Notas dos Alunos</h5>
+              <p class="text-muted">Confira abaixo a média das notas dos alunos que realizaram todos os simulados.</p>
             </div>
-            <!-- Abas de Performance (Normal / Líquida) -->
+            <!-- Segunda coluna: contém as abas para exibição dos dados em dois formatos (Pontuação Normal e Líquida) -->
             <div class="col-lg-7">
               <div class="tabs-custom">
                 <ul class="nav nav-tabs" id="analiseTab" role="tablist">
@@ -184,53 +188,53 @@
                   </li>
                 </ul>
                 <div class="tab-content pt-3" id="analiseTabContent">
-                  <!-- Conteúdo da Pontuação Normal -->
+                  <!-- Conteúdo da aba "Pontuação Normal" -->
                   <div class="tab-pane fade show active" id="normal" role="tabpanel" aria-labelledby="normal-tab">
                     <div class="row">
                       <div class="col">
                         <div class="performance-item">
-                          <div class="label">Nota final</div>
+                          <div class="label">Média Geral</div>
                           <div class="value"><%= performanceData.nota %> / 100</div>
                         </div>
                       </div>
                       <div class="col">
                         <div class="performance-item">
-                          <div class="label">Acertos</div>
+                          <div class="label">Acertos Médios</div>
                           <div class="value"><%= performanceData.correctCount %> / <%= performanceData.totalQuestions %></div>
                         </div>
                       </div>
                       <div class="col">
                         <div class="performance-item">
-                          <div class="label">Duração</div>
+                          <div class="label">Duração Média</div>
                           <div class="value"><%= performanceData.duracaoAluno %></div>
                         </div>
                       </div>
                     </div>
                   </div>
-                  <!-- Conteúdo da Pontuação Líquida -->
+                  <!-- Conteúdo da aba "Pontuação Líquida" -->
                   <div class="tab-pane fade" id="liquida" role="tabpanel" aria-labelledby="liquida-tab">
                     <div class="row">
                       <div class="col">
                         <div class="performance-item">
-                          <div class="label">Nota final</div>
+                          <div class="label">Média Geral</div>
                           <div class="value"><%= performanceData.nota %> / 100</div>
                         </div>
                       </div>
                       <div class="col">
                         <div class="performance-item">
-                          <div class="label">Acertos</div>
+                          <div class="label">Acertos Médios</div>
                           <div class="value"><%= performanceData.correctCount %> / <%= performanceData.totalQuestions %></div>
                         </div>
                       </div>
                       <div class="col">
                         <div class="performance-item">
-                          <div class="label">Erros</div>
+                          <div class="label">Erros Médios</div>
                           <div class="value"><%= performanceData.wrongAnswers %> / <%= performanceData.totalQuestions %></div>
                         </div>
                       </div>
                       <div class="col">
                         <div class="performance-item">
-                          <div class="label">Em branco</div>
+                          <div class="label">Em Branco</div>
                           <div class="value"><%= performanceData.blank %> / <%= performanceData.totalQuestions %></div>
                         </div>
                       </div>
@@ -263,26 +267,41 @@
           </div>
         </div>
 
+        <!-- Novo Card para o Gráfico de Desempenho dos Alunos Individualmente com a Média da Turma -->
+        <div class="card-custom chart-card">
+          <div class="card-header">
+            <h5>Desempenho Individual dos Alunos</h5>
+          </div>
+          <div class="card-body">
+            <div id="student_chart" class="apex-charts"></div>
+          </div>
+        </div>
+
         <!-- Container oculto para armazenar os dados dos gráficos (usando data attributes) -->
+        <!-- Adicionamos novos atributos para os dados dos alunos -->
         <div
           id="chart-data"
           data-uc-labels='<%= JSON.stringify(performanceData.ucLabels) %>'
           data-acertos='<%= JSON.stringify(performanceData.acertosData) %>'
           data-erros='<%= JSON.stringify(performanceData.errosData) %>'
+          data-student-labels='<%= JSON.stringify(performanceData.studentLabels) %>'
+          data-student-grades='<%= JSON.stringify(performanceData.studentGrades) %>'
         ></div>
       </div>
 
-      <!-- Inclusão do Footer -->
+      <!-- Inclusão do Footer (via partial) -->
       <%- include('partials/footer') %>
     </div>
 
-    <!-- Bootstrap JS Bundle -->
+    <!-- Inclusão do Bootstrap JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-    <!-- Script para renderizar os gráficos após o carregamento do DOM -->
+    <!-- Scripts para renderizar os gráficos após o carregamento do DOM -->
     <script>
       document.addEventListener("DOMContentLoaded", function () {
-        // Renderiza o Donut Chart (Percentual de rendimento)
+        // ---------------------------
+        // Renderização do Donut Chart (Percentual de rendimento)
+        // ---------------------------
         var wrong = Number("<%= performanceData.wrongAnswers %>");
         var correct = Number("<%= performanceData.correctCount %>");
         var blankVal = Number("<%= performanceData.blank %>");
@@ -307,7 +326,9 @@
         var donutChart = new ApexCharts(document.querySelector("#donut_chart"), donutOptions);
         donutChart.render();
 
-        // Renderiza o Bar Chart (Desempenho por UC)
+        // ---------------------------
+        // Renderização do Bar Chart (Desempenho por UC)
+        // ---------------------------
         var dataEl = document.getElementById("chart-data");
         var ucLabels = JSON.parse(dataEl.getAttribute("data-uc-labels"));
         var acertosDataRaw = JSON.parse(dataEl.getAttribute("data-acertos"));
@@ -372,6 +393,54 @@
 
         var barChart = new ApexCharts(document.querySelector("#bar_chart"), barOptions);
         barChart.render();
+
+        // ---------------------------
+        // Renderização do Novo Gráfico: Desempenho Individual dos Alunos com a Média da Turma
+        // ---------------------------
+        // Lê os dados de alunos: labels (nomes ou identificadores) e suas notas individuais
+        var studentLabels = JSON.parse(dataEl.getAttribute("data-student-labels"));
+        var studentGradesRaw = JSON.parse(dataEl.getAttribute("data-student-grades"));
+        var studentGrades = studentGradesRaw.map(function(val) { return Number(val); });
+
+        // Obtém a média da turma (a propriedade "classAverage" deve ser enviada no performanceData pelo back-end)
+        var classAverage = Number("<%= performanceData.classAverage %>");
+
+        // Define as opções do gráfico de barras para o desempenho individual dos alunos
+        var studentChartOptions = {
+          chart: {
+            type: 'bar',
+            height: 350
+          },
+          series: [{
+            name: 'Nota',
+            data: studentGrades
+          }],
+          xaxis: {
+            categories: studentLabels
+          },
+          // Adiciona uma annotation no eixo Y para indicar a média da turma
+          annotations: {
+            yaxis: [{
+              y: classAverage,
+              borderColor: '#FF4560',
+              label: {
+                borderColor: '#FF4560',
+                style: {
+                  color: '#fff',
+                  background: '#FF4560'
+                },
+                text: 'Média da Turma'
+              }
+            }]
+          },
+          title: {
+            text: 'Desempenho Individual com Média da Turma',
+            align: 'center'
+          }
+        };
+
+        var studentChart = new ApexCharts(document.querySelector("#student_chart"), studentChartOptions);
+        studentChart.render();
       });
     </script>
   </body>
