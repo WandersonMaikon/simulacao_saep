@@ -88,15 +88,18 @@
         <!-- Título da Página -->
         <h2 class="title mb-3">Análise Geral</h2>
 
-        <!-- Card para o Gráfico de Simulados (Média das Notas dos Simulados) -->
-        <div class="card-custom chart-card">
-          <div class="card-header">
-            <h5>Desempenho dos Simulados</h5>
+        <!-- Condicional: exibe o gráfico de Simulados somente se um filtro for aplicado -->
+        <% if (cursoFiltro) { %>
+          <!-- Card para o Gráfico de Simulados -->
+          <div class="card-custom chart-card">
+            <div class="card-header">
+              <h5>Desempenho dos Simulados</h5>
+            </div>
+            <div class="card-body">
+              <div id="simulado_chart"></div>
+            </div>
           </div>
-          <div class="card-body">
-            <div id="simulado_chart"></div>
-          </div>
-        </div>
+        <% } %>
 
         <!-- Container oculto para dados dos gráficos -->
         <div
@@ -153,68 +156,94 @@
     <!-- Script para renderizar os gráficos -->
     <script>
       document.addEventListener("DOMContentLoaded", function () {
-        // ---------------------------
-        // Gráfico de Simulados: Média das Notas dos Simulados com evento de clique
-        // ---------------------------
-        var dataEl = document.getElementById("chart-data");
-        var simuladosData = JSON.parse(dataEl.getAttribute("data-simulados"));
-        // Extrai os títulos e as médias dos simulados
-        var simuladosTitles = simuladosData.map(function (item) {
-          return item.titulo;
-        });
-        var simuladosAverages = simuladosData.map(function (item) {
-          return Number(item.media) || 0;
-        });
+        // Verifica se o gráfico de simulados deve ser renderizado (apenas se o filtro foi aplicado)
+        var cursoFiltro = "<%= cursoFiltro %>";
+        if (cursoFiltro) {
+          var dataEl = document.getElementById("chart-data");
+          var simuladosData = JSON.parse(dataEl.getAttribute("data-simulados"));
 
-        var simuladosChartOptions = {
-          chart: {
-            type: "bar",
-            height: 365,
-            events: {
-              dataPointSelection: function (event, chartContext, config) {
-                // Obtém o índice da barra clicada e o simulado correspondente
-                var index = config.dataPointIndex;
-                var simulado = simuladosData[index];
-                if (simulado && simulado.id) {
-                  // Redireciona para a página de detalhes do simulado
-                  window.location.href = "/admin/simulados/" + simulado.id;
+          // Extrai os títulos, médias e quantidade de alunos para cada simulado
+          var simuladosTitles = simuladosData.map(function (item) {
+            return item.titulo;
+          });
+          var simuladosAverages = simuladosData.map(function (item) {
+            return Number(item.media) || 0;
+          });
+          var simuladosCounts = simuladosData.map(function (item) {
+            return Number(item.total_alunos) || 0;
+          });
+
+          var simuladosChartOptions = {
+            chart: {
+              type: "bar",
+              height: 365,
+              events: {
+                dataPointSelection: function (event, chartContext, config) {
+                  // Obtém o índice da barra clicada e o simulado correspondente
+                  var index = config.dataPointIndex;
+                  var simulado = simuladosData[index];
+                  if (simulado && simulado.id) {
+                    // Redireciona para a página de detalhes do simulado
+                    window.location.href = "/admin/simulados/" + simulado.id;
+                  }
                 }
               }
+            },
+            series: [
+              {
+                name: "Média dos Simulados",
+                data: simuladosAverages
+              },
+              {
+                name: "Participantes",
+                data: simuladosCounts
+              }
+            ],
+            xaxis: {
+              categories: simuladosTitles
+            },
+            title: {
+              text: "Média das Notas dos Simulados e Quantidade de Participantes",
+              align: "center"
+            },
+            yaxis: [
+              {
+                title: { text: "Nota Média" }
+              },
+              {
+                opposite: true,
+                title: { text: "Total de Alunos" }
+              }
+            ],
+            plotOptions: {
+              bar: {
+                horizontal: false,
+                columnWidth: "55%",
+                endingShape: "rounded"
+              }
+            },
+            dataLabels: {
+              enabled: true,
+              formatter: function (val, opts) {
+                // Se for a primeira série, exibe o valor da nota
+                if (opts.seriesIndex === 0) {
+                  return "Nota média: " + val;
+                }
+                // Se for a segunda série, exibe a quantidade de alunos por extenso
+                if (opts.seriesIndex === 1) {
+                  return "Participantes: " + val;
+                }
+                return val;
+              }
             }
-          },
-          series: [
-            {
-              name: "Média",
-              data: simuladosAverages
-            }
-          ],
-          xaxis: {
-            categories: simuladosTitles
-          },
-          title: {
-            text: "Média das Notas dos Simulados",
-            align: "center"
-          },
-          yaxis: {
-            title: { text: "Nota Média" }
-          },
-          plotOptions: {
-            bar: {
-              horizontal: false,
-              columnWidth: "55%",
-              endingShape: "rounded"
-            }
-          },
-          dataLabels: { enabled: true }
-        };
+          };
 
-        var simuladosChart = new ApexCharts(
-          document.querySelector("#simulado_chart"),
-          simuladosChartOptions
-        );
-        simuladosChart.render();
-
-        // Outros gráficos (Donut, Bar, etc.) podem ser renderizados aqui, se necessário.
+          var simuladosChart = new ApexCharts(
+            document.querySelector("#simulado_chart"),
+            simuladosChartOptions
+          );
+          simuladosChart.render();
+        }
       });
     </script>
   </body>

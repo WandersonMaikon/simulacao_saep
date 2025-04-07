@@ -109,14 +109,15 @@ router.get("/admin/dashboard", verificarAutenticacao, (req, res) => {
           turmas = [];
         }
 
-        // Consulta os simulados e calcula a média das notas dos alunos que realizaram cada simulado
+        // Consulta os simulados e calcula a média das notas e a quantidade de alunos que fizeram cada simulado
         let simuladosQuery = `
-          SELECT s.id, s.titulo, AVG(ts.nota) AS media 
-          FROM simulado s 
-          LEFT JOIN tentativa_simulado ts ON s.id = ts.simulado_id 
-          WHERE s.professor_id = ?
-        `;
+SELECT s.id, s.titulo, AVG(ts.nota) AS media, COUNT(ts.id) AS total_alunos
+FROM simulado s 
+LEFT JOIN tentativa_simulado ts ON s.id = ts.simulado_id 
+WHERE s.professor_id = ?
+`;
         let queryParams = [req.session.user.id];
+
         if (cursoFiltro) {
           simuladosQuery += " AND s.curso_id = ? ";
           queryParams.push(cursoFiltro);
@@ -143,7 +144,7 @@ router.get("/admin/dashboard", verificarAutenticacao, (req, res) => {
             ucLabels: ["UC1", "UC2", "UC3"],
             acertosData: [15, 10, 15],
             errosData: [2, 1, 2],
-            simuladosData: simulados,
+            simuladosData: simulados, // Cada item inclui: id, titulo, media e total_alunos
           };
 
           res.render("dashboard", {
