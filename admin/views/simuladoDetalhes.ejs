@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Detalhes do Simulado</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Bootstrap CSS -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div class="container my-5">
+      <h1>Detalhes do Simulado <%= simuladoId %></h1>
+      <% if (message) { %>
+      <div class="alert alert-danger"><%= message %></div>
+      <% } %> <% if (detalhes.length > 0) { %>
+      <table class="table table-bordered">
+        <thead>
+          <tr>
+            <th>Aluno</th>
+            <th>Nota</th>
+            <th>Total de Respostas</th>
+            <th>Acertos</th>
+            <th>Erros</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% detalhes.forEach(function(item) { %>
+          <tr>
+            <td><%= item.aluno %></td>
+            <td><%= item.nota %></td>
+            <td><%= item.total_respostas %></td>
+            <td><%= item.acertos %></td>
+            <td><%= item.erros %></td>
+          </tr>
+          <% }); %>
+        </tbody>
+      </table>
+      <% } else { %>
+      <p>Nenhum aluno realizou este simulado.</p>
+      <% } %>
+      <a href="/admin/dashboard" class="btn btn-secondary">Voltar</a>
+    </div>
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  </body>
+</html>

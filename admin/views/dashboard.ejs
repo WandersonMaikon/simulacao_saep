@@ -29,7 +29,8 @@
         margin-bottom: 2rem;
       }
       /* Outros estilos conforme necessário */
-      #donut_chart, #bar_chart {
+      #donut_chart,
+      #bar_chart {
         min-height: 287px;
       }
       #student_chart {
@@ -87,9 +88,6 @@
         <!-- Título da Página -->
         <h2 class="title mb-3">Análise Geral</h2>
 
-        <!-- Cards e Gráficos existentes (omiti alguns para brevidade) -->
-        <!-- Exemplo de outros cards... -->
-
         <!-- Card para o Gráfico de Simulados (Média das Notas dos Simulados) -->
         <div class="card-custom chart-card">
           <div class="card-header">
@@ -122,7 +120,7 @@
 
     <!-- Script para atualizar o dropdown de Turma via AJAX -->
     <script>
-      document.getElementById("curso").addEventListener("change", function() {
+      document.getElementById("curso").addEventListener("change", function () {
         const cursoId = this.value;
         const turmaSelect = document.getElementById("turma");
         turmaSelect.innerHTML = '<option value="">Carregando turmas...</option>';
@@ -133,11 +131,11 @@
         }
 
         fetch(`/admin/turmas/by-curso/${cursoId}`)
-          .then(response => response.json())
-          .then(data => {
-            if(data.turmas && data.turmas.length > 0) {
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.turmas && data.turmas.length > 0) {
               let options = '<option value="">-- Escolha uma Turma --</option>';
-              data.turmas.forEach(turma => {
+              data.turmas.forEach((turma) => {
                 options += `<option value="${turma.id}">${turma.nome}</option>`;
               });
               turmaSelect.innerHTML = options;
@@ -145,7 +143,7 @@
               turmaSelect.innerHTML = '<option value="">Nenhuma turma encontrada</option>';
             }
           })
-          .catch(error => {
+          .catch((error) => {
             console.error("Erro ao carregar turmas:", error);
             turmaSelect.innerHTML = '<option value="">Erro ao carregar turmas</option>';
           });
@@ -156,40 +154,67 @@
     <script>
       document.addEventListener("DOMContentLoaded", function () {
         // ---------------------------
-        // Exemplo de gráficos existentes (Donut e Bar Chart)
-        // (omiti o código para brevidade; mantenha se necessário)
-        // ---------------------------
-
-        // ---------------------------
-        // Gráfico de Simulados: Média das Notas dos Simulados
+        // Gráfico de Simulados: Média das Notas dos Simulados com evento de clique
         // ---------------------------
         var dataEl = document.getElementById("chart-data");
         var simuladosData = JSON.parse(dataEl.getAttribute("data-simulados"));
-        // Extrai os títulos e as médias
-        var simuladosTitles = simuladosData.map(function(item) {
+        // Extrai os títulos e as médias dos simulados
+        var simuladosTitles = simuladosData.map(function (item) {
           return item.titulo;
         });
-        var simuladosAverages = simuladosData.map(function(item) {
+        var simuladosAverages = simuladosData.map(function (item) {
           return Number(item.media) || 0;
         });
 
         var simuladosChartOptions = {
-          chart: { type: 'bar', height: 365 },
-          series: [{
-            name: 'Média',
-            data: simuladosAverages
-          }],
-          xaxis: { categories: simuladosTitles },
-          title: { text: 'Média das Notas dos Simulados', align: 'center' },
-          yaxis: { title: { text: 'Nota Média' } },
+          chart: {
+            type: "bar",
+            height: 365,
+            events: {
+              dataPointSelection: function (event, chartContext, config) {
+                // Obtém o índice da barra clicada e o simulado correspondente
+                var index = config.dataPointIndex;
+                var simulado = simuladosData[index];
+                if (simulado && simulado.id) {
+                  // Redireciona para a página de detalhes do simulado
+                  window.location.href = "/admin/simulados/" + simulado.id;
+                }
+              }
+            }
+          },
+          series: [
+            {
+              name: "Média",
+              data: simuladosAverages
+            }
+          ],
+          xaxis: {
+            categories: simuladosTitles
+          },
+          title: {
+            text: "Média das Notas dos Simulados",
+            align: "center"
+          },
+          yaxis: {
+            title: { text: "Nota Média" }
+          },
           plotOptions: {
-            bar: { horizontal: false, columnWidth: '55%', endingShape: 'rounded' }
+            bar: {
+              horizontal: false,
+              columnWidth: "55%",
+              endingShape: "rounded"
+            }
           },
           dataLabels: { enabled: true }
         };
 
-        var simuladosChart = new ApexCharts(document.querySelector("#simulado_chart"), simuladosChartOptions);
+        var simuladosChart = new ApexCharts(
+          document.querySelector("#simulado_chart"),
+          simuladosChartOptions
+        );
         simuladosChart.render();
+
+        // Outros gráficos (Donut, Bar, etc.) podem ser renderizados aqui, se necessário.
       });
     </script>
   </body>

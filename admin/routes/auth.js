@@ -67,7 +67,7 @@ router.get("/admin/dashboard", verificarAutenticacao, (req, res) => {
   const cursoFiltro = req.query.curso || null;
   const turmaFiltro = req.query.turma || null;
 
-  // Consulta os cursos vinculados ao professor logado
+  // Busca os cursos vinculados ao professor logado
   db.query(
     "SELECT curso.id, curso.nome FROM curso INNER JOIN professor_curso ON curso.id = professor_curso.curso_id WHERE professor_curso.professor_id = ?",
     [req.session.user.id],
@@ -117,7 +117,6 @@ router.get("/admin/dashboard", verificarAutenticacao, (req, res) => {
           WHERE s.professor_id = ?
         `;
         let queryParams = [req.session.user.id];
-
         if (cursoFiltro) {
           simuladosQuery += " AND s.curso_id = ? ";
           queryParams.push(cursoFiltro);
@@ -134,7 +133,6 @@ router.get("/admin/dashboard", verificarAutenticacao, (req, res) => {
             simulados = [];
           }
 
-          // Dados de performance fictícios para outros gráficos (você pode ajustar conforme necessário)
           const performanceData = {
             nota: 80,
             correctCount: 40,
@@ -145,7 +143,7 @@ router.get("/admin/dashboard", verificarAutenticacao, (req, res) => {
             ucLabels: ["UC1", "UC2", "UC3"],
             acertosData: [15, 10, 15],
             errosData: [2, 1, 2],
-            simuladosData: simulados, // Dados dos simulados com média calculada
+            simuladosData: simulados,
           };
 
           res.render("dashboard", {
@@ -185,6 +183,47 @@ router.get(
     );
   }
 );
+
+// ===================================================================
+// Rota GET para exibir os detalhes de um simulado.
+// ===================================================================
+router.get("/admin/simulados/:id", verificarAutenticacao, (req, res) => {
+  const db = req.db;
+  const simuladoId = req.params.id;
+
+  // Consulta para obter os detalhes das tentativas do simulado,
+  // incluindo o nome do aluno, nota, total de respostas e quantidade de acertos.
+  const query = `
+    SELECT a.nome AS aluno, ts.nota, 
+           COUNT(ra.id) AS total_respostas, 
+           SUM(CASE WHEN ra.correta = 1 THEN 1 ELSE 0 END) AS acertos
+    FROM tentativa_simulado ts
+    LEFT JOIN aluno a ON ts.aluno_id = a.id
+    LEFT JOIN resposta_aluno ra ON ts.id = ra.tentativa_id
+    WHERE ts.simulado_id = ?
+    GROUP BY ts.id, a.nome, ts.nota
+  `;
+  db.query(query, [simuladoId], (err, resultados) => {
+    if (err) {
+      console.error("Erro ao buscar detalhes do simulado:", err);
+      return res.render("simuladoDetalhes", {
+        message: "Erro ao carregar detalhes do simulado",
+        detalhes: [],
+        simuladoId: simuladoId,
+      });
+    }
+    // Calcula os erros para cada tentativa
+    resultados.forEach((item) => {
+      item.erros = item.total_respostas - item.acertos;
+    });
+
+    res.render("simuladoDetalhes", {
+      message: "",
+      detalhes: resultados,
+      simuladoId: simuladoId,
+    });
+  });
+});
 
 // ===================================================================
 // Rota para Realizar o Logout.
