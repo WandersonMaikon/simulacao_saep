@@ -4,15 +4,21 @@
     <meta charset="UTF-8" />
     <title>Dashboard - Análise Geral</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <!-- Inclusão do Bootstrap CSS -->
-   
-    <!-- Inclusão do ApexCharts -->
+    
+    <!-- Choices.js CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
+    <!-- ApexCharts -->
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <!-- CSS personalizado -->
     <link rel="stylesheet" href="/assets/theme-d32f8eb8.css" />
     <style>
       body {
         background-color: #f0f0f0;
+        color: #000;
+      }
+      /* Força o fundo branco para os componentes gerados pelo Choices.js */
+      .choices__inner {
+        background-color: white;
       }
       .title {
         font-size: 2rem;
@@ -25,7 +31,7 @@
         padding: 1.5rem;
         margin-bottom: 2rem;
       }
-      /* Outros estilos conforme necessário */
+      /* Layout dos gráficos – conforme definido */
       #donut_chart,
       #bar_chart {
         min-height: 287px;
@@ -33,14 +39,59 @@
       #student_chart {
         min-height: 350px;
       }
-      /* Gráfico de Simulados */
       #simulado_chart {
         min-height: 365px;
       }
-      /* Estilo para exibição do intervalo */
       #simulado_chart_interval {
         font-size: 1.1rem;
         color: #333;
+      }
+      /* Estilo dos selects e labels (baseado no exemplo Adicionar Questão) */
+      .w-full {
+        width: 100%;
+      }
+      .mb-2 {
+        margin-bottom: 0.5rem;
+      }
+      .form-label {
+        font-weight: 500;
+        font-size: 0.8125rem;
+        color: #6B7280;
+      }
+      .form-select {
+        width: 100%;
+        padding: 0.5rem;
+        border: 1px solid #ccc;
+        border-radius: 0.375rem;
+        background-color: #fff;
+      }
+      /* Botão Filtrar – inspirado no botão "Salvar" do exemplo "Adicionar Questão" */
+      .btn-filtrar {
+        padding: 0.5rem 1.25rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+        border: 1px solid transparent;
+        text-align: center;
+        cursor: pointer;
+        background-color: #2563eb;
+        color: #fff;
+        border-radius: 0.375rem;
+        transition: background-color 0.5s, border-color 0.5s;
+      }
+      .btn-filtrar:hover {
+        background-color: #1d4ed8;
+        border-color: #1d4ed8;
+      }
+      /* Agrupamento dos filtros em linha com espaçamento */
+      .filter-inline {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 2rem;
+        align-items: flex-end;
+      }
+      .filter-inline > div {
+        flex: 1;
+        min-width: 200px;
       }
     </style>
   </head>
@@ -54,35 +105,45 @@
 
       <!-- Conteúdo principal -->
       <div class="container my-5">
-        <!-- Formulário de Filtro (Curso e Turma) -->
+        <!-- Formulário de Filtro (Curso e Turma) – estrutura baseada no exemplo "Adicionar Questão" -->
         <div class="mb-4">
-          <form method="GET" action="/admin/dashboard" class="row g-3">
-            <div class="col-md-4">
-              <label for="curso" class="form-label">Selecione o Curso</label>
-              <select class="form-select" name="curso" id="curso" required>
-                <option value="">-- Escolha um Curso --</option>
-                <% cursos.forEach(cursoItem => { %>
-                  <option value="<%= cursoItem.id %>" <% if(cursoFiltro == cursoItem.id) { %> selected <% } %>>
-                    <%= cursoItem.nome %>
-                  </option>
-                <% }); %>
-              </select>
-            </div>
-            <div class="col-md-4">
-              <label for="turma" class="form-label">Selecione a Turma</label>
-              <select class="form-select" name="turma" id="turma" required>
-                <option value="">-- Escolha uma Turma --</option>
-                <% if (turmas && turmas.length > 0) { %>
-                  <% turmas.forEach(turmaItem => { %>
-                    <option value="<%= turmaItem.id %>" <% if(turmaFiltro == turmaItem.id) { %> selected <% } %>>
-                      <%= turmaItem.nome %>
+          <form method="GET" action="/admin/dashboard">
+            <div class="filter-inline">
+              <!-- Campo Curso -->
+              <div class="w-full">
+                <div class="mb-2">
+                  <label for="curso" class="form-label">Selecione o Curso</label>
+                </div>
+                <select class="form-select" name="curso" id="curso" required>
+                  <option value="">-- Escolha um Curso --</option>
+                  <% cursos.forEach(cursoItem => { %>
+                    <option value="<%= cursoItem.id %>" <% if(cursoFiltro == cursoItem.id){ %> selected <% } %>>
+                      <%= cursoItem.nome %>
                     </option>
                   <% }); %>
-                <% } %>
-              </select>
-            </div>
-            <div class="col-md-4 align-self-end">
-              <button type="submit" class="btn btn-primary">Filtrar</button>
+                </select>
+              </div>
+              <!-- Campo Turma -->
+              <div class="w-full">
+                <div class="mb-2">
+                  <label for="turma" class="form-label">Selecione a Turma</label>
+                </div>
+                <select class="form-select" name="turma" id="turma" required>
+                  <!-- O HTML original traz o placeholder; este será substituído via AJAX -->
+                  <option value="">-- Escolha uma Turma --</option>
+                  <% if(turmaFiltro && turmas && turmas.length > 0){ %>
+                    <% turmas.forEach(turmaItem => { %>
+                      <option value="<%= turmaItem.id %>" <% if(turmaFiltro == turmaItem.id){ %> selected <% } %>>
+                        <%= turmaItem.nome %>
+                      </option>
+                    <% }); %>
+                  <% } %>
+                </select>
+              </div>
+              <!-- Botão Filtrar -->
+              <div>
+                <button type="submit" class="btn-filtrar">Filtrar</button>
+              </div>
             </div>
           </form>
         </div>
@@ -91,7 +152,7 @@
         <h2 class="title mb-3">Análise Geral</h2>
 
         <!-- Se o filtro de curso estiver aplicado, exibe o card com o gráfico de simulados -->
-        <% if (cursoFiltro) { %>
+        <% if(cursoFiltro) { %>
           <div class="card-custom chart-card">
             <div class="card-header">
               <h5>Desempenho dos Simulados</h5>
@@ -101,11 +162,11 @@
               <div class="mb-3">
                 <div>
                   <label for="start-week" class="text-default-800 text-sm font-medium inline-block mb-2">Semana de Início</label>
-                  <input class="block w-full rounded py-2.5 px-4 text-default-800 text-sm focus:ring-transparent border-default-200" id="start-week" type="week" name="start-week">
+                  <input class="block w-full rounded py-2.5 px-4 border-default-200 text-default-800 text-sm focus:ring-transparent" id="start-week" type="week" name="start-week">
                 </div>
                 <div>
                   <label for="end-week" class="text-default-800 text-sm font-medium inline-block mb-2 mt-2">Semana de Fim</label>
-                  <input class="block w-full rounded py-2.5 px-4 text-default-800 text-sm focus:ring-transparent border-default-200" id="end-week" type="week" name="end-week">
+                  <input class="block w-full rounded py-2.5 px-4 border-default-200 text-default-800 text-sm focus:ring-transparent" id="end-week" type="week" name="end-week">
                 </div>
                 <button id="apply-week-filter" class="btn btn-secondary mt-2">Aplicar Filtro Semanal</button>
               </div>
@@ -118,194 +179,226 @@
         <% } %>
 
         <!-- Container oculto para dados dos gráficos -->
-        <div
-          id="chart-data"
-          data-simulados='<%= JSON.stringify(performanceData.simuladosData || []) %>'
-        ></div>
+        <div id="chart-data" data-simulados='<%= JSON.stringify(performanceData.simuladosData || []) %>'></div>
       </div>
 
-      <!-- Inclusão do Footer -->
       <%- include('partials/footer') %>
     </div>
 
-    <!-- Inclusão do Bootstrap JS Bundle -->
+    <!-- Bootstrap JS Bundle (se houver dependência; remova se não for necessário) -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
-    <!-- Script para atualizar o dropdown de Turma via AJAX -->
+    <!-- Choices.js JS -->
+    <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
     <script>
-      document.getElementById("curso").addEventListener("change", function () {
-        const cursoId = this.value;
-        const turmaSelect = document.getElementById("turma");
-        turmaSelect.innerHTML = '<option value="">Carregando turmas...</option>';
-        if (!cursoId) {
-          turmaSelect.innerHTML = '<option value="">-- Escolha uma Turma --</option>';
-          return;
+      document.addEventListener('DOMContentLoaded', function() {
+        var cursoSelect = document.getElementById('curso');
+        var turmaSelect = document.getElementById('turma');
+
+        // Inicializa o Choices.js para os selects
+        var cursoChoices = new Choices(cursoSelect, {
+          searchEnabled: true,
+          itemSelectText: '',
+          shouldSort: false
+        });
+        var turmaChoices = new Choices(turmaSelect, {
+          searchEnabled: true,
+          itemSelectText: '',
+          shouldSort: false
+        });
+
+        // Função para carregar turmas via AJAX com base no curso selecionado.
+        // Se houver turmas, seleciona automaticamente a primeira; se não houver, limpa o select.
+        function loadTurmas() {
+          var cursoId = cursoSelect.value;
+          if (!cursoId) {
+            turmaChoices.clearChoices();
+            turmaChoices.setChoices(
+              [{ value: "", label: "-- Escolha uma Turma --", selected: false, disabled: false }],
+              'value',
+              'label',
+              false
+            );
+            turmaSelect.value = "";
+            return;
+          }
+          turmaChoices.clearChoices();
+          turmaChoices.setChoices(
+            [{ value: "", label: "Carregando turmas...", selected: false, disabled: true }],
+            'value',
+            'label',
+            false
+          );
+  
+          fetch(`/admin/turmas/by-curso/${cursoId}`)
+            .then(response => response.json())
+            .then(data => {
+              if (data.turmas && data.turmas.length > 0) {
+                var options = data.turmas.map(function(turma, index) {
+                  return { 
+                    value: turma.id, 
+                    label: turma.nome, 
+                    selected: (index === 0), 
+                    disabled: false 
+                  };
+                });
+                turmaChoices.clearChoices();
+                turmaChoices.setChoices(options, 'value', 'label', true);
+                // Atualiza o valor do select nativo para garantir que nenhuma turma antiga permaneça selecionada
+                turmaSelect.value = data.turmas[0].id;
+                turmaChoices.setChoiceByValue(turmaSelect.value);
+              } else {
+                // Se não houver turmas, limpa o select e exibe uma mensagem informativa
+                turmaChoices.clearChoices();
+                turmaChoices.setChoices(
+                  [{ value: "", label: "Nenhuma turma encontrada", selected: false, disabled: true }],
+                  'value',
+                  'label',
+                  false
+                );
+                turmaSelect.value = "";
+              }
+            })
+            .catch(error => {
+              console.error("Erro ao carregar turmas:", error);
+              turmaChoices.clearChoices();
+              turmaChoices.setChoices(
+                [{ value: "", label: "Erro ao carregar turmas", selected: false, disabled: true }],
+                'value',
+                'label',
+                false
+              );
+              turmaSelect.value = "";
+            });
         }
-        fetch(`/admin/turmas/by-curso/${cursoId}`)
-          .then((response) => response.json())
-          .then((data) => {
-            if (data.turmas && data.turmas.length > 0) {
-              let options = '<option value="">-- Escolha uma Turma --</option>';
-              data.turmas.forEach((turma) => {
-                options += `<option value="${turma.id}">${turma.nome}</option>`;
-              });
-              turmaSelect.innerHTML = options;
-            } else {
-              turmaSelect.innerHTML = '<option value="">Nenhuma turma encontrada</option>';
-            }
-          })
-          .catch((error) => {
-            console.error("Erro ao carregar turmas:", error);
-            turmaSelect.innerHTML = '<option value="">Erro ao carregar turmas</option>';
-          });
-      });
-    </script>
+        
+        // Atualiza as turmas quando o curso for alterado
+        cursoSelect.addEventListener("change", loadTurmas);
 
-    <!-- Script para renderizar o gráfico de simulados com filtro semanal -->
-    <script>
-      document.addEventListener("DOMContentLoaded", function () {
-        // Só renderiza se o filtro de curso estiver aplicado
+        // Renderização do gráfico de simulados (mantida conforme exemplo original)
         var cursoFiltro = "<%= cursoFiltro %>";
-        if (!cursoFiltro) return;
-        var dataEl = document.getElementById("chart-data");
-        var simuladosData = JSON.parse(dataEl.getAttribute("data-simulados"));
+        if (cursoFiltro) {
+          var dataEl = document.getElementById("chart-data");
+          var simuladosData = JSON.parse(dataEl.getAttribute("data-simulados"));
 
-        // Função para converter uma data para string ISO da semana (YYYY-Www)
-        function getISOWeekString(dateStr) {
-          var d = new Date(dateStr);
-          // Ajuste para garantir o cálculo correto do ISO week:
-          // Converte para quinta-feira da semana corrente
-          var day = d.getDay() || 7; // domingo vira 7
-          d.setDate(d.getDate() + 4 - day);
-          var yearStart = new Date(d.getFullYear(), 0, 1);
-          var weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
-          return d.getFullYear() + "-W" + ("0" + weekNo).slice(-2);
-        }
+          function getISOWeekString(dateStr) {
+            var d = new Date(dateStr);
+            var day = d.getDay() || 7;
+            d.setDate(d.getDate() + 4 - day);
+            var yearStart = new Date(d.getFullYear(), 0, 1);
+            var weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+            return d.getFullYear() + "-W" + ("0" + weekNo).slice(-2);
+          }
 
-        // Função para renderizar o gráfico com base nos dados e exibir o intervalo
-        function renderSimuladosChart(dataArray, intervalText) {
-          // Prepara os arrays para o gráfico usando todos os dados filtrados
-          var simuladosDescriptions = dataArray.map(function (item) {
-            return item.descricao ? item.descricao : "Sem descrição";
-          });
-          var simuladosAverages = dataArray.map(function (item) {
-            if (item.tentativas && item.tentativas.length > 0) {
-              var soma = item.tentativas.reduce(function (acc, cur) {
-                return acc + Number(cur.nota);
-              }, 0);
-              return Number((soma / item.tentativas.length).toFixed(2));
-            } else if (item.media != null) {
-              return Number(item.media);
-            } else {
-              return 0;
-            }
-          });
-          var simuladosCounts = dataArray.map(function (item) {
-            if (item.tentativas && item.tentativas.length > 0) {
-              return item.tentativas.length;
-            } else if (item.total_alunos != null) {
-              return Number(item.total_alunos) || 0;
-            } else {
-              return 0;
-            }
-          });
-
-          // Exibe o intervalo de semanas selecionado
-          document.getElementById("simulado_chart_interval").innerHTML =
-            intervalText || "Todos os dados";
-
-          var simuladosChartOptions = {
-            chart: {
-              height: 365,
-              type: "bar",
-              events: {
-                dataPointSelection: function (event, chartContext, config) {
-                  var index = config.dataPointIndex;
-                  var simulado = dataArray[index];
-                  if (simulado && simulado.id) {
-                    window.location.href = "/admin/simulados/" + simulado.id;
+          function renderSimuladosChart(dataArray, intervalText) {
+            var simuladosDescriptions = dataArray.map(function(item) {
+              // Se a descrição existir e não for apenas espaços, usa a descrição; senão, usa o id do simulado.
+              return (item.descricao && item.descricao.trim().length > 0) ? 
+                     item.descricao : String(item.id);
+            });
+            var simuladosAverages = dataArray.map(function(item) {
+              if (item.tentativas && item.tentativas.length > 0) {
+                var soma = item.tentativas.reduce(function(acc, cur) {
+                  return acc + Number(cur.nota);
+                }, 0);
+                return Number((soma / item.tentativas.length).toFixed(2));
+              } else if (item.media != null) {
+                return Number(item.media);
+              } else {
+                return 0;
+              }
+            });
+            var simuladosCounts = dataArray.map(function(item) {
+              if (item.tentativas && item.tentativas.length > 0) {
+                return item.tentativas.length;
+              } else if (item.total_alunos != null) {
+                return Number(item.total_alunos) || 0;
+              } else {
+                return 0;
+              }
+            });
+  
+            document.getElementById("simulado_chart_interval").innerHTML = intervalText || "Todos os dados";
+  
+            var simuladosChartOptions = {
+              chart: {
+                height: 365,
+                type: "bar",
+                events: {
+                  dataPointSelection: function(event, chartContext, config) {
+                    var index = config.dataPointIndex;
+                    var simulado = dataArray[index];
+                    if (simulado && simulado.id) {
+                      window.location.href = "/admin/simulados/" + simulado.id;
+                    }
                   }
                 }
-              }
-            },
-            series: [
-              {
-                name: "Média dos Simulados",
-                data: simuladosAverages
-              }
-            ],
-            xaxis: {
-              categories: simuladosDescriptions,
-              labels: {
-                formatter: function (val) {
-                  return val.length > 20 ? val.substring(0, 20) + "…" : val;
+              },
+              series: [
+                { name: "Média dos Simulados", data: simuladosAverages }
+              ],
+              xaxis: {
+                categories: simuladosDescriptions,
+                labels: {
+                  formatter: function(val) {
+                    return val.length > 20 ? val.substring(0, 20) + "…" : val;
+                  }
                 }
-              }
-            },
-            title: {
-              text: "Média das Notas dos Simulados",
-              align: "center"
-            },
-            yaxis: {
-              title: { text: "Nota Média" }
-            },
-            plotOptions: {
-              bar: {
-                horizontal: false,
-                columnWidth: "55%",
-                endingShape: "rounded"
-              }
-            },
-            dataLabels: {
-              enabled: true,
-              formatter: function (val, opts) {
-                var index = opts.dataPointIndex;
-                var count = simuladosCounts[index];
-                return "Nota: " + val + " (" + count + " alunos)";
-              }
-            },
-            tooltip: {
-              custom: function ({ series, seriesIndex, dataPointIndex }) {
-                var simulado = dataArray[dataPointIndex];
-                var count = simuladosCounts[dataPointIndex];
-                return (
-                  '<div class="arrow_box" style="padding: 8px; background: #fff; border: 1px solid #ccc;">' +
-                  "<strong>Simulado:</strong> " + (simulado.descricao || "Sem descrição") + "<br>" +
-                  "<strong>Nota média:</strong> " + series[seriesIndex][dataPointIndex] + "<br>" +
-                  "<strong>Total de alunos:</strong> " + count +
-                  "</div>"
-                );
-              }
-            },
-            legend: {
-              show: false
+              },
+              title: {
+                text: "Média das Notas dos Simulados",
+                align: "center"
+              },
+              yaxis: {
+                title: { text: "Nota Média" }
+              },
+              plotOptions: {
+                bar: {
+                  horizontal: false,
+                  columnWidth: "55%",
+                  endingShape: "rounded"
+                }
+              },
+              dataLabels: {
+                enabled: true,
+                formatter: function(val, opts) {
+                  var index = opts.dataPointIndex;
+                  var count = simuladosCounts[index];
+                  return "Nota: " + val + " (" + count + " alunos)";
+                }
+              },
+              tooltip: {
+                custom: function({ series, seriesIndex, dataPointIndex }) {
+                  var simulado = dataArray[dataPointIndex];
+                  var count = simuladosCounts[dataPointIndex];
+                  return (
+                    '<div class="arrow_box" style="padding: 8px; background: #fff; border: 1px solid #ccc;">' +
+                    "<strong>Simulado:</strong> " + (simulado.descricao || "Sem descrição") + "<br>" +
+                    "<strong>Nota média:</strong> " + series[seriesIndex][dataPointIndex] + "<br>" +
+                    "<strong>Total de alunos:</strong> " + count +
+                    "</div>"
+                  );
+                }
+              },
+              legend: { show: false }
+            };
+  
+            if (window.simuladosChart) {
+              window.simuladosChart.destroy();
             }
-          };
-
-          if (window.simuladosChart) {
-            window.simuladosChart.destroy();
+            window.simuladosChart = new ApexCharts(document.querySelector("#simulado_chart"), simuladosChartOptions);
+            window.simuladosChart.render();
           }
-          window.simuladosChart = new ApexCharts(
-            document.querySelector("#simulado_chart"),
-            simuladosChartOptions
-          );
-          window.simuladosChart.render();
-        }
-
-        // Renderiza inicialmente todos os dados
-        renderSimuladosChart(simuladosData, "Todos os dados");
-
-        // Evento para aplicar o filtro semanal
-        document
-          .getElementById("apply-week-filter")
-          .addEventListener("click", function () {
+  
+          renderSimuladosChart(simuladosData, "Todos os dados");
+  
+          document.getElementById("apply-week-filter").addEventListener("click", function() {
             var startWeek = document.getElementById("start-week").value;
             var endWeek = document.getElementById("end-week").value;
             if (!startWeek || !endWeek) {
               alert("Por favor, selecione a semana de início e a semana de fim.");
               return;
             }
-            var filteredData = simuladosData.filter(function (item) {
+            var filteredData = simuladosData.filter(function(item) {
               if (!item.data_criacao) return false;
               var simuladoWeek = getISOWeekString(item.data_criacao);
               return simuladoWeek >= startWeek && simuladoWeek <= endWeek;
@@ -313,6 +406,7 @@
             var intervalText = "Dados do intervalo: " + startWeek + " até " + endWeek;
             renderSimuladosChart(filteredData, intervalText);
           });
+        }
       });
     </script>
   </body>
