@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <title>Dashboard - Análise Geral</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    
+
     <!-- Choices.js CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
     <!-- ApexCharts -->
@@ -46,7 +46,7 @@
         font-size: 1.1rem;
         color: #333;
       }
-      /* Estilo dos selects e labels (baseado no exemplo Adicionar Questão) */
+      /* Estilo dos selects e labels (baseado no exemplo "Adicionar Questão") */
       .w-full {
         width: 100%;
       }
@@ -65,7 +65,7 @@
         border-radius: 0.375rem;
         background-color: #fff;
       }
-      /* Botão Filtrar – inspirado no botão "Salvar" do exemplo "Adicionar Questão" */
+      /* Botão Filtrar – inspirado no exemplo "Adicionar Questão" */
       .btn-filtrar {
         padding: 0.5rem 1.25rem;
         font-size: 0.875rem;
@@ -129,7 +129,6 @@
                   <label for="turma" class="form-label">Selecione a Turma</label>
                 </div>
                 <select class="form-select" name="turma" id="turma" required>
-                  <!-- O HTML original traz o placeholder; este será substituído via AJAX -->
                   <option value="">-- Escolha uma Turma --</option>
                   <% if(turmaFiltro && turmas && turmas.length > 0){ %>
                     <% turmas.forEach(turmaItem => { %>
@@ -174,6 +173,10 @@
               <div id="simulado_chart_interval" style="text-align: center; font-weight: bold; margin-bottom: 10px;"></div>
               <!-- Container do Gráfico -->
               <div id="simulado_chart"></div>
+              <!-- Legenda abaixo do gráfico -->
+              <div style="text-align: center; margin-top: 10px; font-weight: bold;">
+                Número do Simulado
+              </div>
             </div>
           </div>
         <% } %>
@@ -207,7 +210,7 @@
         });
 
         // Função para carregar turmas via AJAX com base no curso selecionado.
-        // Se houver turmas, seleciona automaticamente a primeira; se não houver, limpa o select.
+        // Se houver turmas, a primeira é selecionada automaticamente.
         function loadTurmas() {
           var cursoId = cursoSelect.value;
           if (!cursoId) {
@@ -243,11 +246,11 @@
                 });
                 turmaChoices.clearChoices();
                 turmaChoices.setChoices(options, 'value', 'label', true);
-                // Atualiza o valor do select nativo para garantir que nenhuma turma antiga permaneça selecionada
+                // Define o valor do select nativo para a primeira turma retornada
                 turmaSelect.value = data.turmas[0].id;
                 turmaChoices.setChoiceByValue(turmaSelect.value);
               } else {
-                // Se não houver turmas, limpa o select e exibe uma mensagem informativa
+                // Se não houver turmas, limpa o select e remove seleção anterior
                 turmaChoices.clearChoices();
                 turmaChoices.setChoices(
                   [{ value: "", label: "Nenhuma turma encontrada", selected: false, disabled: true }],
@@ -271,7 +274,7 @@
             });
         }
         
-        // Atualiza as turmas quando o curso for alterado
+        // Atualiza as turmas sempre que o curso for alterado.
         cursoSelect.addEventListener("change", loadTurmas);
 
         // Renderização do gráfico de simulados (mantida conforme exemplo original)
@@ -290,10 +293,9 @@
           }
 
           function renderSimuladosChart(dataArray, intervalText) {
+            // Usa a descrição se existir; caso contrário, usa o id do simulado
             var simuladosDescriptions = dataArray.map(function(item) {
-              // Se a descrição existir e não for apenas espaços, usa a descrição; senão, usa o id do simulado.
-              return (item.descricao && item.descricao.trim().length > 0) ? 
-                     item.descricao : String(item.id);
+              return (item.descricao && item.descricao.trim().length > 0) ? item.descricao : String(item.id);
             });
             var simuladosAverages = dataArray.map(function(item) {
               if (item.tentativas && item.tentativas.length > 0) {
@@ -303,15 +305,6 @@
                 return Number((soma / item.tentativas.length).toFixed(2));
               } else if (item.media != null) {
                 return Number(item.media);
-              } else {
-                return 0;
-              }
-            });
-            var simuladosCounts = dataArray.map(function(item) {
-              if (item.tentativas && item.tentativas.length > 0) {
-                return item.tentativas.length;
-              } else if (item.total_alunos != null) {
-                return Number(item.total_alunos) || 0;
               } else {
                 return 0;
               }
@@ -333,8 +326,23 @@
                   }
                 }
               },
+              colors: ['#2563eb'],
+              plotOptions: {
+                bar: {
+                  horizontal: false,
+                  columnWidth: "55%",
+                  endingShape: "rounded",
+                  colors: {
+                    ranges: [{
+                      from: 0,
+                      to: 69.99,
+                      color: '#ff0000'
+                    }]
+                  }
+                }
+              },
               series: [
-                { name: "Média dos Simulados", data: simuladosAverages }
+                { name: "Nota Média", data: simuladosAverages }
               ],
               xaxis: {
                 categories: simuladosDescriptions,
@@ -351,30 +359,26 @@
               yaxis: {
                 title: { text: "Nota Média" }
               },
-              plotOptions: {
-                bar: {
-                  horizontal: false,
-                  columnWidth: "55%",
-                  endingShape: "rounded"
-                }
-              },
               dataLabels: {
                 enabled: true,
                 formatter: function(val, opts) {
-                  var index = opts.dataPointIndex;
-                  var count = simuladosCounts[index];
-                  return "Nota: " + val + " (" + count + " alunos)";
+                  return String(val);
                 }
               },
               tooltip: {
                 custom: function({ series, seriesIndex, dataPointIndex }) {
                   var simulado = dataArray[dataPointIndex];
-                  var count = simuladosCounts[dataPointIndex];
+                  var avg = series[0][dataPointIndex];
+                  var count = (simulado.tentativas && simulado.tentativas.length > 0) 
+                                ? simulado.tentativas.length 
+                                : (simulado.total_alunos || 0);
+                  var descricao = (simulado.descricao && simulado.descricao.trim().length > 0)
+                                  ? simulado.descricao : simulado.id;
                   return (
                     '<div class="arrow_box" style="padding: 8px; background: #fff; border: 1px solid #ccc;">' +
-                    "<strong>Simulado:</strong> " + (simulado.descricao || "Sem descrição") + "<br>" +
-                    "<strong>Nota média:</strong> " + series[seriesIndex][dataPointIndex] + "<br>" +
-                    "<strong>Total de alunos:</strong> " + count +
+                    "<strong>Nota média da turma:</strong> " + avg + "<br>" +
+                    "<strong>Quantidade de alunos:</strong> " + count + "<br>" +
+                    "<strong>Descrição:</strong> " + descricao +
                     "</div>"
                   );
                 }
