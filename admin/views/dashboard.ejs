@@ -10,11 +10,7 @@
     <!-- ApexCharts -->
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <link rel="shortcut icon" href="/assets/favicon-8fd74f43.ico" />
-    <script
-      type="module"
-      crossorigin
-      src="../assets/theme-e4584917.js"
-    ></script>
+    <script type="module" crossorigin src="../assets/theme-e4584917.js"></script>
     <!-- CSS personalizado -->
     <link rel="stylesheet" href="/assets/theme-d32f8eb8.css" />
     <style>
@@ -37,7 +33,7 @@
         padding: 1.5rem;
         margin-bottom: 2rem;
       }
-      /* Layout dos gráficos – conforme definido */
+      /* Layout dos gráficos */
       #donut_chart,
       #bar_chart {
         min-height: 287px;
@@ -175,7 +171,7 @@
                 </div>
                 <button id="apply-week-filter" class="btn btn-secondary mt-2">Aplicar Filtro Semanal</button>
               </div>
-              <!-- Intervalo Selecionado -->
+              <!-- Intervalo Selecionado (será atualizado) -->
               <div id="simulado_chart_interval" style="text-align: center; font-weight: bold; margin-bottom: 10px;"></div>
               <!-- Container do Gráfico -->
               <div id="simulado_chart"></div>
@@ -184,13 +180,11 @@
                 Número do Simulado
               </div>
             </div>
-            
           </div>
         <% } %>
 
         <!-- Container oculto para os dados dos gráficos -->
         <div id="chart-data" data-simulados='<%= JSON.stringify(performanceData.simuladosData || []) %>'></div>
-        
       </div>
 
       <%- include('partials/footer') %>
@@ -204,7 +198,7 @@
       document.addEventListener('DOMContentLoaded', function() {
         var cursoSelect = document.getElementById('curso');
         var turmaSelect = document.getElementById('turma');
-
+      
         // Inicializa o Choices.js para os selects
         var cursoChoices = new Choices(cursoSelect, {
           searchEnabled: true,
@@ -216,29 +210,19 @@
           itemSelectText: '',
           shouldSort: false
         });
-
-        // Função para carregar turmas via AJAX com base no curso selecionado.
+      
+        // Função para carregar turmas via AJAX
         function loadTurmas() {
           var cursoId = cursoSelect.value;
           if (!cursoId) {
             turmaChoices.clearChoices();
-            turmaChoices.setChoices(
-              [{ value: "", label: "-- Escolha uma Turma --", selected: false, disabled: false }],
-              'value',
-              'label',
-              false
-            );
+            turmaChoices.setChoices([{ value: "", label: "-- Escolha uma Turma --", selected: false, disabled: false }], 'value', 'label', false);
             turmaSelect.value = "";
             return;
           }
           turmaChoices.clearChoices();
-          turmaChoices.setChoices(
-            [{ value: "", label: "Carregando turmas...", selected: false, disabled: true }],
-            'value',
-            'label',
-            false
-          );
-  
+          turmaChoices.setChoices([{ value: "", label: "Carregando turmas...", selected: false, disabled: true }], 'value', 'label', false);
+      
           fetch(`/admin/turmas/by-curso/${cursoId}`)
             .then(response => response.json())
             .then(data => {
@@ -253,42 +237,66 @@
                 });
                 turmaChoices.clearChoices();
                 turmaChoices.setChoices(options, 'value', 'label', true);
-                // Define o valor do select nativo para a primeira turma retornada
                 turmaSelect.value = data.turmas[0].id;
                 turmaChoices.setChoiceByValue(turmaSelect.value);
               } else {
                 turmaChoices.clearChoices();
-                turmaChoices.setChoices(
-                  [{ value: "", label: "Nenhuma turma encontrada", selected: false, disabled: true }],
-                  'value',
-                  'label',
-                  false
-                );
+                turmaChoices.setChoices([{ value: "", label: "Nenhuma turma encontrada", selected: false, disabled: true }], 'value', 'label', false);
                 turmaSelect.value = "";
               }
             })
             .catch(error => {
               console.error("Erro ao carregar turmas:", error);
               turmaChoices.clearChoices();
-              turmaChoices.setChoices(
-                [{ value: "", label: "Erro ao carregar turmas", selected: false, disabled: true }],
-                'value',
-                'label',
-                false
-              );
+              turmaChoices.setChoices([{ value: "", label: "Erro ao carregar turmas", selected: false, disabled: true }], 'value', 'label', false);
               turmaSelect.value = "";
             });
         }
-        
+      
         cursoSelect.addEventListener("change", loadTurmas);
-
+      
+        // Função para converter o input week (ex. "2025-W14") para o intervalo de datas da semana
+        function getDateRangeFromWeek(weekString) {
+          var parts = weekString.split("-W");
+          var year = parseInt(parts[0], 10);
+          var week = parseInt(parts[1], 10);
+          var simple = new Date(year, 0, 4); // 4 de janeiro é sempre na primeira semana ISO
+          var dayOfWeek = simple.getDay() || 7;
+          var isoWeekStart = new Date(simple);
+          isoWeekStart.setDate(simple.getDate() - dayOfWeek + 1 + (week - 1) * 7);
+          var isoWeekEnd = new Date(isoWeekStart);
+          isoWeekEnd.setDate(isoWeekStart.getDate() + 6);
+          return { start: isoWeekStart, end: isoWeekEnd };
+        }
+      
+        // Função para converter data para string ISO week (para filtro)
+        function getISOWeekString(dateStr) {
+          var d = new Date(dateStr);
+          var day = d.getDay() || 7;
+          var d2 = new Date(d);
+          d2.setDate(d.getDate() + 4 - day);
+          var yearStart = new Date(d2.getFullYear(), 0, 1);
+          var weekNo = Math.ceil((((d2 - yearStart) / 86400000) + 1) / 7);
+          return d2.getFullYear() + "-W" + ("0" + weekNo).slice(-2);
+        }
+      
         // Renderização do gráfico combinado (Line & Column)
         var cursoFiltro = "<%= cursoFiltro %>";
         if (cursoFiltro) {
+          var chartContainer = document.querySelector("#simulado_chart");
+          if (!chartContainer) {
+            console.error("Container #simulado_chart não encontrado!");
+            return;
+          }
           var dataEl = document.getElementById("chart-data");
           var simuladosData = JSON.parse(dataEl.getAttribute("data-simulados"));
-
-          // Preparando as categorias de forma segura
+      
+          if (!simuladosData || simuladosData.length === 0) {
+            chartContainer.innerHTML = "<p style='text-align:center;'>Nenhum dado encontrado</p>";
+            return;
+          }
+      
+          // Prepara as categorias e médias de forma segura
           var simuladosDescriptions = simuladosData.map(function(item) {
             if (item && item.descricao && item.descricao.trim().length > 0)
               return item.descricao;
@@ -297,7 +305,6 @@
             else
               return "";
           });
-          // Cálculo da média das notas para cada simulado
           var simuladosAverages = simuladosData.map(function(item) {
             if (item && item.tentativas && item.tentativas.length > 0) {
               var soma = item.tentativas.reduce(function(acc, cur) {
@@ -310,16 +317,7 @@
               return 0;
             }
           });
-    
-          function getISOWeekString(dateStr) {
-            var d = new Date(dateStr);
-            var day = d.getDay() || 7;
-            d.setDate(d.getDate() + 4 - day);
-            var yearStart = new Date(d.getFullYear(), 0, 1);
-            var weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
-            return d.getFullYear() + "-W" + ("0" + weekNo).slice(-2);
-          }
-    
+      
           function renderSimuladosChart(dataArray, intervalText) {
             var simuladosDescriptions = dataArray.map(function(item) {
               if (item && item.descricao && item.descricao.trim().length > 0)
@@ -341,13 +339,14 @@
                 return 0;
               }
             });
-    
+      
+            // Atualiza o intervalo com datas amigáveis
             document.getElementById("simulado_chart_interval").innerHTML = intervalText || "Todos os dados";
-    
+      
             var simuladosChartOptions = {
               chart: {
                 height: 365,
-                type: 'line',  // Tipo base para gráfico misto
+                type: 'line',  // Base para gráfico misto
                 stacked: false,
                 events: {
                   dataPointSelection: function(event, chartContext, config) {
@@ -360,7 +359,7 @@
                 }
               },
               stroke: {
-                width: [0, 4] // Coluna sem stroke; linha com stroke de largura 4
+                width: [0, 4] // Coluna sem stroke; linha com stroke de 4px
               },
               plotOptions: {
                 bar: {
@@ -368,7 +367,7 @@
                   endingShape: "rounded"
                 }
               },
-              // Séries: mantém a coluna existente e acrescenta a série do tipo line (com os mesmos valores)
+              // Duas séries: uma de coluna e outra de linha (com os mesmos dados)
               series: [
                 { 
                   name: "Nota Média",
@@ -376,7 +375,7 @@
                   data: simuladosAverages
                 },
                 { 
-                  name: "Linha da média",  // Esta série representa a média das notas
+                  name: "Social Media",
                   type: "line",
                   data: simuladosAverages
                 }
@@ -403,9 +402,7 @@
               dataLabels: {
                 enabled: true,
                 enabledOnSeries: [1],
-                formatter: function(val, opts) {
-                  return String(val);
-                },
+                formatter: function(val, opts) { return String(val); },
                 background: {
                   enabled: true,
                   foreColor: '#fff',
@@ -432,19 +429,20 @@
                   );
                 }
               },
-              // Habilita a legenda para permitir a interação (toggle das séries)
               legend: { show: true }
             };
-    
+      
             if (window.simuladosChart) {
               window.simuladosChart.destroy();
             }
             window.simuladosChart = new ApexCharts(document.querySelector("#simulado_chart"), simuladosChartOptions);
             window.simuladosChart.render();
           }
-    
+      
+          // Renderiza inicialmente com todos os dados
           renderSimuladosChart(simuladosData, "Todos os dados");
-    
+      
+          // Ao clicar no filtro de semana
           document.getElementById("apply-week-filter").addEventListener("click", function() {
             var startWeek = document.getElementById("start-week").value;
             var endWeek = document.getElementById("end-week").value;
@@ -452,12 +450,16 @@
               alert("Por favor, selecione a semana de início e a semana de fim.");
               return;
             }
+            // Filtra os dados com base na string ISO retornada por getISOWeekString
             var filteredData = simuladosData.filter(function(item) {
               if (!item.data_criacao) return false;
               var simuladoWeek = getISOWeekString(item.data_criacao);
               return simuladoWeek >= startWeek && simuladoWeek <= endWeek;
             });
-            var intervalText = "Dados do intervalo: " + startWeek + " até " + endWeek;
+            // Converte os inputs week para datas para exibição
+            var startRange = getDateRangeFromWeek(startWeek);
+            var endRange   = getDateRangeFromWeek(endWeek);
+            var intervalText = "Dados do intervalo: " + startRange.start.toLocaleDateString() + " até " + endRange.end.toLocaleDateString();
             renderSimuladosChart(filteredData, intervalText);
           });
         }

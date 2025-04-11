@@ -109,13 +109,16 @@ router.get("/admin/dashboard", verificarAutenticacao, (req, res) => {
           turmas = [];
         }
 
-        // Consulta os simulados e calcula a média das notas e a quantidade de alunos que fizeram cada simulado
+        // ===================================================================
+        // Consulta os simulados, agora retornando também o campo data_criacao,
+        // que é necessário para o front-end filtrar por semana.
+        // ===================================================================
         let simuladosQuery = `
-SELECT s.id, s.titulo, AVG(ts.nota) AS media, COUNT(ts.id) AS total_alunos
-FROM simulado s 
-LEFT JOIN tentativa_simulado ts ON s.id = ts.simulado_id 
-WHERE s.professor_id = ?
-`;
+          SELECT s.id, s.titulo, s.data_criacao, AVG(ts.nota) AS media, COUNT(ts.id) AS total_alunos
+          FROM simulado s 
+          LEFT JOIN tentativa_simulado ts ON s.id = ts.simulado_id 
+          WHERE s.professor_id = ?
+        `;
         let queryParams = [req.session.user.id];
 
         if (cursoFiltro) {
@@ -126,12 +129,20 @@ WHERE s.professor_id = ?
           simuladosQuery += " AND s.turma_id = ? ";
           queryParams.push(turmaFiltro);
         }
-        simuladosQuery += " GROUP BY s.id, s.titulo";
+        // Importante: Incluir s.data_criacao no GROUP BY para que este campo seja retornado
+        simuladosQuery += " GROUP BY s.id, s.titulo, s.data_criacao";
 
         db.query(simuladosQuery, queryParams, (err, simulados) => {
           if (err) {
             console.error("Erro ao buscar simulados:", err);
             simulados = [];
+          }
+
+          // Emite um aviso se o campo data_criacao não estiver populado
+          if (simulados.length > 0 && simulados[0].data_criacao == null) {
+            console.warn(
+              "O campo data_criacao não está populado para os simulados!"
+            );
           }
 
           const performanceData = {
@@ -144,7 +155,7 @@ WHERE s.professor_id = ?
             ucLabels: ["UC1", "UC2", "UC3"],
             acertosData: [15, 10, 15],
             errosData: [2, 1, 2],
-            simuladosData: simulados, // Cada item inclui: id, titulo, media e total_alunos
+            simuladosData: simulados, // Cada item inclui: id, titulo, data_criacao, media e total_alunos
           };
 
           res.render("dashboard", {
@@ -192,8 +203,7 @@ router.get("/admin/simulados/:id", verificarAutenticacao, (req, res) => {
   const db = req.db;
   const simuladoId = req.params.id;
 
-  // Consulta para obter os detalhes das tentativas do simulado,
-  // incluindo o nome do aluno, nota, total de respostas e quantidade de acertos.
+  // Consulta para obter os detalhes das tentativas do simulado, incluindo nome do aluno, nota, total de respostas e quantidade de acertos.
   const query = `
     SELECT a.nome AS aluno, ts.nota, 
            COUNT(ra.id) AS total_respostas, 
