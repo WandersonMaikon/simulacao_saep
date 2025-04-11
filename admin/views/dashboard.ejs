@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
     <!-- ApexCharts -->
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <link rel="shortcut icon" href="/assets/favicon-8fd74f43.ico" />
     <!-- CSS personalizado -->
     <link rel="stylesheet" href="/assets/theme-d32f8eb8.css" />
     <style>
@@ -46,7 +47,7 @@
         font-size: 1.1rem;
         color: #333;
       }
-      /* Estilo dos selects e labels (baseado no exemplo "Adicionar Questão") */
+      /* Estilo dos selects e labels */
       .w-full {
         width: 100%;
       }
@@ -65,7 +66,7 @@
         border-radius: 0.375rem;
         background-color: #fff;
       }
-      /* Botão Filtrar – inspirado no exemplo "Adicionar Questão" */
+      /* Botão Filtrar */
       .btn-filtrar {
         padding: 0.5rem 1.25rem;
         font-size: 0.875rem;
@@ -82,7 +83,7 @@
         background-color: #1d4ed8;
         border-color: #1d4ed8;
       }
-      /* Agrupamento dos filtros em linha com espaçamento */
+      /* Agrupamento dos filtros */
       .filter-inline {
         display: flex;
         flex-wrap: wrap;
@@ -105,7 +106,7 @@
 
       <!-- Conteúdo principal -->
       <div class="container my-5">
-        <!-- Formulário de Filtro (Curso e Turma) – estrutura baseada no exemplo "Adicionar Questão" -->
+        <!-- Formulário de Filtro (Curso e Turma) -->
         <div class="mb-4">
           <form method="GET" action="/admin/dashboard">
             <div class="filter-inline">
@@ -150,14 +151,14 @@
         <!-- Título da Página -->
         <h2 class="title mb-3">Análise Geral</h2>
 
-        <!-- Se o filtro de curso estiver aplicado, exibe o card com o gráfico de simulados -->
+        <!-- Card com o Gráfico de Simulados -->
         <% if(cursoFiltro) { %>
           <div class="card-custom chart-card">
             <div class="card-header">
               <h5>Desempenho dos Simulados</h5>
             </div>
             <div class="card-body">
-              <!-- Filtro Semanal: Intervalo entre duas semanas -->
+              <!-- Filtro Semanal -->
               <div class="mb-3">
                 <div>
                   <label for="start-week" class="text-default-800 text-sm font-medium inline-block mb-2">Semana de Início</label>
@@ -169,7 +170,7 @@
                 </div>
                 <button id="apply-week-filter" class="btn btn-secondary mt-2">Aplicar Filtro Semanal</button>
               </div>
-              <!-- Exibição do intervalo selecionado -->
+              <!-- Intervalo Selecionado -->
               <div id="simulado_chart_interval" style="text-align: center; font-weight: bold; margin-bottom: 10px;"></div>
               <!-- Container do Gráfico -->
               <div id="simulado_chart"></div>
@@ -181,14 +182,14 @@
           </div>
         <% } %>
 
-        <!-- Container oculto para dados dos gráficos -->
+        <!-- Container oculto para os dados dos gráficos -->
         <div id="chart-data" data-simulados='<%= JSON.stringify(performanceData.simuladosData || []) %>'></div>
       </div>
 
       <%- include('partials/footer') %>
     </div>
 
-    <!-- Bootstrap JS Bundle (se houver dependência; remova se não for necessário) -->
+    <!-- Bootstrap JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <!-- Choices.js JS -->
     <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
@@ -210,7 +211,6 @@
         });
 
         // Função para carregar turmas via AJAX com base no curso selecionado.
-        // Se houver turmas, a primeira é selecionada automaticamente.
         function loadTurmas() {
           var cursoId = cursoSelect.value;
           if (!cursoId) {
@@ -250,7 +250,6 @@
                 turmaSelect.value = data.turmas[0].id;
                 turmaChoices.setChoiceByValue(turmaSelect.value);
               } else {
-                // Se não houver turmas, limpa o select e remove seleção anterior
                 turmaChoices.clearChoices();
                 turmaChoices.setChoices(
                   [{ value: "", label: "Nenhuma turma encontrada", selected: false, disabled: true }],
@@ -274,15 +273,37 @@
             });
         }
         
-        // Atualiza as turmas sempre que o curso for alterado.
         cursoSelect.addEventListener("change", loadTurmas);
 
-        // Renderização do gráfico de simulados (mantida conforme exemplo original)
+        // Renderização do gráfico combinado (Line & Column)
         var cursoFiltro = "<%= cursoFiltro %>";
         if (cursoFiltro) {
           var dataEl = document.getElementById("chart-data");
           var simuladosData = JSON.parse(dataEl.getAttribute("data-simulados"));
 
+          // Preparando as categorias de forma segura
+          var simuladosDescriptions = simuladosData.map(function(item) {
+            if (item && item.descricao && item.descricao.trim().length > 0)
+              return item.descricao;
+            else if (item && item.id)
+              return String(item.id);
+            else
+              return "";
+          });
+          // Cálculo da média das notas para cada simulado
+          var simuladosAverages = simuladosData.map(function(item) {
+            if (item && item.tentativas && item.tentativas.length > 0) {
+              var soma = item.tentativas.reduce(function(acc, cur) {
+                return acc + Number(cur.nota);
+              }, 0);
+              return Number((soma / item.tentativas.length).toFixed(2));
+            } else if (item && item.media != null) {
+              return Number(item.media);
+            } else {
+              return 0;
+            }
+          });
+    
           function getISOWeekString(dateStr) {
             var d = new Date(dateStr);
             var day = d.getDay() || 7;
@@ -291,31 +312,36 @@
             var weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
             return d.getFullYear() + "-W" + ("0" + weekNo).slice(-2);
           }
-
+    
           function renderSimuladosChart(dataArray, intervalText) {
-            // Usa a descrição se existir; caso contrário, usa o id do simulado
             var simuladosDescriptions = dataArray.map(function(item) {
-              return (item.descricao && item.descricao.trim().length > 0) ? item.descricao : String(item.id);
+              if (item && item.descricao && item.descricao.trim().length > 0)
+                return item.descricao;
+              else if (item && item.id)
+                return String(item.id);
+              else
+                return "";
             });
             var simuladosAverages = dataArray.map(function(item) {
-              if (item.tentativas && item.tentativas.length > 0) {
+              if (item && item.tentativas && item.tentativas.length > 0) {
                 var soma = item.tentativas.reduce(function(acc, cur) {
                   return acc + Number(cur.nota);
                 }, 0);
                 return Number((soma / item.tentativas.length).toFixed(2));
-              } else if (item.media != null) {
+              } else if (item && item.media != null) {
                 return Number(item.media);
               } else {
                 return 0;
               }
             });
-  
+    
             document.getElementById("simulado_chart_interval").innerHTML = intervalText || "Todos os dados";
-  
+    
             var simuladosChartOptions = {
               chart: {
                 height: 365,
-                type: "bar",
+                type: 'line',  // Tipo base para gráfico misto
+                stacked: false,
                 events: {
                   dataPointSelection: function(event, chartContext, config) {
                     var index = config.dataPointIndex;
@@ -326,28 +352,33 @@
                   }
                 }
               },
-              colors: ['#2563eb'],
+              stroke: {
+                width: [0, 4] // Coluna sem stroke; linha com stroke de largura 4
+              },
               plotOptions: {
                 bar: {
-                  horizontal: false,
                   columnWidth: "55%",
-                  endingShape: "rounded",
-                  colors: {
-                    ranges: [{
-                      from: 0,
-                      to: 69.99,
-                      color: '#ff0000'
-                    }]
-                  }
+                  endingShape: "rounded"
                 }
               },
+              // Séries: mantém a coluna existente e acrescenta a série do tipo line (com os mesmos valores)
               series: [
-                { name: "Nota Média", data: simuladosAverages }
+                { 
+                  name: "Nota Média",
+                  type: "column",
+                  data: simuladosAverages
+                },
+                { 
+                  name: "Social Media",  // Esta série representa a média das notas
+                  type: "line",
+                  data: simuladosAverages
+                }
               ],
               xaxis: {
                 categories: simuladosDescriptions,
                 labels: {
                   formatter: function(val) {
+                    if (!val) return "";
                     return val.length > 20 ? val.substring(0, 20) + "…" : val;
                   }
                 }
@@ -356,45 +387,57 @@
                 text: "Média das Notas dos Simulados",
                 align: "center"
               },
-              yaxis: {
-                title: { text: "Nota Média" }
-              },
+              yaxis: [{
+                title: { text: "Valor média notas" }
+              }, {
+                opposite: true,
+                title: { text: "Social Media" }
+              }],
               dataLabels: {
                 enabled: true,
+                enabledOnSeries: [1],
                 formatter: function(val, opts) {
                   return String(val);
-                }
+                },
+                background: {
+                  enabled: true,
+                  foreColor: '#fff',
+                  borderRadius: 2,
+                  padding: 4
+                },
+                offsetY: -10
               },
               tooltip: {
                 custom: function({ series, seriesIndex, dataPointIndex }) {
                   var simulado = dataArray[dataPointIndex];
                   var avg = series[0][dataPointIndex];
-                  var count = (simulado.tentativas && simulado.tentativas.length > 0) 
-                                ? simulado.tentativas.length 
-                                : (simulado.total_alunos || 0);
-                  var descricao = (simulado.descricao && simulado.descricao.trim().length > 0)
-                                  ? simulado.descricao : simulado.id;
+                  var count = (simulado && simulado.tentativas && simulado.tentativas.length > 0) 
+                              ? simulado.tentativas.length 
+                              : (simulado && simulado.total_alunos ? simulado.total_alunos : 0);
+                  var descricao = (simulado && simulado.descricao && simulado.descricao.trim().length > 0)
+                                  ? simulado.descricao : (simulado && simulado.id ? simulado.id : "");
                   return (
                     '<div class="arrow_box" style="padding: 8px; background: #fff; border: 1px solid #ccc;">' +
-                    "<strong>Nota média da turma:</strong> " + avg + "<br>" +
-                    "<strong>Quantidade de alunos:</strong> " + count + "<br>" +
-                    "<strong>Descrição:</strong> " + descricao +
+                      "<strong>Nota média da turma:</strong> " + avg + "<br>" +
+                      "<strong>Quantidade de alunos:</strong> " + count + "<br>" +
+                      "<strong>Descrição:</strong> " + descricao +
                     "</div>"
                   );
                 }
               },
-              legend: { show: false }
+              // Habilita a legenda para permitir a interação (toggle das séries)
+              legend: { show: true }
             };
-  
+    
             if (window.simuladosChart) {
               window.simuladosChart.destroy();
             }
             window.simuladosChart = new ApexCharts(document.querySelector("#simulado_chart"), simuladosChartOptions);
             window.simuladosChart.render();
           }
-  
+    
           renderSimuladosChart(simuladosData, "Todos os dados");
-  
+    
           document.getElementById("apply-week-filter").addEventListener("click", function() {
             var startWeek = document.getElementById("start-week").value;
             var endWeek = document.getElementById("end-week").value;
