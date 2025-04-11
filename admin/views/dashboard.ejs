@@ -10,6 +10,11 @@
     <!-- ApexCharts -->
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <link rel="shortcut icon" href="/assets/favicon-8fd74f43.ico" />
+    <script
+      type="module"
+      crossorigin
+      src="../assets/theme-e4584917.js"
+    ></script>
     <!-- CSS personalizado -->
     <link rel="stylesheet" href="/assets/theme-d32f8eb8.css" />
     <style>
@@ -179,11 +184,13 @@
                 Número do Simulado
               </div>
             </div>
+            
           </div>
         <% } %>
 
         <!-- Container oculto para os dados dos gráficos -->
         <div id="chart-data" data-simulados='<%= JSON.stringify(performanceData.simuladosData || []) %>'></div>
+        
       </div>
 
       <%- include('partials/footer') %>
@@ -369,7 +376,7 @@
                   data: simuladosAverages
                 },
                 { 
-                  name: "Social Media",  // Esta série representa a média das notas
+                  name: "Linha da média",  // Esta série representa a média das notas
                   type: "line",
                   data: simuladosAverages
                 }
@@ -391,7 +398,7 @@
                 title: { text: "Valor média notas" }
               }, {
                 opposite: true,
-                title: { text: "Social Media" }
+                title: { text: "Linha da Média" }
               }],
               dataLabels: {
                 enabled: true,
