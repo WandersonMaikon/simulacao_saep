@@ -109,12 +109,9 @@ router.get("/admin/dashboard", verificarAutenticacao, (req, res) => {
           turmas = [];
         }
 
-        // ===================================================================
-        // Consulta os simulados, agora retornando também o campo data_criacao,
-        // que é necessário para o front-end filtrar por semana.
-        // ===================================================================
+        // Atualize a consulta para incluir a descrição do simulado (s.descricao)
         let simuladosQuery = `
-          SELECT s.id, s.titulo, s.data_criacao, AVG(ts.nota) AS media, COUNT(ts.id) AS total_alunos
+          SELECT s.id, s.titulo, s.descricao, s.data_criacao, AVG(ts.nota) AS media, COUNT(ts.id) AS total_alunos
           FROM simulado s 
           LEFT JOIN tentativa_simulado ts ON s.id = ts.simulado_id 
           WHERE s.professor_id = ?
@@ -129,20 +126,14 @@ router.get("/admin/dashboard", verificarAutenticacao, (req, res) => {
           simuladosQuery += " AND s.turma_id = ? ";
           queryParams.push(turmaFiltro);
         }
-        // Importante: Incluir s.data_criacao no GROUP BY para que este campo seja retornado
-        simuladosQuery += " GROUP BY s.id, s.titulo, s.data_criacao";
+        // Inclua s.descricao no GROUP BY para que esse campo seja retornado
+        simuladosQuery +=
+          " GROUP BY s.id, s.titulo, s.descricao, s.data_criacao";
 
         db.query(simuladosQuery, queryParams, (err, simulados) => {
           if (err) {
             console.error("Erro ao buscar simulados:", err);
             simulados = [];
-          }
-
-          // Emite um aviso se o campo data_criacao não estiver populado
-          if (simulados.length > 0 && simulados[0].data_criacao == null) {
-            console.warn(
-              "O campo data_criacao não está populado para os simulados!"
-            );
           }
 
           const performanceData = {
@@ -155,7 +146,8 @@ router.get("/admin/dashboard", verificarAutenticacao, (req, res) => {
             ucLabels: ["UC1", "UC2", "UC3"],
             acertosData: [15, 10, 15],
             errosData: [2, 1, 2],
-            simuladosData: simulados, // Cada item inclui: id, titulo, data_criacao, media e total_alunos
+            // Cada item agora inclui: id, titulo, descricao, data_criacao, media e total_alunos
+            simuladosData: simulados,
           };
 
           res.render("dashboard", {

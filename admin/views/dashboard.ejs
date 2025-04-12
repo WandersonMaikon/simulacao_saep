@@ -216,12 +216,22 @@
           var cursoId = cursoSelect.value;
           if (!cursoId) {
             turmaChoices.clearChoices();
-            turmaChoices.setChoices([{ value: "", label: "-- Escolha uma Turma --", selected: false, disabled: false }], 'value', 'label', false);
+            turmaChoices.setChoices(
+              [{ value: "", label: "-- Escolha uma Turma --", selected: false, disabled: false }],
+              'value',
+              'label',
+              false
+            );
             turmaSelect.value = "";
             return;
           }
           turmaChoices.clearChoices();
-          turmaChoices.setChoices([{ value: "", label: "Carregando turmas...", selected: false, disabled: true }], 'value', 'label', false);
+          turmaChoices.setChoices(
+            [{ value: "", label: "Carregando turmas...", selected: false, disabled: true }],
+            'value',
+            'label',
+            false
+          );
       
           fetch(`/admin/turmas/by-curso/${cursoId}`)
             .then(response => response.json())
@@ -241,14 +251,24 @@
                 turmaChoices.setChoiceByValue(turmaSelect.value);
               } else {
                 turmaChoices.clearChoices();
-                turmaChoices.setChoices([{ value: "", label: "Nenhuma turma encontrada", selected: false, disabled: true }], 'value', 'label', false);
+                turmaChoices.setChoices(
+                  [{ value: "", label: "Nenhuma turma encontrada", selected: false, disabled: true }],
+                  'value',
+                  'label',
+                  false
+                );
                 turmaSelect.value = "";
               }
             })
             .catch(error => {
               console.error("Erro ao carregar turmas:", error);
               turmaChoices.clearChoices();
-              turmaChoices.setChoices([{ value: "", label: "Erro ao carregar turmas", selected: false, disabled: true }], 'value', 'label', false);
+              turmaChoices.setChoices(
+                [{ value: "", label: "Erro ao carregar turmas", selected: false, disabled: true }],
+                'value',
+                'label',
+                false
+              );
               turmaSelect.value = "";
             });
         }
@@ -296,14 +316,9 @@
             return;
           }
       
-          // Prepara as categorias e médias de forma segura
+          // Para o eixo X, exibiremos somente o ID do simulado
           var simuladosDescriptions = simuladosData.map(function(item) {
-            if (item && item.descricao && item.descricao.trim().length > 0)
-              return item.descricao;
-            else if (item && item.id)
-              return String(item.id);
-            else
-              return "";
+            return String(item.id);
           });
           var simuladosAverages = simuladosData.map(function(item) {
             if (item && item.tentativas && item.tentativas.length > 0) {
@@ -319,13 +334,9 @@
           });
       
           function renderSimuladosChart(dataArray, intervalText) {
+            // Eixo X: Mostra somente o ID
             var simuladosDescriptions = dataArray.map(function(item) {
-              if (item && item.descricao && item.descricao.trim().length > 0)
-                return item.descricao;
-              else if (item && item.id)
-                return String(item.id);
-              else
-                return "";
+              return String(item.id);
             });
             var simuladosAverages = dataArray.map(function(item) {
               if (item && item.tentativas && item.tentativas.length > 0) {
@@ -359,7 +370,7 @@
                 }
               },
               stroke: {
-                width: [0, 4] // Coluna sem stroke; linha com stroke de 4px
+                width: [0, 4]
               },
               plotOptions: {
                 bar: {
@@ -367,7 +378,6 @@
                   endingShape: "rounded"
                 }
               },
-              // Duas séries: uma de coluna e outra de linha (com os mesmos dados)
               series: [
                 { 
                   name: "Nota Média",
@@ -385,7 +395,7 @@
                 labels: {
                   formatter: function(val) {
                     if (!val) return "";
-                    return val.length > 20 ? val.substring(0, 20) + "…" : val;
+                    return val;
                   }
                 }
               },
@@ -415,16 +425,25 @@
                 custom: function({ series, seriesIndex, dataPointIndex }) {
                   var simulado = dataArray[dataPointIndex];
                   var avg = series[0][dataPointIndex];
-                  var count = (simulado && simulado.tentativas && simulado.tentativas.length > 0) 
-                              ? simulado.tentativas.length 
+                  var count = (simulado && simulado.tentativas && simulado.tentativas.length > 0)
+                              ? simulado.tentativas.length
                               : (simulado && simulado.total_alunos ? simulado.total_alunos : 0);
+                  var idSimulado = simulado && simulado.id ? simulado.id : "N/A";
+                  // Agora utiliza o campo 'descricao' para a descrição
                   var descricao = (simulado && simulado.descricao && simulado.descricao.trim().length > 0)
-                                  ? simulado.descricao : (simulado && simulado.id ? simulado.id : "");
+                                  ? simulado.descricao : "Sem descrição";
+                  var dia = "";
+                  if (simulado && simulado.data_criacao) {
+                    var d = new Date(simulado.data_criacao);
+                    dia = d.toLocaleDateString();
+                  }
                   return (
                     '<div class="arrow_box" style="padding: 8px; background: #fff; border: 1px solid #ccc;">' +
+                      "<strong>ID do simulado:</strong> " + idSimulado + "<br>" +
+                      "<strong>Descrição:</strong> " + descricao + "<br>" +
                       "<strong>Nota média da turma:</strong> " + avg + "<br>" +
                       "<strong>Quantidade de alunos:</strong> " + count + "<br>" +
-                      "<strong>Descrição:</strong> " + descricao +
+                      "<strong>Data do simulado:</strong> " + dia +
                     "</div>"
                   );
                 }
@@ -450,13 +469,11 @@
               alert("Por favor, selecione a semana de início e a semana de fim.");
               return;
             }
-            // Filtra os dados com base na string ISO retornada por getISOWeekString
             var filteredData = simuladosData.filter(function(item) {
               if (!item.data_criacao) return false;
               var simuladoWeek = getISOWeekString(item.data_criacao);
               return simuladoWeek >= startWeek && simuladoWeek <= endWeek;
             });
-            // Converte os inputs week para datas para exibição
             var startRange = getDateRangeFromWeek(startWeek);
             var endRange   = getDateRangeFromWeek(endWeek);
             var intervalText = "Dados do intervalo: " + startRange.start.toLocaleDateString() + " até " + endRange.end.toLocaleDateString();
