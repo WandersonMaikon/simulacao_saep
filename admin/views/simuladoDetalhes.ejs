@@ -11,6 +11,13 @@
     <div class="min-h-screen flex flex-col lg:ps-64 w-full">
       <%- include('partials/header') %>
       <div class="p-6 space-y-6">
+        <!-- Botão Voltar reposicionado na parte superior e com estilo mais visível -->
+        <div class="mb-4">
+          <a href="/admin/dashboard" class="btn btn-primary font-bold">
+            Voltar
+          </a>
+        </div>
+
         <h4 class="text-lg font-semibold text-default-900">
           Detalhes do Simulado <%= simuladoId %>
         </h4>
@@ -98,27 +105,29 @@
           </div>
         </div>
 
+        <!-- Campo de Pesquisa: Procurar aluno -->
+        <div class="flex items-center justify-between py-4 px-5">
+          <div class="relative flex">
+            <input
+              type="search"
+              id="searchAluno"
+              class="ps-12 pe-4 py-2.5 block lg:w-64 border-none bg-default-100 text-default-700 rounded-lg text-sm focus:border-primary focus:ring-primary"
+              placeholder="Procurar aluno..."
+            />
+            <span class="absolute start-4 top-2.5">
+              <i
+                class="ph-duotone ph-magnifying-glass text-lg text-default-600"
+              ></i>
+            </span>
+          </div>
+        </div>
+
         <!-- Tabela de Detalhes do Simulado -->
         <div class="shadow rounded-lg bg-white dark:bg-default-50 h-fit">
-          <!-- Campo de Pesquisa: Procurar aluno -->
-          <div class="flex items-center justify-between py-4 px-5">
-            <div class="relative flex">
-              <input
-                type="search"
-                class="ps-12 pe-4 py-2.5 block lg:w-64 border-none bg-default-100 text-default-700 rounded-lg text-sm focus:border-primary focus:ring-primary"
-                placeholder="Procurar aluno..."
-              />
-              <span class="absolute start-4 top-2.5">
-                <i
-                  class="ph-duotone ph-magnifying-glass text-lg text-default-600"
-                ></i>
-              </span>
-            </div>
-          </div>
           <div class="p-5">
             <% if (detalhes.length > 0) { %>
             <div class="overflow-x-auto">
-              <table class="min-w-full">
+              <table class="min-w-full" id="tabelaAlunos">
                 <thead class="border-b border-dashed border-default-200">
                   <tr>
                     <th
@@ -152,7 +161,18 @@
                   <% detalhes.forEach(function(item) { %>
                   <tr>
                     <td class="px-6 py-3"><%= item.aluno %></td>
-                    <td class="px-6 py-3"><%= item.nota %></td>
+                    <td class="px-6 py-3">
+                      <% const grade = parseFloat(item.nota); %> <% if
+                      (!isNaN(grade)) { %> <% if (grade < 70) { %>
+                      <span class="text-red-500"><%= item.nota %></span>
+                      <% } else if (grade === 70) { %>
+                      <span class="text-yellow-500"><%= item.nota %></span>
+                      <% } else { %>
+                      <span class="text-green-500"><%= item.nota %></span>
+                      <% } %> <% } else { %>
+                      <span><%= item.nota %></span>
+                      <% } %>
+                    </td>
                     <td class="px-6 py-3"><%= item.total_respostas %></td>
                     <td class="px-6 py-3"><%= item.acertos %></td>
                     <td class="px-6 py-3"><%= item.erros %></td>
@@ -166,10 +186,20 @@
             <% } %>
           </div>
         </div>
-
-        <a href="/admin/dashboard" class="btn btn-secondary">Voltar</a>
       </div>
       <%- include('partials/footer') %>
     </div>
+
+    <!-- Script para filtrar a tabela de alunos conforme o valor digitado no campo de pesquisa -->
+    <script>
+      $(document).ready(function () {
+        $("#searchAluno").on("keyup", function () {
+          var value = $(this).val().toLowerCase();
+          $("#tabelaAlunos tbody tr").filter(function () {
+            $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
+          });
+        });
+      });
+    </script>
   </body>
 </html>
