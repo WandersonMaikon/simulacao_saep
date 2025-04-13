@@ -195,7 +195,8 @@ router.get("/admin/simulados/:id", verificarAutenticacao, (req, res) => {
   const db = req.db;
   const simuladoId = req.params.id;
 
-  // Consulta para obter os detalhes das tentativas do simulado, incluindo nome do aluno, nota, total de respostas e quantidade de acertos.
+  // Consulta para obter os detalhes das tentativas do simulado,
+  // incluindo nome do aluno, nota, total de respostas e quantidade de acertos.
   const query = `
     SELECT a.nome AS aluno, ts.nota, 
            COUNT(ra.id) AS total_respostas, 
@@ -206,6 +207,7 @@ router.get("/admin/simulados/:id", verificarAutenticacao, (req, res) => {
     WHERE ts.simulado_id = ?
     GROUP BY ts.id, a.nome, ts.nota
   `;
+
   db.query(query, [simuladoId], (err, resultados) => {
     if (err) {
       console.error("Erro ao buscar detalhes do simulado:", err);
@@ -213,17 +215,58 @@ router.get("/admin/simulados/:id", verificarAutenticacao, (req, res) => {
         message: "Erro ao carregar detalhes do simulado",
         detalhes: [],
         simuladoId: simuladoId,
+        totalStudents: 0,
+        above70: 0,
+        below70: 0,
+        averageGrade: 0,
       });
     }
-    // Calcula os erros para cada tentativa
+
+    // Para cada registro, calcula os erros subtraindo os acertos do total de respostas.
     resultados.forEach((item) => {
       item.erros = item.total_respostas - item.acertos;
     });
 
+    // Cálculo dos valores para os cards:
+    // Total de alunos que fizeram a prova (tamanho do array de resultados)
+    const totalStudents = resultados.length;
+
+    // Cálculo do total das notas:
+    // Converte o valor de cada nota para número com parseFloat.
+    // Se a conversão resultar em NaN, considera 0 para evitar erros na soma.
+    const totalGrades = resultados.reduce((acc, curr) => {
+      const nota = parseFloat(curr.nota);
+      return acc + (isNaN(nota) ? 0 : nota);
+    }, 0);
+
+    // Cálculo da média aritmética:
+    // Caso haja alunos, divide o total das notas pelo número total de alunos
+    // e formata o resultado para 2 casas decimais.
+    const averageGrade =
+      totalStudents > 0 ? (totalGrades / totalStudents).toFixed(2) : 0;
+
+    // Cálculo da quantidade de alunos com nota superior a 70.00:
+    // Converte cada nota para número e utiliza o método filter para contar.
+    const above70 = resultados.filter((item) => {
+      const nota = parseFloat(item.nota);
+      return !isNaN(nota) && nota > 70;
+    }).length;
+
+    // Cálculo da quantidade de alunos com nota inferior a 70.00:
+    const below70 = resultados.filter((item) => {
+      const nota = parseFloat(item.nota);
+      return !isNaN(nota) && nota < 70;
+    }).length;
+
+    // Renderiza o template passando todos os dados necessários.
     res.render("simuladoDetalhes", {
       message: "",
       detalhes: resultados,
       simuladoId: simuladoId,
+      totalStudents: totalStudents,
+      above70: above70,
+      below70: below70,
+      averageGrade: averageGrade,
     });
   });
 });
