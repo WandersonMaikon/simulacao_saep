@@ -13,8 +13,11 @@
       <div class="p-6 space-y-6">
         <!-- Botão Voltar reposicionado na parte superior e com estilo mais visível -->
         <div class="mb-4">
-          <a href="/admin/dashboard" class="btn btn-primary font-bold">
-            Voltar
+          <a
+            href="/admin/dashboard"
+            class="py-2 px-5 inline-block font-semibold tracking-wide border align-middle duration-500 text-sm text-center bg-blue-600 hover:bg-blue-700 border-blue-600 hover:border-blue-700 text-white rounded"
+          >
+            <i class="ph ph-skip-back text-lg"></i>Voltar
           </a>
         </div>
 
@@ -105,7 +108,7 @@
           </div>
         </div>
 
-        <!-- Campo de Pesquisa: Procurar aluno -->
+        <!-- Campo de Pesquisa e Botão de Exportar para Excel -->
         <div class="flex items-center justify-between py-4 px-5">
           <div class="relative flex">
             <input
@@ -119,6 +122,15 @@
                 class="ph-duotone ph-magnifying-glass text-lg text-default-600"
               ></i>
             </span>
+          </div>
+          <!-- Botão de Exportar para Excel -->
+          <div>
+            <button
+              id="btnExportExcel"
+              class="py-2 px-5 inline-block font-semibold tracking-wide border align-middle duration-500 text-sm text-center bg-green-600 hover:bg-green-700 border-green-600 hover:border-green-700 text-white rounded"
+            >
+              <i class="ph ph-download text-lg"></i> Exportar Excel
+            </button>
           </div>
         </div>
 
@@ -200,6 +212,35 @@
           });
         });
       });
+
+      // Função para exportar a tabela para Excel
+      function exportTableToExcel(tableID, filename = "") {
+        var dataType = "application/vnd.ms-excel";
+        var tableSelect = document.getElementById(tableID);
+        var tableHTML = tableSelect.outerHTML.replace(/ /g, "%20");
+
+        filename = filename ? filename + ".xls" : "excel_data.xls";
+        var downloadLink = document.createElement("a");
+        document.body.appendChild(downloadLink);
+
+        if (navigator.msSaveOrOpenBlob) {
+          var blob = new Blob(["\ufeff", tableSelect.outerHTML], {
+            type: dataType,
+          });
+          navigator.msSaveOrOpenBlob(blob, filename);
+        } else {
+          downloadLink.href = "data:" + dataType + ", " + tableHTML;
+          downloadLink.download = filename;
+          downloadLink.click();
+        }
+      }
+
+      // Evento para o botão de exportação
+      document
+        .getElementById("btnExportExcel")
+        .addEventListener("click", function () {
+          exportTableToExcel("tabelaAlunos", "dados_simulado");
+        });
     </script>
   </body>
 </html>
