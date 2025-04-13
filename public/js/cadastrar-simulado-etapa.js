@@ -1,5 +1,7 @@
 $(document).ready(function () {
-  // Variáveis globais
+  console.log("Script cadastra-simulado-etapa.js carregado.");
+
+  // Variáveis globais e funções existentes
   var currentIndex = 0;
   var fieldsets = $("form fieldset");
   var totalSteps = fieldsets.length; // 5 etapas
@@ -12,7 +14,6 @@ $(document).ready(function () {
   var itemsPerPageQuestoes = 10;
   var selectedQuestoesIds = [];
 
-  // Funções para atualizar os contadores de itens selecionados
   function updateAlunosSelectedCount() {
     $("#aluno-selected-count").text(
       "Total selecionados: " + selectedAlunosIds.length
@@ -24,7 +25,6 @@ $(document).ready(function () {
     );
   }
 
-  // Função para renderizar alunos
   function renderAlunosPage() {
     var tbody = $("#aluno-table-body");
     tbody.empty();
@@ -114,10 +114,8 @@ $(document).ready(function () {
     updateAlunosSelectedCount();
   });
 
-  // Busca alunos via AJAX ao alterar a turma
   $("#select-turma").on("change", function () {
     var turmaId = $(this).val();
-    console.log("Turma selecionada:", turmaId);
     if (!turmaId) {
       $("#aluno-table-body").html(`
         <tr>
@@ -132,7 +130,6 @@ $(document).ready(function () {
       type: "GET",
       dataType: "json",
       success: function (data) {
-        console.log("Resposta de alunos:", data);
         allAlunos = data;
         currentPageAlunos = 1;
         renderAlunosPage();
@@ -152,7 +149,6 @@ $(document).ready(function () {
     });
   });
 
-  // Função para renderizar questões (Etapa 4)
   function renderQuestoesPage() {
     var tbody = $("#questao-table-body");
     tbody.empty();
@@ -165,20 +161,25 @@ $(document).ready(function () {
           selectedQuestoesIds.indexOf(questao.id.toString()) !== -1
             ? "checked"
             : "";
-        // Renderiza somente Título, Curso e UC (usando questao.materia para UC)
         tbody.append(`
           <tr>
             <td class="px-6 py-3">
-              <input type="checkbox" name="questoes[]" value="${questao.id}" class="form-checkbox questao-checkbox" ${checked}>
+              <input type="checkbox" name="questoes[]" value="${
+                questao.id
+              }" class="form-checkbox questao-checkbox" ${checked}>
             </td>
             <td class="px-6 py-3">${questao.titulo}</td>
             <td class="px-6 py-3">${questao.curso}</td>
             <td class="px-6 py-3">${questao.materia}</td>
             <td class="px-6 py-3 text-center">
-              <button
-                type="button"
-                class="py-2 px-5 inline-block font-medium tracking-wide border align-middle duration-500 text-sm text-center bg-primary hover:bg-primary-600 border-primary hover:border-primary-600 text-white rounded-md"
+              <button type="button"
+                class="btn-detalhes-questao py-2 px-5 inline-block font-medium tracking-wide border align-middle duration-500 text-sm text-center bg-primary hover:bg-primary-600 border-primary hover:border-primary-600 text-white rounded-md"
                 data-hs-overlay="#overlay-right"
+                data-questao-id="${questao.id}"
+                data-questao-titulo="${questao.titulo}"
+                data-questao-enunciado='${
+                  questao.enunciado || "Detalhes não disponíveis"
+                }'
               >
                 <i class="ph-duotone ph-eye text-base"></i>
               </button>
@@ -242,7 +243,6 @@ $(document).ready(function () {
     updateQuestoesSelectedCount();
   });
 
-  // Busca questões via AJAX – chamada ao entrar na Etapa 4
   function fetchQuestoes() {
     var cursoId = $("#select-curso").val();
     if (!cursoId) {
@@ -254,7 +254,6 @@ $(document).ready(function () {
       type: "GET",
       dataType: "json",
       success: function (data) {
-        console.log("Resposta de questões:", data);
         allQuestoes = data;
         currentPageQuestoes = 1;
         renderQuestoesPage();
@@ -269,7 +268,6 @@ $(document).ready(function () {
     });
   }
 
-  // Atualiza a busca para questões (apenas Título, Curso e UC)
   $("#questao-search").on("keyup", function () {
     var query = $(this).val().toLowerCase();
     $("#questao-table-body tr").each(function () {
@@ -288,7 +286,6 @@ $(document).ready(function () {
     });
   });
 
-  // Atualiza o resumo final na Etapa 5
   function updateReviewFinal() {
     var cursoText = $("#select-curso option:selected").text();
     var turmaText = $("#select-turma option:selected").text();
@@ -308,7 +305,6 @@ $(document).ready(function () {
         return questao.titulo;
       })
       .join(", ");
-
     $("#resumo-final-curso").text(cursoText);
     $("#resumo-final-turma").text(turmaText);
     $("#resumo-final-alunos").text(alunosText || "Nenhum aluno selecionado");
@@ -317,7 +313,6 @@ $(document).ready(function () {
     );
   }
 
-  // Exibe a etapa atual e atualiza a barra de progresso
   function showStep(index) {
     fieldsets.removeClass("active");
     fieldsets.eq(index).addClass("active");
@@ -326,12 +321,9 @@ $(document).ready(function () {
       .css("width", percent + "%")
       .attr("aria-valuenow", percent)
       .text(Math.round(percent) + "%");
-
-    // Se estiver na Etapa 4 (índice 3), carrega as questões se ainda não estiverem
     if (index === 3 && allQuestoes.length === 0) {
       fetchQuestoes();
     }
-    // Se estiver na Etapa 5 (revisão final), atualiza o resumo
     if (index === totalSteps - 1) {
       updateReviewFinal();
     }
@@ -355,7 +347,6 @@ $(document).ready(function () {
       }
     });
     if (!valid) return false;
-
     if (currentIndex === 0) {
       var cursoId = $("#select-curso").val();
       if (!cursoId) {
@@ -417,13 +408,11 @@ $(document).ready(function () {
     showStep(currentIndex);
   });
 
-  // Inicializa a primeira etapa e Choices.js para o select de curso
   showStep(currentIndex);
   new Choices("#select-curso", { removeItemButton: false });
 
-  // Intercepta o submit do formulário para solicitar campos adicionais via modal
   $("#form-cadastrar-simulado").submit(function (e) {
-    e.preventDefault(); // Impede o envio normal do formulário
+    e.preventDefault();
     Swal.fire({
       title: "Informe os dados adicionais",
       html:
@@ -442,7 +431,6 @@ $(document).ready(function () {
         if (!descricao || !tempo) {
           Swal.showValidationMessage("Preencha ambos os campos");
         }
-        // Se o input de tempo não contiver um traço, assume que é apenas o horário e concatena com a data atual
         let tempoFormatted = tempo;
         if (tempo.indexOf("-") === -1) {
           let today = new Date();
@@ -460,10 +448,8 @@ $(document).ready(function () {
       cancelButtonColor: "#d33",
     }).then((result) => {
       if (result.isConfirmed) {
-        // Remove inputs hidden anteriores (se houver)
         $("#form-cadastrar-simulado input[name='tempo_prova']").remove();
         $("#form-cadastrar-simulado input[name='descricao']").remove();
-        // Adiciona os novos campos ao formulário
         $("<input>")
           .attr({
             type: "hidden",
@@ -478,8 +464,6 @@ $(document).ready(function () {
             value: result.value.descricao,
           })
           .appendTo("#form-cadastrar-simulado");
-
-        // Envia o formulário via AJAX
         var formData = $(this).serialize();
         $.ajax({
           url: $(this).attr("action"),
@@ -516,112 +500,69 @@ $(document).ready(function () {
       }
     });
   });
-});
 
-// Rota para ativar simulado via checkbox com confirmação
-$(document).on("change", ".ativar-simulado", function () {
-  var checkbox = $(this);
-  if (checkbox.is(":checked")) {
-    Swal.fire({
-      title: "Atenção",
-      text: "Esta operação não poderá ser desfeita! Deseja prosseguir para ativar este simulado?",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonText: "Sim, ativar",
-      cancelButtonText: "Cancelar",
-      confirmButtonColor: "#10b981",
-      cancelButtonColor: "#d33",
-    }).then((result) => {
-      if (result.isConfirmed) {
-        var simuladoId = checkbox.data("id");
-        $.ajax({
-          url: "/ativar-simulado/" + simuladoId,
-          method: "PUT",
-          dataType: "json",
-          success: function (response) {
-            if (response.success) {
-              Swal.fire({
-                icon: "success",
-                title: "Simulado ativado!",
-                text: response.message,
-                timer: 2000,
-                showConfirmButton: false,
-              });
-              checkbox.prop("disabled", true);
-            } else {
-              Swal.fire({
-                icon: "error",
-                title: "Erro",
-                text: response.error,
-              });
-              checkbox.prop("checked", false);
-            }
-          },
-          error: function () {
-            Swal.fire({
-              icon: "error",
-              title: "Erro",
-              text: "Não foi possível ativar o simulado.",
-            });
-            checkbox.prop("checked", false);
-          },
-        });
+  // --- Lógica para exibir/ocultar o modal offcanvas usando jQuery fadeIn/fadeOut ---
+
+  // Ao clicar no botão de ver detalhes, atualiza o modal e o exibe com fadeIn (300ms)
+  $(document).on("click", ".btn-detalhes-questao", function (e) {
+    e.preventDefault();
+    console.log("Botão de detalhes clicado.");
+    var titulo = $(this).data("questao-titulo");
+    var enunciado = $(this).data("questao-enunciado");
+    console.log("Título:", titulo, "Enunciado:", enunciado);
+    $("#modal-titulo").html(titulo);
+    $("#modal-conteudo").html(enunciado);
+    $("#overlay-right").fadeIn(300);
+  });
+
+  // Ao clicar no botão de fechar (com id #close-overlay), oculta o modal com fadeOut (300ms)
+  $(document).on("click", "#close-overlay", function (e) {
+    e.preventDefault();
+    console.log("Botão de fechar modal clicado.");
+    $("#overlay-right").fadeOut(300);
+  });
+
+  // Eventos de pesquisa e outros ...
+  $(document).on("keyup", "#aluno-search", function () {
+    var query = $(this).val().toLowerCase();
+    $("#aluno-table-body tr").each(function () {
+      var idText = $(this).find("td:nth-child(2)").text().toLowerCase();
+      var nomeText = $(this).find("td:nth-child(3)").text().toLowerCase();
+      var usuarioText = $(this).find("td:nth-child(4)").text().toLowerCase();
+      if (
+        idText.indexOf(query) > -1 ||
+        nomeText.indexOf(query) > -1 ||
+        usuarioText.indexOf(query) > -1
+      ) {
+        $(this).show();
       } else {
-        checkbox.prop("checked", false);
+        $(this).hide();
       }
     });
-  }
-});
+  });
 
-$(document).ready(function () {
-  var currentPath = window.location.pathname;
-  $(".admin-menu a").each(function () {
-    var linkPath = $(this).attr("href");
-    if (currentPath === linkPath || currentPath.indexOf(linkPath) === 0) {
-      $(this).addClass("active");
+  $(document).on("keyup", "#questao-search", function () {
+    var query = $(this).val().toLowerCase();
+    $("#questao-table-body tr").each(function () {
+      var tituloText = $(this).find("td:nth-child(2)").text().toLowerCase();
+      var cursoText = $(this).find("td:nth-child(3)").text().toLowerCase();
+      var ucText = $(this).find("td:nth-child(4)").text().toLowerCase();
+      if (
+        tituloText.indexOf(query) > -1 ||
+        cursoText.indexOf(query) > -1 ||
+        ucText.indexOf(query) > -1
+      ) {
+        $(this).show();
+      } else {
+        $(this).hide();
+      }
+    });
+  });
+
+  document.addEventListener("DOMContentLoaded", function () {
+    var simuladoLink = document.querySelector('a[href="/admin/simulados"]');
+    if (simuladoLink) {
+      simuladoLink.classList.add("active");
     }
   });
-});
-
-$("#aluno-search").on("keyup", function () {
-  var query = $(this).val().toLowerCase();
-  $("#aluno-table-body tr").each(function () {
-    var idText = $(this).find("td:nth-child(2)").text().toLowerCase();
-    var nomeText = $(this).find("td:nth-child(3)").text().toLowerCase();
-    var usuarioText = $(this).find("td:nth-child(4)").text().toLowerCase();
-    if (
-      idText.indexOf(query) > -1 ||
-      nomeText.indexOf(query) > -1 ||
-      usuarioText.indexOf(query) > -1
-    ) {
-      $(this).show();
-    } else {
-      $(this).hide();
-    }
-  });
-});
-
-$("#questao-search").on("keyup", function () {
-  var query = $(this).val().toLowerCase();
-  $("#questao-table-body tr").each(function () {
-    var tituloText = $(this).find("td:nth-child(2)").text().toLowerCase();
-    var cursoText = $(this).find("td:nth-child(3)").text().toLowerCase();
-    var ucText = $(this).find("td:nth-child(4)").text().toLowerCase();
-    if (
-      tituloText.indexOf(query) > -1 ||
-      cursoText.indexOf(query) > -1 ||
-      ucText.indexOf(query) > -1
-    ) {
-      $(this).show();
-    } else {
-      $(this).hide();
-    }
-  });
-});
-
-document.addEventListener("DOMContentLoaded", function () {
-  var simuladoLink = document.querySelector('a[href="/admin/simulados"]');
-  if (simuladoLink) {
-    simuladoLink.classList.add("active");
-  }
 });
