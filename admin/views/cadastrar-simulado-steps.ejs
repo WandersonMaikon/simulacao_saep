@@ -46,7 +46,7 @@
       .btn-group-steps {
         margin-top: 1.5rem;
       }
-      /* Barra de progresso – 5 etapas: 20% cada (agora 5 etapas = 20% cada) */
+      /* Barra de progresso – 5 etapas: 20% cada */
       #progressbar {
         height: 20px;
         margin-bottom: 1.5rem;
@@ -177,14 +177,12 @@
             <!-- Etapa 3: Selecionar Alunos -->
             <fieldset>
               <div class="step-header">Etapa 3: Selecione os Alunos</div>
-              <!-- Área de busca (opcional) -->
               <div
                 id="aluno-selected-count"
                 class="mb-2 text-sm text-default-800"
               >
                 Total selecionados: 0
               </div>
-
               <div
                 class="flex flex-wrap items-center justify-between py-4 px-5"
               >
@@ -202,7 +200,6 @@
                   </span>
                 </div>
               </div>
-              <!-- Tabela de alunos -->
               <div id="aluno-table-container" class="mb-3">
                 <div
                   class="border-t border-dashed border-default-200 relative overflow-x-auto"
@@ -247,12 +244,10 @@
                   </table>
                 </div>
               </div>
-              <!-- Controles de paginação para alunos -->
               <div
                 id="aluno-pagination"
                 class="flex items-center justify-center gap-2 my-4"
               ></div>
-              <!-- Botões de navegação entre etapas -->
               <div class="flex items-center gap-2 justify-between">
                 <button type="button" class="btn-custom prev">Voltar</button>
                 <button type="button" class="btn-custom next">Próximo</button>
@@ -267,7 +262,6 @@
               >
                 <h2>Total selecionados: 0</h2>
               </div>
-
               <!-- Área de busca para questões -->
               <div
                 class="flex flex-wrap items-center justify-between py-4 px-5"
@@ -286,7 +280,7 @@
                   </span>
                 </div>
               </div>
-              <!-- Tabela de questões -->
+              <!-- Tabela de questões (apresenta apenas Título, Curso, UC e coluna para detalhes) -->
               <div id="questao-table-container" class="mb-3">
                 <div
                   class="border-t border-dashed border-default-200 relative overflow-x-auto"
@@ -294,6 +288,7 @@
                   <table class="min-w-full">
                     <thead class="border-b border-dashed border-default-200">
                       <tr>
+                        <!-- Coluna para seleção via checkbox -->
                         <td class="px-6 py-3 w-10 font-medium text-default-900">
                           <input
                             type="checkbox"
@@ -301,30 +296,29 @@
                             id="select-all-questoes"
                           />
                         </td>
+                        <!-- Coluna Título -->
                         <th
-                          class="px-6 py-3 text-start text-sm capitalize font-semibold text-default-900"
-                        >
-                          Id
-                        </th>
-                        <th
-                          class="px-6 py-3 text-start text-sm capitalize font-semibold text-default-900"
+                          class="px-6 py-3 text-start text-sm capitalize font-semibold text-default-900 min-w-32"
                         >
                           Título
                         </th>
+                        <!-- Coluna Curso -->
                         <th
-                          class="px-6 py-3 text-start text-sm capitalize font-semibold text-default-900"
+                          class="px-6 py-3 text-start text-sm capitalize font-semibold text-default-900 min-w-32"
                         >
                           Curso
                         </th>
+                        <!-- Coluna UC -->
                         <th
-                          class="px-6 py-3 text-start text-sm capitalize font-semibold text-default-900"
+                          class="px-6 py-3 text-start text-sm capitalize font-semibold text-default-900 min-w-32"
                         >
-                          Matéria
+                          UC
                         </th>
+                        <!-- Nova coluna: Ver detalhes da questão -->
                         <th
-                          class="px-6 py-3 text-start text-sm capitalize font-semibold text-default-900"
+                          class="px-6 py-3 text-center text-sm capitalize font-semibold text-default-900 min-w-32"
                         >
-                          Enunciado
+                          Ver detalhes da questão
                         </th>
                       </tr>
                     </thead>
@@ -332,16 +326,41 @@
                       id="questao-table-body"
                       class="divide-y divide-dashed divide-default-200"
                     >
+                      <% if (typeof questoes !== 'undefined' && questoes.length
+                      > 0) { %> <% questoes.forEach(function(item) { %>
                       <tr>
-                        <td colspan="6" class="text-center py-6">
+                        <td class="px-6 py-3">
+                          <input
+                            type="checkbox"
+                            class="form-checkbox"
+                            name="questao[]"
+                            value="<%= item.id %>"
+                          />
+                        </td>
+                        <td class="px-6 py-3"><%= item.titulo %></td>
+                        <td class="px-6 py-3"><%= item.curso %></td>
+                        <td class="px-6 py-3"><%= item.uc %></td>
+                        <td class="px-6 py-3">
+                          <button
+                            type="button"
+                            class="py-2 px-5 inline-block font-medium tracking-wide border align-middle duration-500 text-sm bg-primary hover:bg-primary-600 border-primary hover:border-primary-600 text-white rounded-md"
+                            data-hs-overlay="#overlay-right"
+                          >
+                            <i class="ph-duotone ph-eye text-base"></i>
+                          </button>
+                        </td>
+                      </tr>
+                      <% }); %> <% } else { %>
+                      <tr>
+                        <td colspan="5" class="text-center py-6">
                           Nenhuma questão encontrada.
                         </td>
                       </tr>
+                      <% } %>
                     </tbody>
                   </table>
                 </div>
               </div>
-              <!-- Controles de paginação para questões -->
               <div
                 id="questao-pagination"
                 class="flex items-center justify-center gap-2 my-4"

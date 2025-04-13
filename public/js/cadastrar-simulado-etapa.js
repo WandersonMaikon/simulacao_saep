@@ -19,8 +19,8 @@ $(document).ready(function () {
     );
   }
   function updateQuestoesSelectedCount() {
-    $("#questao-selected-count").text(
-      "Total selecionados: " + selectedQuestoesIds.length
+    $("#questao-selected-count").html(
+      "<h2>Total selecionados: " + selectedQuestoesIds.length + "</h2>"
     );
   }
 
@@ -61,7 +61,7 @@ $(document).ready(function () {
     } else {
       tbody.append(`
         <tr>
-          <td colspan="7" class="text-center py-6">Nenhum aluno cadastrado nesta turma.</td>
+          <td colspan="4" class="text-center py-6">Nenhum aluno cadastrado nesta turma.</td>
         </tr>
       `);
     }
@@ -152,7 +152,7 @@ $(document).ready(function () {
     });
   });
 
-  // Função para renderizar questões
+  // Função para renderizar questões (Etapa 4)
   function renderQuestoesPage() {
     var tbody = $("#questao-table-body");
     tbody.empty();
@@ -165,23 +165,31 @@ $(document).ready(function () {
           selectedQuestoesIds.indexOf(questao.id.toString()) !== -1
             ? "checked"
             : "";
+        // Renderiza somente Título, Curso e UC (usando questao.materia para UC)
         tbody.append(`
           <tr>
             <td class="px-6 py-3">
               <input type="checkbox" name="questoes[]" value="${questao.id}" class="form-checkbox questao-checkbox" ${checked}>
             </td>
-            <td class="px-6 py-3">${questao.id}</td>
             <td class="px-6 py-3">${questao.titulo}</td>
             <td class="px-6 py-3">${questao.curso}</td>
             <td class="px-6 py-3">${questao.materia}</td>
-            <td class="px-6 py-3">${questao.enunciado}</td>
+            <td class="px-6 py-3 text-center">
+              <button
+                type="button"
+                class="py-2 px-5 inline-block font-medium tracking-wide border align-middle duration-500 text-sm text-center bg-primary hover:bg-primary-600 border-primary hover:border-primary-600 text-white rounded-md"
+                data-hs-overlay="#overlay-right"
+              >
+                <i class="ph-duotone ph-eye text-base"></i>
+              </button>
+            </td>
           </tr>
         `);
       });
     } else {
       tbody.append(`
         <tr>
-          <td colspan="6" class="text-center py-6">Nenhuma questão encontrada.</td>
+          <td colspan="5" class="text-center py-6">Nenhuma questão encontrada.</td>
         </tr>
       `);
     }
@@ -261,20 +269,17 @@ $(document).ready(function () {
     });
   }
 
+  // Atualiza a busca para questões (apenas Título, Curso e UC)
   $("#questao-search").on("keyup", function () {
     var query = $(this).val().toLowerCase();
     $("#questao-table-body tr").each(function () {
-      var idText = $(this).find("td:nth-child(2)").text().toLowerCase();
-      var tituloText = $(this).find("td:nth-child(3)").text().toLowerCase();
-      var cursoText = $(this).find("td:nth-child(4)").text().toLowerCase();
-      var materiaText = $(this).find("td:nth-child(5)").text().toLowerCase();
-      var enunciadoText = $(this).find("td:nth-child(6)").text().toLowerCase();
+      var tituloText = $(this).find("td:nth-child(2)").text().toLowerCase();
+      var cursoText = $(this).find("td:nth-child(3)").text().toLowerCase();
+      var ucText = $(this).find("td:nth-child(4)").text().toLowerCase();
       if (
-        idText.indexOf(query) > -1 ||
         tituloText.indexOf(query) > -1 ||
         cursoText.indexOf(query) > -1 ||
-        materiaText.indexOf(query) > -1 ||
-        enunciadoText.indexOf(query) > -1
+        ucText.indexOf(query) > -1
       ) {
         $(this).show();
       } else {
@@ -588,6 +593,24 @@ $("#aluno-search").on("keyup", function () {
       idText.indexOf(query) > -1 ||
       nomeText.indexOf(query) > -1 ||
       usuarioText.indexOf(query) > -1
+    ) {
+      $(this).show();
+    } else {
+      $(this).hide();
+    }
+  });
+});
+
+$("#questao-search").on("keyup", function () {
+  var query = $(this).val().toLowerCase();
+  $("#questao-table-body tr").each(function () {
+    var tituloText = $(this).find("td:nth-child(2)").text().toLowerCase();
+    var cursoText = $(this).find("td:nth-child(3)").text().toLowerCase();
+    var ucText = $(this).find("td:nth-child(4)").text().toLowerCase();
+    if (
+      tituloText.indexOf(query) > -1 ||
+      cursoText.indexOf(query) > -1 ||
+      ucText.indexOf(query) > -1
     ) {
       $(this).show();
     } else {
