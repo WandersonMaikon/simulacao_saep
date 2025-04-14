@@ -146,6 +146,7 @@
                 <button type="button" class="btn-custom next">Próximo</button>
               </div>
             </fieldset>
+
             <!-- Etapa 2: Selecionar Turma -->
             <fieldset>
               <div class="step-header">Etapa 2: Selecione a Turma</div>
@@ -168,6 +169,7 @@
                 <button type="button" class="btn-custom next">Próximo</button>
               </div>
             </fieldset>
+
             <!-- Etapa 3: Selecionar Alunos -->
             <fieldset>
               <div class="step-header">Etapa 3: Selecione os Alunos</div>
@@ -183,9 +185,9 @@
                 <div class="relative flex">
                   <input
                     type="search"
+                    id="aluno-search"
                     class="ps-12 pe-4 py-2.5 block lg:w-64 border-none bg-default-100 text-default-700 rounded-lg text-sm focus:border-primary focus:ring-primary"
                     placeholder="Procurar aluno..."
-                    id="aluno-search"
                   />
                   <span class="absolute start-4 top-2.5">
                     <i
@@ -204,8 +206,8 @@
                         <td class="px-6 py-3 w-10 font-medium text-default-900">
                           <input
                             type="checkbox"
-                            class="form-checkbox"
                             id="select-all-alunos"
+                            class="form-checkbox"
                           />
                         </td>
                         <th
@@ -247,6 +249,7 @@
                 <button type="button" class="btn-custom next">Próximo</button>
               </div>
             </fieldset>
+
             <!-- Etapa 4: Selecionar Questões -->
             <fieldset>
               <div class="step-header">Etapa 4: Selecione as Questões</div>
@@ -274,7 +277,7 @@
                   </span>
                 </div>
               </div>
-              <!-- Tabela de questões -->
+              <!-- Tabela de Questões -->
               <div id="questao-table-container" class="mb-3">
                 <div
                   class="border-t border-dashed border-default-200 relative overflow-x-auto"
@@ -285,8 +288,8 @@
                         <td class="px-6 py-3 w-10 font-medium text-default-900">
                           <input
                             type="checkbox"
-                            class="form-checkbox"
                             id="select-all-questoes"
+                            class="form-checkbox"
                           />
                         </td>
                         <th
@@ -321,9 +324,9 @@
                         <td class="px-6 py-3">
                           <input
                             type="checkbox"
-                            class="form-checkbox"
                             name="questoes[]"
                             value="<%= item.id %>"
+                            class="form-checkbox"
                           />
                         </td>
                         <td class="px-6 py-3"><%= item.titulo %></td>
@@ -335,8 +338,9 @@
                             class="btn-detalhes-questao py-2 px-5 inline-block font-medium tracking-wide border align-middle duration-500 text-sm text-center bg-primary hover:bg-primary-600 border-primary hover:border-primary-600 text-white rounded-md"
                             data-hs-overlay="#overlay-right"
                             data-questao-id="<%= item.id %>"
-                            data-questao-titulo="<%= item.titulo %>"
-                            data-questao-enunciado='<%= item.enunciado || "Detalhes não disponíveis" %>'
+                            data-questao-dificuldade="<%= item.dificuldade || 'N/A' %>"
+                            data-questao-enunciado='<%- JSON.stringify(item.enunciado || "Detalhes não disponíveis") %>'
+                            data-questao-alternativas='<%- JSON.stringify([item.alternativa_a, item.alternativa_b, item.alternativa_c, item.alternativa_d, item.alternativa_e].filter(function(alt){ return alt && alt.trim() !== ""; })) %>'
                           >
                             <i class="ph-duotone ph-eye text-base"></i>
                           </button>
@@ -362,6 +366,7 @@
                 <button type="button" class="btn-custom next">Próximo</button>
               </div>
             </fieldset>
+
             <!-- Etapa 5: Revisão Final -->
             <fieldset>
               <div class="step-header">Etapa 5: Revisão Final</div>
@@ -399,7 +404,8 @@
       </div>
       <%- include('partials/footer') %>
     </div>
-    <!-- Modal Offcanvas para detalhes da questão (inicialmente oculto) -->
+
+    <!-- Modal Offcanvas para Detalhes da Questão (inicialmente oculto) -->
     <div
       id="overlay-right"
       class="hs-overlay fixed top-0 right-0 transition-all duration-300 transform h-full max-w-xs w-full z-[60] bg-white border-l border-default-200 dark:bg-default-50"
@@ -410,10 +416,11 @@
       <div
         class="flex justify-between items-center py-3 px-4 border-b border-default-200"
       >
+        <!-- O cabeçalho exibirá a dificuldade -->
         <h3 class="text-lg font-medium text-default-600" id="modal-titulo">
           Offcanvas title
         </h3>
-        <!-- Botão de fechar com ID para facilitar a seleção -->
+        <!-- Botão de fechar com ID -->
         <button type="button" class="hover:text-default-900" id="close-overlay">
           <span class="sr-only">Close modal</span>
           <svg
@@ -434,12 +441,14 @@
         </button>
       </div>
       <div class="p-4">
-        <p class="text-default-600 mt-1" id="modal-conteudo">
-          Some text as placeholder. In real life you can have the elements you
-          have chosen. Like, text, images, lists, etc.
-        </p>
+        <!-- Conteúdo do modal: Enunciado e Lista de Alternativas -->
+        <div id="modal-conteudo">
+          Some text as placeholder. In real life you can have text, images,
+          lists, etc.
+        </div>
       </div>
     </div>
+
     <!-- Bootstrap Bundle JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <!-- Script do cadastrar-simulado-etapa.js -->

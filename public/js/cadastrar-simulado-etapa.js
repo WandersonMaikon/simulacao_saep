@@ -1,7 +1,7 @@
 $(document).ready(function () {
-  console.log("Script cadastra-simulado-etapa.js carregado.");
+  console.log("Script cadastrar-simulado-etapa.js carregado.");
 
-  // Variáveis globais e funções existentes
+  // Variáveis globais
   var currentIndex = 0;
   var fieldsets = $("form fieldset");
   var totalSteps = fieldsets.length; // 5 etapas
@@ -14,6 +14,9 @@ $(document).ready(function () {
   var itemsPerPageQuestoes = 10;
   var selectedQuestoesIds = [];
 
+  // ---------------------------
+  // Funções para atualizar contadores
+  // ---------------------------
   function updateAlunosSelectedCount() {
     $("#aluno-selected-count").text(
       "Total selecionados: " + selectedAlunosIds.length
@@ -25,6 +28,9 @@ $(document).ready(function () {
     );
   }
 
+  // ---------------------------
+  // Renderização de alunos e paginação (mantém o que você já tinha)
+  // ---------------------------
   function renderAlunosPage() {
     var tbody = $("#aluno-table-body");
     tbody.empty();
@@ -149,6 +155,9 @@ $(document).ready(function () {
     });
   });
 
+  // ---------------------------
+  // Renderização de questões – Correção aplicada aqui
+  // ---------------------------
   function renderQuestoesPage() {
     var tbody = $("#questao-table-body");
     tbody.empty();
@@ -176,10 +185,19 @@ $(document).ready(function () {
                 class="btn-detalhes-questao py-2 px-5 inline-block font-medium tracking-wide border align-middle duration-500 text-sm text-center bg-primary hover:bg-primary-600 border-primary hover:border-primary-600 text-white rounded-md"
                 data-hs-overlay="#overlay-right"
                 data-questao-id="${questao.id}"
-                data-questao-titulo="${questao.titulo}"
-                data-questao-enunciado='${
+                data-questao-dificuldade="${questao.dificuldade || "N/A"}"
+                data-questao-enunciado="${encodeURIComponent(
                   questao.enunciado || "Detalhes não disponíveis"
-                }'
+                )}"
+                data-questao-alternativas='${JSON.stringify(
+                  [
+                    questao.alternativa_a,
+                    questao.alternativa_b,
+                    questao.alternativa_c,
+                    questao.alternativa_d,
+                    questao.alternativa_e,
+                  ].filter((alt) => alt && alt.trim() !== "")
+                )}'
               >
                 <i class="ph-duotone ph-eye text-base"></i>
               </button>
@@ -286,6 +304,9 @@ $(document).ready(function () {
     });
   });
 
+  // ---------------------------
+  // Atualização do resumo final
+  // ---------------------------
   function updateReviewFinal() {
     var cursoText = $("#select-curso option:selected").text();
     var turmaText = $("#select-turma option:selected").text();
@@ -313,6 +334,9 @@ $(document).ready(function () {
     );
   }
 
+  // ---------------------------
+  // Controle das etapas do formulário
+  // ---------------------------
   function showStep(index) {
     fieldsets.removeClass("active");
     fieldsets.eq(index).addClass("active");
@@ -411,6 +435,9 @@ $(document).ready(function () {
   showStep(currentIndex);
   new Choices("#select-curso", { removeItemButton: false });
 
+  // ---------------------------
+  // Submissão do formulário com dados adicionais via SweetAlert
+  // ---------------------------
   $("#form-cadastrar-simulado").submit(function (e) {
     e.preventDefault();
     Swal.fire({
@@ -501,28 +528,59 @@ $(document).ready(function () {
     });
   });
 
-  // --- Lógica para exibir/ocultar o modal offcanvas usando jQuery fadeIn/fadeOut ---
-
-  // Ao clicar no botão de ver detalhes, atualiza o modal e o exibe com fadeIn (300ms)
+  // ---------------------------
+  // Lógica para exibir/ocultar o modal offcanvas com fadeIn/fadeOut
+  // ---------------------------
   $(document).on("click", ".btn-detalhes-questao", function (e) {
     e.preventDefault();
     console.log("Botão de detalhes clicado.");
-    var titulo = $(this).data("questao-titulo");
-    var enunciado = $(this).data("questao-enunciado");
-    console.log("Título:", titulo, "Enunciado:", enunciado);
-    $("#modal-titulo").html(titulo);
-    $("#modal-conteudo").html(enunciado);
+
+    // Captura os dados do botão
+    var dificuldade = $(this).data("questao-dificuldade");
+    // Como inserimos o enunciado usando encodeURIComponent, decodificamos aqui:
+    var enunciado = decodeURIComponent($(this).attr("data-questao-enunciado"));
+    // As alternativas foram armazenadas como JSON string; fazemos o parse
+    var alternativas = $(this).attr("data-questao-alternativas");
+    try {
+      alternativas = JSON.parse(alternativas);
+    } catch (err) {
+      alternativas = [];
+    }
+    console.log(
+      "Dificuldade:",
+      dificuldade,
+      "Enunciado:",
+      enunciado,
+      "Alternativas:",
+      alternativas
+    );
+
+    // Atualiza o cabeçalho do modal para mostrar a dificuldade
+    $("#modal-titulo").html("Dificuldade: " + dificuldade);
+
+    // Monta o conteúdo do modal: exibe o enunciado e, se houver alternativas, gera uma lista ordenada
+    var content = enunciado;
+    if (Array.isArray(alternativas) && alternativas.length > 0) {
+      content += "<br/><br/><ol style='list-style-type: upper-alpha;'>";
+      alternativas.forEach(function (alt) {
+        content += "<li>" + alt + "</li>";
+      });
+      content += "</ol>";
+    }
+    $("#modal-conteudo").html(content);
+
+    // Exibe o modal com fadeIn de 300ms
     $("#overlay-right").fadeIn(300);
   });
 
-  // Ao clicar no botão de fechar (com id #close-overlay), oculta o modal com fadeOut (300ms)
+  // Evento para fechar o modal
   $(document).on("click", "#close-overlay", function (e) {
     e.preventDefault();
     console.log("Botão de fechar modal clicado.");
     $("#overlay-right").fadeOut(300);
   });
 
-  // Eventos de pesquisa e outros ...
+  // Eventos de pesquisa para alunos e questões
   $(document).on("keyup", "#aluno-search", function () {
     var query = $(this).val().toLowerCase();
     $("#aluno-table-body tr").each(function () {

@@ -169,17 +169,43 @@ router.get("/alunos-por-turma/:turmaId", verificarAutenticacao, (req, res) => {
 router.get("/questao-por-curso/:cursoId", verificarAutenticacao, (req, res) => {
   const db = req.db;
   const cursoId = Number(req.params.cursoId);
-  db.query(
-    "SELECT q.id, q.titulo, q.enunciado, c.nome AS curso, m.nome AS materia FROM questao q JOIN curso c ON q.curso_id = c.id JOIN materia m ON q.materia_id = m.id WHERE q.curso_id = ?",
-    [cursoId],
-    (err, results) => {
-      if (err) {
-        console.error("Erro ao buscar questões:", err);
-        return res.status(500).json({ error: "Erro ao buscar questões" });
-      }
-      res.json(results);
+  // Query atualizada para buscar a dificuldade, enunciado e todas as alternativas
+  const query = `
+    SELECT 
+      q.id, 
+      q.titulo, 
+      q.enunciado, 
+      q.dificuldade, 
+      q.alternativa_a, 
+      q.alternativa_b, 
+      q.alternativa_c, 
+      q.alternativa_d, 
+      q.alternativa_e,
+      c.nome AS curso, 
+      m.nome AS materia
+    FROM questao q 
+    JOIN curso c ON q.curso_id = c.id 
+    JOIN materia m ON q.materia_id = m.id 
+    WHERE q.curso_id = ?`;
+
+  db.query(query, [cursoId], (err, results) => {
+    if (err) {
+      console.error("Erro ao buscar questões:", err);
+      return res.status(500).json({ error: "Erro ao buscar questões" });
     }
-  );
+    // Cria um campo "alternativas" para facilitar o processamento no front‑end
+    results = results.map((q) => {
+      q.alternativas = [
+        q.alternativa_a,
+        q.alternativa_b,
+        q.alternativa_c,
+        q.alternativa_d,
+        q.alternativa_e,
+      ].filter((alt) => alt && alt.trim() !== "");
+      return q;
+    });
+    return res.json(results);
+  });
 });
 
 // POST /cadastrar-simulado-steps - Processa o cadastro multi‑etapas de simulado
