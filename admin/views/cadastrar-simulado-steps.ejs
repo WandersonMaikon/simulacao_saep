@@ -88,6 +88,11 @@
       .review-item h5 {
         margin-bottom: 0.5rem;
       }
+      /* Estilo para permitir scroll dentro do modal Offcanvas */
+      #modal-conteudo {
+        max-height: 80vh;
+        overflow-y: auto;
+      }
     </style>
   </head>
   <body class="bg-primary/10">
@@ -310,7 +315,7 @@
                         <th
                           class="px-6 py-3 text-center text-sm capitalize font-semibold text-default-900 min-w-32"
                         >
-                          Ver detalhes da questão
+                          ver detalhes da questão
                         </th>
                       </tr>
                     </thead>
@@ -416,11 +421,11 @@
       <div
         class="flex justify-between items-center py-3 px-4 border-b border-default-200"
       >
-        <!-- O cabeçalho exibirá a dificuldade -->
+        <!-- Cabeçalho que exibirá a dificuldade -->
         <h3 class="text-lg font-medium text-default-600" id="modal-titulo">
           Offcanvas title
         </h3>
-        <!-- Botão de fechar com ID -->
+        <!-- Botão para fechar o modal -->
         <button type="button" class="hover:text-default-900" id="close-overlay">
           <span class="sr-only">Close modal</span>
           <svg
@@ -441,7 +446,7 @@
         </button>
       </div>
       <div class="p-4">
-        <!-- Conteúdo do modal: Enunciado e Lista de Alternativas -->
+        <!-- Conteúdo do modal com scroll interno para enunciados extensos -->
         <div id="modal-conteudo">
           Some text as placeholder. In real life you can have text, images,
           lists, etc.
@@ -449,9 +454,54 @@
       </div>
     </div>
 
+    <!-- Overlay Backdrop para o Modal Offcanvas -->
+    <div
+      id="overlay-backdrop"
+      data-hs-overlay-backdrop-template=""
+      style="display: none; z-index: 59"
+      class="transition duration fixed inset-0 bg-gray-900 bg-opacity-50 dark:bg-opacity-80 hs-overlay-backdrop"
+    ></div>
+
     <!-- Bootstrap Bundle JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <!-- Script do cadastrar-simulado-etapa.js -->
     <script src="../js/cadastrar-simulado-etapa.js"></script>
+    <!-- Bloco adicional para controle do modal com overlay e efeito de fadeIn/fadeOut -->
+    <script>
+      $(document).ready(function () {
+        // Funções para abrir e fechar o modal juntamente com o backdrop
+        function openModal() {
+          $("#overlay-backdrop").fadeIn(300);
+          $("#overlay-right").fadeIn(300);
+        }
+        function closeModal() {
+          $("#overlay-right").fadeOut(300);
+          $("#overlay-backdrop").fadeOut(300);
+        }
+
+        // Evento ao clicar no botão de detalhes da questão
+        $(document).on("click", ".btn-detalhes-questao", function (e) {
+          e.preventDefault();
+
+          // Captura dos dados do botão (caso necessário complementar a lógica existente)
+          var dificuldade = $(this).data("questao-dificuldade");
+          var enunciado = $(this).data("questao-enunciado");
+          var alternativas = $(this).data("questao-alternativas");
+          // A lógica de exibição já deve estar definida no seu script original,
+          // chamamos openModal() para exibir o backdrop junto com o modal.
+          openModal();
+        });
+
+        // Evento para fechar o modal ao clicar tanto no botão quanto no backdrop
+        $(document).on(
+          "click",
+          "#close-overlay, #overlay-backdrop",
+          function (e) {
+            e.preventDefault();
+            closeModal();
+          }
+        );
+      });
+    </script>
   </body>
 </html>
