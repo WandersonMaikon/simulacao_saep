@@ -188,6 +188,7 @@
     <div
       id="simuladoData"
       data-total="<%= totalRows %>"
+      data-time="<%= simulado.tempo_prova %>"
       style="display: none"
     ></div>
 
@@ -226,11 +227,14 @@
       </div>
     </div>
 
-    <div class="min-h-screen flex flex-col lg:ps-64 w-full">
+    <!-- Timer fixo fora do SPA -->
+    <div id="timer">Tempo restante: --:--:--</div>
+
+    <!-- Container Principal (será substituído via AJAX) -->
+    <div id="app" class="min-h-screen flex flex-col lg:ps-64 w-full">
       <main class="p-1 space-y-1">
-        <div id="timer">Tempo restante: --:--:--</div>
         <div class="container">
-          <% if (questoes && questoes.length>0) { var questao =
+          <% if (questoes && questoes.length > 0) { var questao =
           questoes[currentPage-1]; %>
           <div
             class="question-card card-simulado shadow rounded-lg bg-white dark:bg-default-50 border"
@@ -242,9 +246,9 @@
               <div class="mt-2">
                 <div class="font-size-2"><%- questao.enunciado %></div>
                 <div class="d-flex flex-column mt-3">
-                  <% var alts = {A: questao.alternativa_a, B:
+                  <% var alts = { A: questao.alternativa_a, B:
                   questao.alternativa_b, C: questao.alternativa_c, D:
-                  questao.alternativa_d, E: questao.alternativa_e};
+                  questao.alternativa_d, E: questao.alternativa_e };
                   Object.keys(alts).forEach(function(key) { if (alts[key]) { %>
                   <div
                     class="alternative-container p-3 my-2"
@@ -285,23 +289,29 @@
           <% if (currentPage > 1) { %>
           <button
             type="button"
-            class="btn-custom"
-            onclick="location.href='/aluno/responder-simulado/<%= simulado.id %>?page=<%= currentPage-1 %>'"
+            class="btn-custom btn-disabled"
+            data-url="/aluno/responder-simulado/<%= simulado.id %>?page=<%= currentPage-1 %>"
+            disabled
           >
             Anterior
           </button>
           <% } else { %>
-          <button type="button" class="btn-custom" disabled>Anterior</button>
+          <button type="button" class="btn-custom btn-disabled" disabled>
+            Anterior
+          </button>
           <% } %> <% if (currentPage < totalPages) { %>
           <button
             type="button"
-            class="btn-custom"
-            onclick="location.href='/aluno/responder-simulado/<%= simulado.id %>?page=<%= currentPage+1 %>'"
+            class="btn-custom btn-disabled"
+            data-url="/aluno/responder-simulado/<%= simulado.id %>?page=<%= currentPage+1 %>"
+            disabled
           >
             Próxima
           </button>
           <% } else { %>
-          <button type="button" class="btn-custom" disabled>Próxima</button>
+          <button type="button" class="btn-custom btn-disabled" disabled>
+            Próxima
+          </button>
           <% } %>
         </div>
       </footer>
@@ -309,47 +319,202 @@
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
+      // Controle de encerramento
       let examEnded = false;
+
+      // IDs e chaves
       const simuladoId = "<%= simulado.id %>";
       const alunoId = "<%= aluno.id %>";
+      const overlayKey = `overlayShown_${alunoId}_${simuladoId}`;
       const totalQuestions = Number(
-        document.getElementById("simuladoData").getAttribute("data-total")
+        document.getElementById("simuladoData").dataset.total
       );
 
-      // Controle do overlay inicial
-      const overlayKey = `overlayShown_${alunoId}_${simuladoId}`;
+      // Utilitário: converte "HH:MM:SS" ou segundos em número de segundos
+      function timeStringToSeconds(t) {
+        if (!t) return 0;
+        if (t.includes(":")) {
+          const [h, m, s] = t.split(":").map((n) => parseInt(n, 10));
+          return (
+            (isNaN(h) ? 0 : h * 3600) +
+            (isNaN(m) ? 0 : m * 60) +
+            (isNaN(s) ? 0 : s)
+          );
+        }
+        const secs = parseInt(t, 10);
+        return isNaN(secs) ? 0 : secs;
+      }
+
+      // Lê do DOM o tempo da prova no formato "HH:MM:SS"
+      const simuladoTimeStr =
+        document.getElementById("simuladoData").dataset.time;
+      const examTimeInSeconds = timeStringToSeconds(simuladoTimeStr);
+
+      // 1) TIMER
+      function initTimer() {
+        const startKey = `aluno_${alunoId}_simulado_start_time_${simuladoId}`;
+        let startStamp = localStorage.getItem(startKey);
+        if (!startStamp) {
+          startStamp = Date.now();
+          localStorage.setItem(startKey, startStamp);
+        }
+
+        function formatTime(sec) {
+          const hh = Math.floor(sec / 3600),
+            mm = Math.floor((sec % 3600) / 60),
+            ss = sec % 60;
+          return (
+            `${hh.toString().padStart(2, "0")}:` +
+            `${mm.toString().padStart(2, "0")}:` +
+            `${ss.toString().padStart(2, "0")}`
+          );
+        }
+
+        function updateTimer() {
+          const elapsed = Math.floor((Date.now() - startStamp) / 1000),
+            left = examTimeInSeconds - elapsed;
+          document.getElementById("timer").textContent =
+            "Tempo restante: " + formatTime(left);
+          if (left <= 0) {
+            clearInterval(window.timerInterval);
+            Swal.fire({
+              title: "Tempo esgotado",
+              text: "O tempo acabou! Simulado encerrado.",
+              icon: "warning",
+              confirmButtonColor: "#2563eb",
+              confirmButtonText: "Ok",
+            }).then(() => {
+              examEnded = true;
+              localStorage.removeItem(startKey);
+              document.getElementById("answersInput").value = JSON.stringify(
+                collectAllAnswers()
+              );
+              const timeoutInput = document.createElement("input");
+              timeoutInput.type = "hidden";
+              timeoutInput.name = "timeout";
+              timeoutInput.value = "true";
+              document
+                .getElementById("encerrarSimuladoForm")
+                .appendChild(timeoutInput)
+                .submit();
+            });
+          }
+        }
+
+        // inicia o loop
+        updateTimer();
+        window.timerInterval = setInterval(updateTimer, 1000);
+      }
+
+      // dispara o timer somente uma vez
+      initTimer();
+
+      // 2) AJAX / SPA
+      const app = document.getElementById("app");
+
+      function fetchPage(url, addToHistory = true) {
+        fetch(url, { credentials: "include" })
+          .then((r) => r.text())
+          .then((html) => {
+            const mainMatch = html.match(/<main[\s\S]*?<\/main>/);
+            const footerMatch = html.match(/<footer[\s\S]*?<\/footer>/);
+            if (mainMatch && footerMatch) {
+              app.innerHTML = mainMatch[0] + footerMatch[0];
+              bindAll();
+            }
+            if (addToHistory) history.pushState({ url }, "", url);
+          })
+          .catch(console.error);
+      }
+
+      function bindNavButtons() {
+        document
+          .querySelectorAll(".nav-buttons button[data-url]")
+          .forEach((btn) => {
+            btn.disabled = false;
+            btn.classList.replace("btn-disabled", "btn-enabled");
+            btn.onclick = (e) => {
+              e.preventDefault();
+              fetchPage(btn.dataset.url);
+            };
+          });
+      }
+
+      function bindMapNavigation() {
+        document
+          .querySelectorAll(".sidebar .question-map div")
+          .forEach((el) => {
+            el.onclick = () =>
+              fetchPage(
+                `/aluno/responder-simulado/${simuladoId}?page=${el.dataset.question}`
+              );
+          });
+      }
+
+      function bindAlternativeClicks() {
+        document.querySelectorAll(".alternative-container").forEach((c) => {
+          c.onclick = () => {
+            const q = c.dataset.questao;
+            c.querySelectorAll(".alternative-toggle").forEach((el) =>
+              el.classList.remove("alternative-selected")
+            );
+            const tog = c.querySelector(".alternative-toggle"),
+              alt = tog.dataset.alternative;
+            tog.classList.add("alternative-selected");
+            localStorage.setItem(
+              `aluno_${alunoId}_simulado_${simuladoId}_questao_${q}`,
+              alt
+            );
+            markAnsweredQuestions();
+            updateSubmitButton();
+          };
+        });
+      }
+
+      function bindAll() {
+        bindNavButtons();
+        bindMapNavigation();
+        bindAlternativeClicks();
+        restoreAlternatives();
+        markAnsweredQuestions();
+        updateSubmitButton();
+      }
+
+      window.addEventListener("popstate", (e) => {
+        if (e.state && e.state.url) fetchPage(e.state.url, false);
+      });
+
+      // inicializa ligações
+      bindAll();
+
+      // 3) FULLSCREEN & OVERLAY
       const overlay = document.getElementById("startOverlay");
       if (localStorage.getItem(overlayKey)) overlay.style.display = "none";
 
       function enterFullScreenMode() {
         const elem = document.documentElement;
-        if (elem.requestFullscreen) {
-          elem
-            .requestFullscreen()
-            .catch((err) =>
-              console.error("Erro ao entrar em tela cheia:", err)
-            );
-        } else if (elem.mozRequestFullScreen) {
-          elem.mozRequestFullScreen();
-        } else if (elem.webkitRequestFullscreen) {
-          elem.webkitRequestFullscreen();
-        } else if (elem.msRequestFullscreen) {
-          elem.msRequestFullscreen();
-        }
+        if (elem.requestFullscreen) elem.requestFullscreen().catch(() => {});
+        else if (elem.mozRequestFullScreen) elem.mozRequestFullScreen();
+        else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
+        else if (elem.msRequestFullscreen) elem.msRequestFullscreen();
       }
-      // 1) Função para criar o overlay bloqueador
+
       function showBlocker() {
+        if (sessionStorage.getItem("skipBlocker") === "true") {
+          sessionStorage.removeItem("skipBlocker");
+          return;
+        }
         if (document.getElementById("fsBlocker")) return;
         const div = document.createElement("div");
         div.id = "fsBlocker";
         Object.assign(div.style, {
           position: "fixed",
-          top: 0,
-          left: 0,
+          top: "0",
+          left: "0",
           width: "100%",
           height: "100%",
-          background: "rgba(255,255,255)",
-          zIndex: 9999,
+          background: "rgba(255,255,255,0.95)",
+          zIndex: "9999",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -357,9 +522,11 @@
           fontSize: "1.2rem",
         });
         div.innerHTML = `
-    <p>Você saiu do modo tela cheia!<br>Para continuar o simulado, clique no botão abaixo:</p>
-    <button id="reenterFsBtn" style="padding:0.8rem 1.5rem;font-size:1rem;">Voltar à Tela Cheia</button>
-  `;
+          <p>Você saiu do modo tela cheia!<br>Para continuar, clique abaixo:</p>
+          <button id="reenterFsBtn" style="padding:.8rem 1.5rem;font-size:1rem;">
+            Voltar à Tela Cheia
+          </button>
+        `;
         document.body.appendChild(div);
         document
           .getElementById("reenterFsBtn")
@@ -369,12 +536,13 @@
           });
       }
 
-      // 2) Detecta saída de fullscreen e bloqueia
-      document.addEventListener("fullscreenchange", () => {
-        if (!document.fullscreenElement && !examEnded) {
-          showBlocker();
-        }
-      });
+      ["fullscreenchange", "webkitfullscreenchange"].forEach((ev) =>
+        document.addEventListener(ev, () => {
+          if (!document.fullscreenElement && !examEnded) {
+            showBlocker();
+          }
+        })
+      );
 
       document.getElementById("startBtn").addEventListener("click", () => {
         enterFullScreenMode();
@@ -382,23 +550,13 @@
         overlay.style.display = "none";
       });
 
-      // Impede sair de tela cheia
-      document.addEventListener("keydown", (e) => {
-        if (!examEnded && (e.key === "F11" || e.key === "Escape")) {
-          e.preventDefault();
-          alert("Você não pode sair da tela cheia durante o simulado.");
-          enterFullScreenMode();
-        }
-      });
-      document.addEventListener("fullscreenchange", () => {
-        if (!document.fullscreenElement && !examEnded) {
-          alert("Você não pode sair da tela cheia durante o simulado.");
-          enterFullScreenMode();
-        }
-      });
       ["load", "pageshow"].forEach((evt) =>
         window.addEventListener(evt, () => {
-          // se o simulado já foi iniciado (overlayKey) e não estamos em fullscreen
+          if (sessionStorage.getItem("skipBlocker") === "true") {
+            sessionStorage.removeItem("skipBlocker");
+            enterFullScreenMode();
+            return;
+          }
           if (
             localStorage.getItem(overlayKey) === "true" &&
             !document.fullscreenElement &&
@@ -409,7 +567,7 @@
         })
       );
 
-      // Sidebar toggle
+      // 4) SIDEBAR COLLAPSE
       const sidebarWrapper = document.getElementById("sidebarWrapper"),
         sidebarToggle = document.getElementById("sidebarToggle"),
         toggleIcon = document.getElementById("toggleIcon");
@@ -425,197 +583,82 @@
         localStorage.setItem("sidebarCollapsed", collapsed);
       });
 
-      function timeStringToSeconds(timeString) {
-        if (!timeString) return 0;
-        if (timeString.includes(":")) {
-          var parts = timeString.split(":");
-          if (parts.length !== 3) return 0;
-          return (
-            parseInt(parts[0], 10) * 3600 +
-            parseInt(parts[1], 10) * 60 +
-            parseInt(parts[2], 10)
-          );
-        }
-        var secs = parseInt(timeString, 10);
-        return isNaN(secs) ? 0 : secs;
-      }
-      var examTimeInSeconds = timeStringToSeconds(
-        "<%= simulado.tempo_prova %>"
-      );
-
-      // Limpa storage se for novo simulado
-      (function clearSimuladoStorageIfNew() {
-        var key = "aluno_" + alunoId + "_simulado_id",
+      // 5) STORAGE CLEANUP
+      (function clearIfNew() {
+        const key = `aluno_${alunoId}_simulado_id`,
           stored = localStorage.getItem(key);
         if (stored !== simuladoId) {
-          Object.keys(localStorage).forEach(function (k) {
-            if (k.indexOf("aluno_" + alunoId + "_simulado_") === 0)
+          Object.keys(localStorage).forEach((k) => {
+            if (k.startsWith(`aluno_${alunoId}_simulado_`))
               localStorage.removeItem(k);
           });
           localStorage.setItem(key, simuladoId);
         }
       })();
 
+      // 6) ANSWERS & UI UPDATE
       function collectAllAnswers() {
-        var answersObj = {},
-          prefix = "aluno_" + alunoId + "_simulado_" + simuladoId + "_questao_";
+        const ans = {},
+          prefix = `aluno_${alunoId}_simulado_${simuladoId}_questao_`;
         document
           .querySelectorAll(".sidebar .question-map div")
-          .forEach(function (el) {
-            var qId = el.getAttribute("data-question-id"),
-              ans = localStorage.getItem(prefix + qId);
-            answersObj[qId] = ans !== null ? ans : "";
+          .forEach((el) => {
+            const qId = el.dataset.questionId;
+            ans[qId] = localStorage.getItem(prefix + qId) || "";
           });
-        return answersObj;
+        return ans;
       }
 
       function updateSubmitButton() {
-        var count = Object.keys(collectAllAnswers()).length,
+        const count = Object.keys(collectAllAnswers()).length,
           btn = document.getElementById("submitBtn");
-        if (count === totalQuestions) {
-          btn.disabled = false;
-          btn.className = "btn-enabled";
-        } else {
-          btn.disabled = true;
-          btn.className = "btn-disabled";
-        }
+        btn.disabled = count !== totalQuestions;
+        btn.className = btn.disabled ? "btn-disabled" : "btn-enabled";
       }
 
       function restoreAlternatives() {
-        document
-          .querySelectorAll(".alternative-container")
-          .forEach(function (container) {
-            var qId = container.getAttribute("data-questao"),
-              saved = localStorage.getItem(
-                "aluno_" +
-                  alunoId +
-                  "_simulado_" +
-                  simuladoId +
-                  "_questao_" +
-                  qId
-              );
-            if (saved) {
-              container
-                .querySelectorAll(".alternative-toggle")
-                .forEach((el) => el.classList.remove("alternative-selected"));
-              var sel = container.querySelector(
-                '.alternative-toggle[data-alternative="' + saved + '"]'
-              );
-              if (sel) sel.classList.add("alternative-selected");
-            }
-          });
-        markAnsweredQuestions();
-        updateSubmitButton();
-      }
-
-      document
-        .querySelectorAll(".alternative-container")
-        .forEach(function (el) {
-          el.addEventListener("click", function () {
-            var q = el.getAttribute("data-questao");
-            document
-              .querySelectorAll(
-                '.alternative-container[data-questao="' +
-                  q +
-                  '"] .alternative-toggle'
-              )
-              .forEach((s) => s.classList.remove("alternative-selected"));
-            var tog = el.querySelector(".alternative-toggle"),
-              alt = tog.getAttribute("data-alternative");
-            tog.classList.add("alternative-selected");
-            localStorage.setItem(
-              "aluno_" + alunoId + "_simulado_" + simuladoId + "_questao_" + q,
-              alt
+        document.querySelectorAll(".alternative-container").forEach((c) => {
+          const qId = c.dataset.questao,
+            saved = localStorage.getItem(
+              `aluno_${alunoId}_simulado_${simuladoId}_questao_${qId}`
             );
-            markAnsweredQuestions();
-            updateSubmitButton();
-          });
+          c.querySelectorAll(".alternative-toggle").forEach((el) =>
+            el.classList.remove("alternative-selected")
+          );
+          if (saved) {
+            const sel = c.querySelector(
+              `.alternative-toggle[data-alternative="${saved}"]`
+            );
+            if (sel) sel.classList.add("alternative-selected");
+          }
         });
-
-      window.addEventListener("load", restoreAlternatives);
-      window.addEventListener("pageshow", restoreAlternatives);
+      }
 
       function markAnsweredQuestions() {
         document
           .querySelectorAll(".sidebar .question-map div")
-          .forEach(function (el) {
-            var qId = el.getAttribute("data-question-id"),
-              key =
-                "aluno_" +
-                alunoId +
-                "_simulado_" +
-                simuladoId +
-                "_questao_" +
-                qId;
-            if (localStorage.getItem(key) !== null)
-              el.classList.add("answered");
-            else el.classList.remove("answered");
+          .forEach((el) => {
+            const key = `aluno_${alunoId}_simulado_${simuladoId}_questao_${el.dataset.questionId}`;
+            el.classList.toggle("answered", localStorage.getItem(key) !== null);
           });
       }
 
-      // Timer e encerramento
-      var startKey = "aluno_" + alunoId + "_simulado_start_time_" + simuladoId,
-        storedStart = localStorage.getItem(startKey) || Date.now();
-      localStorage.setItem(startKey, storedStart);
+      window.addEventListener("load", () => {
+        restoreAlternatives();
+        markAnsweredQuestions();
+        updateSubmitButton();
+      });
 
-      function formatTime(sec) {
-        var h = Math.floor(sec / 3600),
-          m = Math.floor((sec % 3600) / 60),
-          s = sec % 60;
-        return (
-          (h < 10 ? "0" : "") +
-          h +
-          ":" +
-          (m < 10 ? "0" : "") +
-          m +
-          ":" +
-          (s < 10 ? "0" : "") +
-          s
-        );
-      }
-      function updateTimer() {
-        var elapsed = Math.floor((Date.now() - storedStart) / 1000),
-          left = examTimeInSeconds - elapsed;
-        document.getElementById("timer").textContent =
-          "Tempo restante: " + formatTime(left);
-        if (left <= 0) {
-          clearInterval(timerInterval);
-          Swal.fire({
-            title: "Tempo esgotado",
-            text: "O tempo acabou! Simulado encerrado.",
-            icon: "warning",
-            confirmButtonColor: "#2563eb",
-            confirmButtonText: "Ok",
-          }).then(() => {
-            examEnded = true;
-            localStorage.removeItem(startKey);
-            document.getElementById("answersInput").value = JSON.stringify(
-              collectAllAnswers()
-            );
-            var timeoutInput = document.createElement("input");
-            timeoutInput.type = "hidden";
-            timeoutInput.name = "timeout";
-            timeoutInput.value = "true";
-            document
-              .getElementById("encerrarSimuladoForm")
-              .appendChild(timeoutInput);
-            document.getElementById("encerrarSimuladoForm").submit();
-          });
-        }
-      }
-      var timerInterval = setInterval(updateTimer, 1000);
-      updateTimer();
-
-      // Envio com confirmação
+      // 7) SUBMIT FORM
       document
         .getElementById("encerrarSimuladoForm")
-        .addEventListener("submit", function (e) {
+        .addEventListener("submit", (e) => {
           e.preventDefault();
-          var answers = collectAllAnswers(),
-            count = Object.keys(answers).length;
+          const answers = collectAllAnswers(),
+            cnt = Object.keys(answers).length;
           document.getElementById("answersInput").value =
             JSON.stringify(answers);
-          if (count < totalQuestions) {
+          if (cnt < totalQuestions) {
             Swal.fire({
               title: "Atenção!",
               text: "Você precisa responder todas as questões para encerrar o simulado.",
@@ -641,21 +684,12 @@
           });
         });
 
-      // Navegação via sidebar
-      document
-        .querySelectorAll(".sidebar .question-map div")
-        .forEach(function (el) {
-          el.addEventListener("click", function () {
-            window.location.href =
-              "/aluno/responder-simulado/<%= simulado.id %>?page=" +
-              el.getAttribute("data-question");
-          });
-        });
+      // 8) LEGACY PREV/NEXT
       document.querySelectorAll(".btn-prev, .btn-next").forEach((btn) => {
         btn.addEventListener("click", (e) => {
           e.preventDefault();
           enterFullScreenMode();
-          window.location.href = btn.getAttribute("data-target");
+          window.location.href = btn.dataset.target;
         });
       });
     </script>
