@@ -726,6 +726,46 @@
           window.location.href = btn.dataset.target;
         });
       });
+      // --- BLOCO DE SEGURANÇA: desabilita PrintScreen, Ctrl+Tab, Copiar/ContextMenu ---
+      (function () {
+        // 1) Desabilita seleção de texto e arraste
+        const noSelectStyle = document.createElement("style");
+        noSelectStyle.innerHTML = `
+    body, .question-card, .alternative-text {
+      -webkit-user-select: none !important;
+      -moz-user-select: none !important;
+      -ms-user-select: none !important;
+      user-select: none !important;
+    }
+    img, svg {
+      pointer-events: none !important;
+    }
+  `;
+        document.head.appendChild(noSelectStyle);
+
+        // 2) Bloqueia menu de contexto (botão direito)
+        document.addEventListener("contextmenu", (e) => {
+          e.preventDefault();
+        });
+
+        // ——— Bloqueia TODAS as teclas do teclado ———
+        ["keydown", "keypress", "keyup"].forEach((evt) => {
+          document.addEventListener(
+            evt,
+            function (e) {
+              e.preventDefault();
+              e.stopPropagation();
+              return false;
+            },
+            true
+          ); // use o listener em capture para pegar antes de tudo
+        });
+
+        // 4) Também bloqueia Ctrl+X, Ctrl+V se quiser
+        document.addEventListener("cut", (e) => e.preventDefault());
+        document.addEventListener("copy", (e) => e.preventDefault());
+        document.addEventListener("paste", (e) => e.preventDefault());
+      })();
     </script>
   </body>
 </html>
