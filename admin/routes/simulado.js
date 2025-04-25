@@ -269,6 +269,10 @@ router.post("/cadastrar-simulado-steps", verificarAutenticacao, (req, res) => {
             ? [questoes]
             : [];
 
+          console.log("→ Alunos recebidos no cadastro:", alunosArray);
+          console.log("→ Quantidade de alunos recebidos:", alunosArray.length);
+          console.log("Quantidade de questões no cadastro:", questoesArray);
+          console.log("→ Quantidade de questões recebidas:", questoesArray.length);
           // Verifica se há alunos ou questões para associar ao simulado. Se não houver, retorna uma resposta de sucesso.
           let totalQueries = alunosArray.length + questoesArray.length;
           if (totalQueries === 0) {

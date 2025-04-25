@@ -29,7 +29,7 @@ $(document).ready(function () {
   }
 
   // ---------------------------
-  // Renderização de alunos e paginação (mantém o que você já tinha)
+  // Renderização de alunos e paginação
   // ---------------------------
   function renderAlunosPage() {
     var tbody = $("#aluno-table-body");
@@ -39,14 +39,6 @@ $(document).ready(function () {
     var alunosPage = allAlunos.slice(startIndex, endIndex);
     if (alunosPage.length > 0) {
       alunosPage.forEach(function (aluno) {
-        var dataStr = aluno.data_cadastro || "";
-        var dataObj = new Date(dataStr);
-        if (isNaN(dataObj.getTime())) {
-          dataObj = new Date(dataStr.replace(/-/g, "/"));
-        }
-        var dataFormatada = dataObj.getTime()
-          ? dataObj.toLocaleString("pt-BR")
-          : "";
         var checked =
           selectedAlunosIds.indexOf(aluno.id.toString()) !== -1
             ? "checked"
@@ -156,7 +148,7 @@ $(document).ready(function () {
   });
 
   // ---------------------------
-  // Renderização de questões – Correção aplicada aqui
+  // Renderização de questões e paginação
   // ---------------------------
   function renderQuestoesPage() {
     var tbody = $("#questao-table-body");
@@ -197,8 +189,7 @@ $(document).ready(function () {
                     questao.alternativa_d,
                     questao.alternativa_e,
                   ].filter((alt) => alt && alt.trim() !== "")
-                )}'
-              >
+                )}'>
                 <i class="ph-duotone ph-eye text-base"></i>
               </button>
             </td>
@@ -285,24 +276,6 @@ $(document).ready(function () {
       },
     });
   }
-
-  $("#questao-search").on("keyup", function () {
-    var query = $(this).val().toLowerCase();
-    $("#questao-table-body tr").each(function () {
-      var tituloText = $(this).find("td:nth-child(2)").text().toLowerCase();
-      var cursoText = $(this).find("td:nth-child(3)").text().toLowerCase();
-      var ucText = $(this).find("td:nth-child(4)").text().toLowerCase();
-      if (
-        tituloText.indexOf(query) > -1 ||
-        cursoText.indexOf(query) > -1 ||
-        ucText.indexOf(query) > -1
-      ) {
-        $(this).show();
-      } else {
-        $(this).hide();
-      }
-    });
-  });
 
   // ---------------------------
   // Atualização do resumo final
@@ -436,10 +409,11 @@ $(document).ready(function () {
   new Choices("#select-curso", { removeItemButton: false });
 
   // ---------------------------
-  // Submissão do formulário com dados adicionais via SweetAlert
+  // Submissão do formulário com SweetAlert e injeção de alunos/questões
   // ---------------------------
   $("#form-cadastrar-simulado").submit(function (e) {
     e.preventDefault();
+
     Swal.fire({
       title: "Informe os dados adicionais",
       html:
@@ -475,26 +449,51 @@ $(document).ready(function () {
       cancelButtonColor: "#d33",
     }).then((result) => {
       if (result.isConfirmed) {
-        $("#form-cadastrar-simulado input[name='tempo_prova']").remove();
-        $("#form-cadastrar-simulado input[name='descricao']").remove();
+        var $form = $("#form-cadastrar-simulado");
+
+        // Remove inputs antigos de tempo e descrição
+        $form
+          .find("input[name='tempo_prova'], input[name='descricao']")
+          .remove();
+
+        // Injeta os novos hidden inputs de tempo e descrição
         $("<input>")
           .attr({
             type: "hidden",
             name: "tempo_prova",
             value: result.value.tempo,
           })
-          .appendTo("#form-cadastrar-simulado");
+          .appendTo($form);
         $("<input>")
           .attr({
             type: "hidden",
             name: "descricao",
             value: result.value.descricao,
           })
-          .appendTo("#form-cadastrar-simulado");
-        var formData = $(this).serialize();
+          .appendTo($form);
+
+        // Remove quaisquer inputs antigos de alunos e questões
+        $form.find('input[name="alunos[]"], input[name="questoes[]"]').remove();
+
+        // Injeta um hidden input para cada aluno selecionado
+        selectedAlunosIds.forEach(function (id) {
+          $("<input>")
+            .attr({ type: "hidden", name: "alunos[]", value: id })
+            .appendTo($form);
+        });
+
+        // Injeta um hidden input para cada questão selecionada
+        selectedQuestoesIds.forEach(function (id) {
+          $("<input>")
+            .attr({ type: "hidden", name: "questoes[]", value: id })
+            .appendTo($form);
+        });
+
+        // Serializa e envia
+        var formData = $form.serialize();
         $.ajax({
-          url: $(this).attr("action"),
-          method: $(this).attr("method"),
+          url: $form.attr("action"),
+          method: $form.attr("method"),
           data: formData,
           dataType: "json",
           success: function (response) {
@@ -509,11 +508,7 @@ $(document).ready(function () {
                 window.location.href = "/admin/simulados";
               });
             } else {
-              Swal.fire({
-                icon: "error",
-                title: "Erro",
-                text: response.error,
-              });
+              Swal.fire({ icon: "error", title: "Erro", text: response.error });
             }
           },
           error: function () {
@@ -529,23 +524,16 @@ $(document).ready(function () {
   });
 
   // ---------------------------
-  // Lógica para exibir/ocultar o modal offcanvas com fadeIn/fadeOut
+  // Modal offcanvas para detalhes
   // ---------------------------
   $(document).on("click", ".btn-detalhes-questao", function (e) {
     e.preventDefault();
-    console.log("Botão de detalhes clicado.");
-
-    // Captura os dados do botão
     var dificuldade = $(this).data("questao-dificuldade");
-    // Como inserimos o enunciado usando encodeURIComponent, decodificamos aqui:
     var enunciado = decodeURIComponent($(this).attr("data-questao-enunciado"));
-    // As alternativas foram armazenadas como JSON string; fazemos o parse
-    var alternativas = $(this).attr("data-questao-alternativas");
+    var alternativas = [];
     try {
-      alternativas = JSON.parse(alternativas);
-    } catch (err) {
-      alternativas = [];
-    }
+      alternativas = JSON.parse($(this).attr("data-questao-alternativas"));
+    } catch (err) {}
     console.log(
       "Dificuldade:",
       dificuldade,
@@ -554,13 +542,9 @@ $(document).ready(function () {
       "Alternativas:",
       alternativas
     );
-
-    // Atualiza o cabeçalho do modal para mostrar a dificuldade
     $("#modal-titulo").html("Dificuldade: " + dificuldade);
-
-    // Monta o conteúdo do modal: exibe o enunciado e, se houver alternativas, gera uma lista ordenada
     var content = enunciado;
-    if (Array.isArray(alternativas) && alternativas.length > 0) {
+    if (alternativas.length) {
       content += "<br/><br/><ol style='list-style-type: upper-alpha;'>";
       alternativas.forEach(function (alt) {
         content += "<li>" + alt + "</li>";
@@ -568,59 +552,45 @@ $(document).ready(function () {
       content += "</ol>";
     }
     $("#modal-conteudo").html(content);
-
-    // Exibe o modal com fadeIn de 300ms
-    $("#overlay-right").fadeIn(300);
+    $("#overlay-backdrop, #overlay-right").fadeIn(300);
   });
 
-  // Evento para fechar o modal
-  $(document).on("click", "#close-overlay", function (e) {
+  $(document).on("click", "#close-overlay, #overlay-backdrop", function (e) {
     e.preventDefault();
-    console.log("Botão de fechar modal clicado.");
-    $("#overlay-right").fadeOut(300);
+    $("#overlay-right, #overlay-backdrop").fadeOut(300);
   });
 
-  // Eventos de pesquisa para alunos e questões
+  // Pesquisa em tempo real para alunos e questões
   $(document).on("keyup", "#aluno-search", function () {
     var query = $(this).val().toLowerCase();
     $("#aluno-table-body tr").each(function () {
       var idText = $(this).find("td:nth-child(2)").text().toLowerCase();
       var nomeText = $(this).find("td:nth-child(3)").text().toLowerCase();
       var usuarioText = $(this).find("td:nth-child(4)").text().toLowerCase();
-      if (
+      $(this).toggle(
         idText.indexOf(query) > -1 ||
-        nomeText.indexOf(query) > -1 ||
-        usuarioText.indexOf(query) > -1
-      ) {
-        $(this).show();
-      } else {
-        $(this).hide();
-      }
+          nomeText.indexOf(query) > -1 ||
+          usuarioText.indexOf(query) > -1
+      );
     });
   });
-
   $(document).on("keyup", "#questao-search", function () {
     var query = $(this).val().toLowerCase();
     $("#questao-table-body tr").each(function () {
       var tituloText = $(this).find("td:nth-child(2)").text().toLowerCase();
       var cursoText = $(this).find("td:nth-child(3)").text().toLowerCase();
       var ucText = $(this).find("td:nth-child(4)").text().toLowerCase();
-      if (
+      $(this).toggle(
         tituloText.indexOf(query) > -1 ||
-        cursoText.indexOf(query) > -1 ||
-        ucText.indexOf(query) > -1
-      ) {
-        $(this).show();
-      } else {
-        $(this).hide();
-      }
+          cursoText.indexOf(query) > -1 ||
+          ucText.indexOf(query) > -1
+      );
     });
   });
 
+  // Ativa link no menu
   document.addEventListener("DOMContentLoaded", function () {
     var simuladoLink = document.querySelector('a[href="/admin/simulados"]');
-    if (simuladoLink) {
-      simuladoLink.classList.add("active");
-    }
+    if (simuladoLink) simuladoLink.classList.add("active");
   });
 });

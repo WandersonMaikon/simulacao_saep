@@ -482,15 +482,22 @@
         document.querySelectorAll(".alternative-container").forEach((c) => {
           c.onclick = () => {
             const q = c.dataset.questao;
-            c.querySelectorAll(".alternative-toggle").forEach((el) =>
-              el.classList.remove("alternative-selected")
-            );
-            const tog = c.querySelector(".alternative-toggle"),
-              alt = tog.dataset.alternative;
+
+            // 1️⃣ limpa qualquer seleção pré-existente dessa questão
+            document
+              .querySelectorAll(
+                `.alternative-container[data-questao="${q}"] .alternative-toggle`
+              )
+              .forEach((el) => el.classList.remove("alternative-selected"));
+
+            // 2️⃣ marca só a alternativa clicada
+            const tog = c.querySelector(".alternative-toggle");
             tog.classList.add("alternative-selected");
+
+            // 3️⃣ guarda no localStorage
             localStorage.setItem(
               `aluno_${alunoId}_simulado_${simuladoId}_questao_${q}`,
-              alt
+              tog.dataset.alternative
             );
             markAnsweredQuestions();
             updateSubmitButton();

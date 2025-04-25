@@ -502,6 +502,85 @@
           }
         );
       });
+
+      // mantém o conjunto de IDs de alunos selecionados
+      const selectedAlunos = new Set();
+
+      // elementos
+      const countEl = document.getElementById("aluno-selected-count");
+      const tbody = document.getElementById("aluno-table-body");
+      const selectAllCb = document.getElementById("select-all-alunos");
+      const form = document.getElementById("form-cadastrar-simulado");
+
+      // atualiza o contador de selecionados
+      function updateAlunoCount() {
+        countEl.textContent = `Total selecionados: ${selectedAlunos.size}`;
+      }
+
+      // marca/desmarca todos na página atual
+      selectAllCb.addEventListener("change", () => {
+        const checkboxes = tbody.querySelectorAll("input.form-checkbox");
+        checkboxes.forEach((cb) => {
+          cb.checked = selectAllCb.checked;
+          const id = cb.value;
+          if (cb.checked) selectedAlunos.add(id);
+          else selectedAlunos.delete(id);
+        });
+        updateAlunoCount();
+      });
+
+      // vincula evento a cada checkbox de aluno
+      function bindAlunoCheckboxes() {
+        const checkboxes = tbody.querySelectorAll("input.form-checkbox");
+        checkboxes.forEach((cb) => {
+          const id = cb.value;
+          // ao renderizar a página, marque quem já está selecionado
+          cb.checked = selectedAlunos.has(id);
+
+          // adicione listener (uma única vez)
+          if (!cb.dataset.bound) {
+            cb.dataset.bound = "true";
+            cb.addEventListener("change", () => {
+              if (cb.checked) selectedAlunos.add(id);
+              else selectedAlunos.delete(id);
+
+              // sincroniza o estado do "select all" na página
+              const allOnPage = Array.from(checkboxes).every((c) => c.checked);
+              selectAllCb.checked = allOnPage;
+
+              updateAlunoCount();
+            });
+          }
+        });
+        updateAlunoCount();
+      }
+
+      // sempre que você atualizar a tabela de alunos (após AJAX ou paginar), chame:
+      //    bindAlunoCheckboxes();
+      // Exemplo, se sua função de paginação faz algo como renderizar <tbody>, depois de renderizar:
+      //    bindAlunoCheckboxes();
+
+      // no envio final do form, substitua os checkboxes visíveis pelos IDs em selectedAlunos
+      form.addEventListener("submit", (e) => {
+        // limpa possíveis inputs antigos
+        form
+          .querySelectorAll('input[name="alunos[]"]')
+          .forEach((i) => i.remove());
+
+        // adiciona um hidden input para cada aluno selecionado
+        selectedAlunos.forEach((id) => {
+          const inp = document.createElement("input");
+          inp.type = "hidden";
+          inp.name = "alunos[]";
+          inp.value = id;
+          form.appendChild(inp);
+        });
+        // aí deixa o submit prosseguir normalmente
+      });
+
+      // Chame uma vez ao final do carregamento da página inicial:
+      bindAlunoCheckboxes();
+      
     </script>
   </body>
 </html>
