@@ -13,8 +13,21 @@
     <link rel="stylesheet" href="/assets/theme-d32f8eb8.css" />
     <style>
       /* Conteúdo principal */
-      main {
-        max-width: 800px;
+      main,
+      .container,
+      .question-card {
+        max-width: 900px !important;
+      }
+      /* 2) Dá um max-height para o card e habilita scroll vertical interno */
+      .question-card {
+        max-height: 80vh; /* até 80% da altura da viewport */
+        overflow-y: auto; /* scroll vertical se ultrapassar */
+        padding-right: 1rem; /* um espacinho extra se aparecer barra de scroll */
+      }
+
+      /* 3) (Opcional) Aumenta o padding no container para dar mais respiro */
+      .container {
+        padding-bottom: 2rem;
       }
       footer {
         position: fixed;
@@ -373,30 +386,44 @@
         function updateTimer() {
           const elapsed = Math.floor((Date.now() - startStamp) / 1000),
             left = examTimeInSeconds - elapsed;
+
+          // Atualiza o display
           document.getElementById("timer").textContent =
             "Tempo restante: " + formatTime(left);
+
           if (left <= 0) {
             clearInterval(window.timerInterval);
+
             Swal.fire({
               title: "Tempo esgotado",
               text: "O tempo acabou! Simulado encerrado.",
               icon: "warning",
-              confirmButtonColor: "#2563eb",
+              confirmButtonColor: "#07318c",
               confirmButtonText: "Ok",
-            }).then(() => {
-              examEnded = true;
-              localStorage.removeItem(startKey);
-              document.getElementById("answersInput").value = JSON.stringify(
-                collectAllAnswers()
-              );
-              const timeoutInput = document.createElement("input");
-              timeoutInput.type = "hidden";
-              timeoutInput.name = "timeout";
-              timeoutInput.value = "true";
-              document
-                .getElementById("encerrarSimuladoForm")
-                .appendChild(timeoutInput)
-                .submit();
+              allowOutsideClick: false,
+              allowEscapeKey: false,
+            }).then((result) => {
+              if (result.isConfirmed) {
+                examEnded = true;
+                localStorage.removeItem(startKey);
+
+                // Preenche as respostas
+                document.getElementById("answersInput").value = JSON.stringify(
+                  collectAllAnswers()
+                );
+
+                // Adiciona campo timeout
+                const timeoutInput = document.createElement("input");
+                timeoutInput.type = "hidden";
+                timeoutInput.name = "timeout";
+                timeoutInput.value = "true";
+                document
+                  .getElementById("encerrarSimuladoForm")
+                  .appendChild(timeoutInput);
+
+                // Envia o formulário para /aluno/encerrar-simulado/:id
+                document.getElementById("encerrarSimuladoForm").submit();
+              }
             });
           }
         }
