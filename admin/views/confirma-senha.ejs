@@ -11,6 +11,7 @@
       src="../assets/theme-e4584917.js"
     ></script>
     <link rel="stylesheet" href="../assets/theme-d32f8eb8.css" />
+    <!-- SweetAlert2 CSS -->
     <link
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css"
@@ -47,9 +48,9 @@
 
             <form action="/recuperar-senha/confirma" method="POST">
               <div class="mb-4">
-                <label for="newPassword" class="block font-semibold mb-2"
-                  >Nova Senha</label
-                >
+                <label for="newPassword" class="block font-semibold mb-2">
+                  Nova Senha
+                </label>
                 <input
                   type="password"
                   id="newPassword"
@@ -72,13 +73,19 @@
                   required
                 />
               </div>
-              <div class="text-center">
+              <div class="mb-4 flex flex-col space-y-4">
                 <button
                   type="submit"
-                  class="px-6 py-3 bg-primary text-white rounded hover:bg-primary-500"
+                  class="w-full px-6 py-3 bg-primary text-white rounded hover:bg-primary-500"
                 >
                   Redefinir Senha
                 </button>
+                <a
+                  href="/admin/login"
+                  class="w-full block text-center px-6 py-3 bg-gray-200 text-default-800 rounded hover:bg-gray-300"
+                >
+                  Voltar para o Login
+                </a>
               </div>
             </form>
           </div>
