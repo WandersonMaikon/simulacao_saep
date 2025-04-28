@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <title>Recuperar Senha</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="shortcut icon" href="../assets/favicon-8fd74f43.ico" />
+    <script
+      type="module"
+      crossorigin
+      src="../assets/theme-e4584917.js"
+    ></script>
+    <link rel="stylesheet" href="../assets/theme-d32f8eb8.css" />
+    <!-- SweetAlert2 CSS -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css"
+    />
+    <style>
+      body {
+        background-image: url("/assets/auth-bg-f57aaf4d.png");
+        background-size: cover;
+        background-repeat: no-repeat;
+        background-position: center;
+      }
+      .logo-img { max-width: 70%; height: auto; }
+    </style>
+  </head>
+  <body class="relative lg:h-screen py-6 flex justify-center items-center">
+    <div class="container">
+      <div class="flex justify-center">
+        <div class="lg:w-1/3 md:w-2/3 w-full relative">
+          <div class="relative bg-white rounded-lg shadow-lg p-6 z-10 dark:bg-default-50">
+            <a href="/" class="block mb-8 text-center">
+              <img class="logo-img mx-auto" src="../assets/saep.png" alt="Logo saep" />
+            </a>
+            <h4 class="text-2xl font-semibold text-default-800 mb-4 text-center">
+              Recuperar Senha
+            </h4>
+            <p class="mb-6 dark:text-default-600 text-center">
+              Confirme sua matrícula para resetar a senha.
+            </p>
+
+            <form action="/recuperar-senha" method="POST" class="mt-6">
+              <div class="mb-4">
+                <label for="matricula" class="block text-base font-semibold text-default-900 mb-2">
+                  Matrícula
+                </label>
+                <input
+                  type="text"
+                  id="matricula"
+                  name="matricula"
+                  class="block w-full rounded py-2.5 px-4 border-default-200 text-default-900 focus:outline-0 focus:ring-0"
+                  placeholder="Digite sua matrícula"
+                  required
+                />
+              </div>
+
+              <div class="flex justify-between items-center mb-4">
+                <button
+                  type="submit"
+                  class="inline-flex items-center justify-center px-6 py-3 rounded bg-primary text-white transition-all hover:bg-primary-500"
+                >
+                  Resetar Senha
+                </button>
+                <a
+                  href="/admin/login"
+                  class="inline-flex items-center justify-center px-6 py-3 rounded bg-default-200 text-default-800 transition-all hover:bg-default-300"
+                >
+                  Voltar ao Login
+                </a>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SweetAlert2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        const alertMessage = "<%= message %>"; // EJS: mensagem de erro vinda do servidor
+        if (alertMessage && alertMessage.trim() !== "") {
+          Swal.fire({
+            title: "Atenção",
+            text: alertMessage,
+            icon: "error",
+            confirmButtonText: "OK",
+            timer: 3000,
+            timerProgressBar: true,
+          });
+        }
+      });
+    </script>
+  </body>
+</html>
