@@ -555,11 +555,6 @@
         updateAlunoCount();
       }
 
-      // sempre que você atualizar a tabela de alunos (após AJAX ou paginar), chame:
-      //    bindAlunoCheckboxes();
-      // Exemplo, se sua função de paginação faz algo como renderizar <tbody>, depois de renderizar:
-      //    bindAlunoCheckboxes();
-
       // no envio final do form, substitua os checkboxes visíveis pelos IDs em selectedAlunos
       form.addEventListener("submit", (e) => {
         // limpa possíveis inputs antigos
@@ -580,7 +575,6 @@
 
       // Chame uma vez ao final do carregamento da página inicial:
       bindAlunoCheckboxes();
-      
     </script>
   </body>
 </html>
