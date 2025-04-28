@@ -56,7 +56,7 @@
             </div>
           </div>
         </div>
-        <!-- Área de busca e botão de cadastro -->
+        <!-- Busca e adicionar -->
         <div class="flex flex-wrap items-center justify-between py-4 px-5">
           <div class="relative flex">
             <input
@@ -70,7 +70,6 @@
               ></i>
             </span>
           </div>
-          <!-- Link para a página de cadastro de questão -->
           <a
             href="/cadastrar-questao"
             class="py-2 px-4 inline-flex items-center justify-center font-semibold tracking-wide text-xs bg-primary hover:bg-primary-500 text-white rounded"
@@ -83,12 +82,11 @@
         <!-- Tabela de Questões -->
         <div class="shadow rounded-lg bg-white dark:bg-default-50 h-fit">
           <div
-            class="border-t border-dashed border-default-200 relative overflow-x-auto"
+            class="border-t border-dashed border-default-200 overflow-x-auto"
           >
             <table class="min-w-full">
               <thead class="border-b border-dashed border-default-200">
                 <tr>
-                  <th class="px-6 py-3 text-left text-sm font-semibold">Id</th>
                   <th class="px-6 py-3 text-left text-sm font-semibold">
                     Título
                   </th>
@@ -97,7 +95,7 @@
                   </th>
                   <th class="px-6 py-3 text-left text-sm font-semibold">UC</th>
                   <th class="px-6 py-3 text-left text-sm font-semibold">
-                    Título
+                    Enunciado
                   </th>
                   <th class="px-3 py-3 text-center text-sm font-semibold">
                     Ação
@@ -105,20 +103,20 @@
                 </tr>
               </thead>
               <tbody class="divide-y divide-dashed divide-default-200">
-                <% if (questoes && questoes.length > 0) { %> <%
-                questoes.forEach(function(questao) { %>
+                <% if (questoes && questoes.length) { %> <%
+                questoes.forEach(questao => { %>
                 <tr>
-                  <td class="px-6 py-3"><%= questao.id %></td>
                   <td class="px-6 py-3"><%= questao.titulo %></td>
                   <td class="px-6 py-3"><%= questao.curso %></td>
                   <td class="px-6 py-3"><%= questao.materia %></td>
-                  <td class="px-6 py-3"><%= questao.titulo %></td>
+                  <td class="px-6 py-3">
+                    <%= questao.enunciado.replace(/<[^>]*>/g, "").trim() %>
+                  </td>
                   <td class="px-3 py-3 text-center">
                     <div class="flex items-center justify-center gap-2">
-                      <!-- Botão para abrir modal de edição -->
                       <a
                         href="#"
-                        class="edit-questao inline-flex items-center justify-center h-8 w-8 rounded-md bg-cyan-500/20 text-cyan-500 transition-all duration-200 hover:bg-cyan-500 hover:text-white"
+                        class="edit-questao inline-flex items-center justify-center h-8 w-8 rounded-md bg-cyan-500/20 text-cyan-500 hover:bg-cyan-500 hover:text-white"
                         data-id="<%= questao.id %>"
                         data-titulo="<%= questao.titulo %>"
                         data-curso_id="<%= questao.curso_id %>"
@@ -134,9 +132,8 @@
                           class="ph-duotone ph-pencil-simple-line text-base"
                         ></i>
                       </a>
-                      <!-- Botão para exclusão -->
                       <button
-                        class="delete-questao inline-flex items-center justify-center h-8 w-8 rounded-md bg-red-500/20 text-red-500 transition-all duration-200 hover:bg-red-500 hover:text-white"
+                        class="delete-questao inline-flex items-center justify-center h-8 w-8 rounded-md bg-red-500/20 text-red-500 hover:bg-red-500 hover:text-white"
                         data-id="<%= questao.id %>"
                       >
                         <i class="ph-duotone ph-trash text-base"></i>
@@ -144,9 +141,9 @@
                     </div>
                   </td>
                 </tr>
-                <% }); %> <% } else { %>
+                <% }) %> <% } else { %>
                 <tr>
-                  <td colspan="6" class="text-center py-6">
+                  <td colspan="5" class="text-center py-6">
                     Nenhuma questão cadastrada.
                   </td>
                 </tr>
@@ -159,29 +156,28 @@
             class="flex items-center justify-between py-3 px-6 border-t border-dashed border-default-200"
           >
             <h6 class="text-default-600">
-              Mostrando <%= (currentPage - 1) * 10 + 1 %> a <%= (currentPage *
-              10 > totalRows ? totalRows : currentPage * 10) %> de <%= totalRows
-              %>
+              Mostrando <%= (currentPage - 1) * 10 + 1 %> a <%= currentPage * 10
+              > totalRows ? totalRows : currentPage * 10 %> de <%= totalRows %>
             </h6>
             <nav class="flex items-center gap-1">
               <% if (currentPage > 1) { %>
               <a
-                class="inline-flex items-center justify-center h-8 w-8 border rounded-md transition-all duration-200 hover:bg-primary hover:text-white"
-                href="/questoes?page=<%= currentPage - 1 %>"
+                class="inline-flex items-center justify-center h-8 w-8 border rounded hover:bg-primary hover:text-white"
+                href="/admin/questao?page=<%= currentPage - 1 %>"
               >
                 <i class="ph ph-caret-left text-base"></i>
               </a>
               <% } %> <% for (let i = 1; i <= totalPages; i++) { %>
               <a
-                class="inline-flex items-center justify-center h-8 w-8 border rounded-md transition-all duration-200 <%= currentPage === i ? 'bg-primary text-white' : 'hover:bg-primary hover:text-white' %>"
-                href="/questoes?page=<%= i %>"
+                class="inline-flex items-center justify-center h-8 w-8 border rounded <%= currentPage === i ? 'bg-primary text-white' : 'hover:bg-primary hover:text-white' %>"
+                href="/admin/questao?page=<%= i %>"
               >
                 <%= i %>
               </a>
               <% } %> <% if (currentPage < totalPages) { %>
               <a
-                class="inline-flex items-center justify-center h-8 w-8 border rounded-md transition-all duration-200 hover:bg-primary hover:text-white"
-                href="/questoes?page=<%= currentPage + 1 %>"
+                class="inline-flex items-center justify-center h-8 w-8 border rounded hover:bg-primary hover:text-white"
+                href="/admin/questao?page=<%= currentPage + 1 %>"
               >
                 <i class="ph ph-caret-right text-base"></i>
               </a>
@@ -194,7 +190,6 @@
     </div>
 
     <!-- Modal para Edição de Questão -->
-
     <script src="../js/questao.js"></script>
   </body>
 </html>
