@@ -1,26 +1,29 @@
+// public/js/questaoCadastrar.js
+
+// Inicializa Choices.js para o select de curso
 const courseChoices = new Choices("#choices-multiple-remove-button", {
   removeItemButton: true,
-  placeholder: true,
   placeholderValue: "Selecione o curso",
 });
-// Se o select de curso é o mesmo, certifique-se de usar o id correto; caso contrário, remova essa linha
-new Choices("#choices-multiple-remove-button");
+window.courseChoices = courseChoices; // expõe globalmente para podermos limpar depois
 
-// Quando o curso for alterado, usa o valor selecionado para buscar matérias via AJAX
+let materiaChoices; // instância de Choices para matéria será criada após o carregamento por AJAX
+
+// Quando o curso for alterado, busca matérias via AJAX e inicializa/atualiza Choices
 $("#choices-multiple-remove-button").on("change", function () {
-  let selectedCourses = $(this).val();
-  if (selectedCourses && selectedCourses.length > 0) {
-    const cursoId = selectedCourses[0];
+  const selected = $(this).val() || [];
+  if (selected.length > 0) {
+    const cursoId = selected[0];
     $.ajax({
       url: "/materias-por-curso/" + cursoId,
       type: "GET",
-      success: function (data) {
+      success(data) {
         const materiaSelect = $("#select-materia");
         materiaSelect.empty();
         if (data.length > 0) {
-          data.forEach(function (materia) {
+          data.forEach((mat) => {
             materiaSelect.append(
-              `<option value="${materia.id}">${materia.nome}</option>`
+              `<option value="${mat.id}">${mat.nome}</option>`
             );
           });
         } else {
@@ -28,20 +31,24 @@ $("#choices-multiple-remove-button").on("change", function () {
             `<option value="">Nenhuma matéria encontrada</option>`
           );
         }
-        // Se já houver uma instância do Choices, destrua-a antes de criar outra
-        if (materiaSelect.data("choices")) {
-          materiaSelect.data("choices").destroy();
+        // Se já existir instância, destrói antes de recriar
+        if (materiaChoices) {
+          materiaChoices.destroy();
         }
-        new Choices("#select-materia");
+        materiaChoices = new Choices("#select-materia", {
+          removeItemButton: true,
+          placeholderValue: "Selecione a matéria",
+        });
+        window.materiaChoices = materiaChoices;
       },
-      error: function () {
+      error() {
         console.error("Erro ao buscar matérias.");
       },
     });
   }
 });
 
-// Botão Cancelar: Se houver algum campo preenchido, avisa que os dados serão perdidos
+// Botão Cancelar
 $("#cancel-btn").click(function () {
   let hasData = false;
   $("#form-cadastrar-questao")
@@ -52,6 +59,17 @@ $("#cancel-btn").click(function () {
         return false;
       }
     });
+
+  function doCancel() {
+    $("#form-cadastrar-questao")[0].reset();
+    quill.setContents([]);
+    $("#hidden-enunciado").val("");
+    courseChoices.removeActiveItems();
+    if (materiaChoices) materiaChoices.removeActiveItems();
+    $("#edit-section").addClass("hidden");
+    window.location.href = "/admin/questao?page=1";
+  }
+
   if (hasData) {
     Swal.fire({
       title: "Tem certeza?",
@@ -64,33 +82,26 @@ $("#cancel-btn").click(function () {
       cancelButtonColor: "#d33",
     }).then((result) => {
       if (result.isConfirmed) {
-        $("#form-cadastrar-questao")
-          .find("input[type='text'], textarea")
-          .val("");
-        $("#edit-section").addClass("hidden");
-        window.location.href = "/admin/questao?page=1";
+        doCancel();
       }
     });
   } else {
-    $("#form-cadastrar-questao")[0].reset();
-    $("#edit-section").addClass("hidden");
-    window.location.href = "/admin/questao?page=1";
+    doCancel();
   }
 });
 
-// Envio do formulário de cadastro de questão via AJAX
+// Captura o submit e envia por AJAX
 $("#form-cadastrar-questao").submit(function (e) {
   e.preventDefault();
 
-  // Atualiza o campo hidden "enunciado" com o conteúdo HTML do Quill
+  // garante que o hidden tenha o HTML mais recente
   $("#hidden-enunciado").val(quill.root.innerHTML);
-  console.log("Conteúdo do enunciado (no submit):", quill.root.innerHTML);
 
   $.ajax({
     url: "/cadastrar-questao",
     type: "POST",
     data: $(this).serialize(),
-    success: function (response) {
+    success(response) {
       Swal.fire({
         title: "Questão adicionada!",
         text: "Deseja cadastrar outra questão?",
@@ -102,17 +113,24 @@ $("#form-cadastrar-questao").submit(function (e) {
         cancelButtonColor: "#d33",
       }).then((result) => {
         if (result.isConfirmed) {
-          // Limpa somente os inputs de texto e textarea
-          $("#form-cadastrar-questao")
-            .find("input[type='text'], textarea")
-            .val("");
+          // limpa o formulário completo
+          const form = $("#form-cadastrar-questao");
+          form[0].reset();
+
+          // limpa Quill e hidden
+          quill.setContents([]);
+          $("#hidden-enunciado").val("");
+
+          // limpa selects Choices.js
+          courseChoices.removeActiveItems();
+          if (materiaChoices) materiaChoices.removeActiveItems();
         } else {
           window.location.href = "/admin/questao?page=1";
         }
       });
     },
-    error: function (xhr) {
-      let errorMsg =
+    error(xhr) {
+      const errorMsg =
         (xhr.responseJSON && xhr.responseJSON.error) ||
         "Erro ao cadastrar questão.";
       Swal.fire({
@@ -127,8 +145,9 @@ $("#form-cadastrar-questao").submit(function (e) {
   });
 });
 
+// Realça link ativo no sidebar
 document.addEventListener("DOMContentLoaded", function () {
-  var questoesLink = document.querySelector('a[href="admin/questao"]');
+  const questoesLink = document.querySelector('a[href="/admin/questao"]');
   if (questoesLink) {
     questoesLink.classList.add("active");
   }

@@ -83,6 +83,10 @@
               <label for="alternativa_d" class="block text-sm font-medium text-default-900">Alternativa D</label>
               <input type="text" name="alternativa_d" id="alternativa_d" value="<%= questao.alternativa_d %>" class="block w-full rounded py-2.5 px-4 border" required>
             </div>
+            <div>
+              <label for="alternativa_e" class="block text-sm font-medium text-default-900">Alternativa E</label>
+              <input type="text" name="alternativa_e" id="alternativa_e" value="<%= questao.alternativa_e %>" class="block w-full rounded py-2.5 px-4 border">
+            </div>
             <!-- Resposta Correta como Select -->
             <div class="md:col-span-2">
               <label for="resposta_correta" class="block text-sm font-medium text-default-900">
@@ -94,6 +98,7 @@
                 <option value="B" <%= questao.resposta_correta === 'B' ? 'selected' : '' %>>B</option>
                 <option value="C" <%= questao.resposta_correta === 'C' ? 'selected' : '' %>>C</option>
                 <option value="D" <%= questao.resposta_correta === 'D' ? 'selected' : '' %>>D</option>
+                <option value="E" <%= questao.resposta_correta === 'E' ? 'selected' : '' %>>E</option>
               </select>
             </div>
           </div>
@@ -111,7 +116,7 @@
     </div>
     <script>
       $(document).ready(function () {
-        // Botão Cancelar na edição: se houver dados preenchidos, alerta que serão perdidos
+        // Botão Cancelar na edição
         $("#cancel-edit-btn").click(function () {
           let hasData = false;
           $("#form-editar-questao")
@@ -122,6 +127,12 @@
                 return false;
               }
             });
+    
+          function goBack() {
+            // usa a rota absoluta
+            window.location.href = "/admin/questao?page=1";
+          }
+    
           if (hasData) {
             Swal.fire({
               title: "Tem certeza?",
@@ -138,16 +149,16 @@
                   .find("input[type='text'], textarea")
                   .val("");
                 $("#edit-section").addClass("hidden");
-                window.location.href = "admin/questao?page=1";
+                goBack();
               }
             });
           } else {
             $("#form-editar-questao")[0].reset();
             $("#edit-section").addClass("hidden");
-            window.location.href = "admin/questao?page=1";
+            goBack();
           }
         });
-
+    
         // Envio do formulário de edição via AJAX
         $("#form-editar-questao").submit(function (e) {
           e.preventDefault();
@@ -167,10 +178,10 @@
                 type: "POST",
                 data: $("#form-editar-questao").serialize(),
                 success: function (response) {
-                  Swal.fire("Editada!", "Questão editada com sucesso!", "success")
-                    .then(() => {
-                      window.location.href = "admin/questao?page=1";
-                    });
+                  Swal.fire("Editada!", "Questão editada com sucesso!", "success").then(() => {
+                    // rota absoluta
+                    window.location.href = "/admin/questao?page=1";
+                  });
                 },
                 error: function (xhr) {
                   let errorMsg =
@@ -182,15 +193,15 @@
             }
           });
         });
-        
-      }
-    );
-    document.addEventListener("DOMContentLoaded", function () {
-      var questoesLink = document.querySelector('a[href="/questao"]');
-      if (questoesLink) {
-        questoesLink.classList.add("active");
-      }
       });
-    </script>
+    
+      // Marca o link ativo no sidebar
+      document.addEventListener("DOMContentLoaded", function () {
+        const questoesLink = document.querySelector('a[href="/admin/questao"]');
+        if (questoesLink) {
+          questoesLink.classList.add("active");
+        }
+      });
+    </script>    
   </body>
 </html>
