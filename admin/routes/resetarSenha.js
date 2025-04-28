@@ -9,14 +9,12 @@ router.get("/recuperar-senha", (req, res) => {
   const flashArray = res.locals.message;
   const message =
     Array.isArray(flashArray) && flashArray.length ? flashArray[0] : "";
-  console.log("[GET /recuperar-senha] flash message:", message);
   res.render("recuperar-senha", { message });
 });
 
 // 2) POST /recuperar-senha → valida matrícula e redireciona
 router.post("/recuperar-senha", async (req, res) => {
   const matricula = (req.body.matricula || "").trim();
-  console.log("[POST /recuperar-senha] matrícula recebida:", matricula);
 
   if (!matricula) {
     req.flash("error", "Informe a matrícula.");
@@ -28,7 +26,6 @@ router.post("/recuperar-senha", async (req, res) => {
       "SELECT id FROM professor WHERE matricula = ? LIMIT 1",
       [matricula]
     );
-    console.log("[POST /recuperar-senha] linhas encontradas:", rows);
 
     if (rows.length === 0) {
       req.flash(
@@ -40,12 +37,8 @@ router.post("/recuperar-senha", async (req, res) => {
 
     // matrícula válida → avança para confirmação de senha
     req.session.matriculaReset = matricula;
-    console.log(
-      "[POST /recuperar-senha] matrícula válida, redirecionando para /recuperar-senha/confirma"
-    );
     return res.redirect("/recuperar-senha/confirma");
   } catch (err) {
-    console.error("[POST /recuperar-senha] erro no BD:", err);
     req.flash("error", "Erro no servidor. Tente novamente.");
     return res.redirect("/recuperar-senha");
   }
@@ -53,7 +46,6 @@ router.post("/recuperar-senha", async (req, res) => {
 
 // 3) GET /recuperar-senha/confirma → exibe o formulário de nova senha
 router.get("/recuperar-senha/confirma", (req, res) => {
-  console.log("[GET /recuperar-senha/confirma]");
   if (!req.session.matriculaReset) {
     // acesso direto proibido → volta para início
     return res.redirect("/recuperar-senha");
@@ -68,7 +60,6 @@ router.get("/recuperar-senha/confirma", (req, res) => {
 router.post("/recuperar-senha/confirma", async (req, res) => {
   const matricula = req.session.matriculaReset;
   const { newPassword, confirmPassword } = req.body;
-  console.log("[POST /recuperar-senha/confirma] para matrícula:", matricula);
 
   // valida se as senhas coincidem
   if (!newPassword || newPassword !== confirmPassword) {
@@ -93,10 +84,6 @@ router.post("/recuperar-senha/confirma", async (req, res) => {
       success: true,
     });
   } catch (err) {
-    console.error(
-      "[POST /recuperar-senha/confirma] erro ao atualizar senha:",
-      err
-    );
     return res.render("confirma-senha", {
       message: "Não foi possível alterar a senha. Tente novamente.",
       success: false,
