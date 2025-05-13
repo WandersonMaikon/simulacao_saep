@@ -1,0 +1,15 @@
+<%- include('partials/header') %>
+<h4>Monitor de Simulado <%= simuladoId %></h4>
+
+<!-- Card de Atividade em Tempo Real -->
+<div class="shadow rounded-lg bg-white mb-6">
+  <div class="p-5">
+    <p class="font-semibold">Atividade em tempo real</p>
+    <table id="liveActivityTable" class="min-w-full mt-4">
+      <!-- cabeçalho e tbody vazios -->
+    </table>
+  </div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="/js/monitor-simulado.js"></script>

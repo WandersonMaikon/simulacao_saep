@@ -659,7 +659,7 @@ $(function () {
 
   // 2) monta o card com número + texto pequeno
   const $card = $(`
-    <a href="/admin/acompanhar-simulado/${id}"
+    <a href="/admin/monitor-simulado/${id}"
        class="shadow rounded-lg bg-white dark:bg-default-50 hover:shadow-lg transition-shadow block">
       <div class="p-5">
         <div class="flex items-center justify-between">
@@ -690,11 +690,4 @@ $(function () {
   // 4) dispara imediatamente e a cada 5s
   fetchCount();
   setInterval(fetchCount, 5000);
-
-  // (Opcional) se usar Socket.IO, basta manter o listener:
-  // const socket = io();
-  // socket.emit('joinAdminSimulado', { simuladoId: id });
-  // socket.on('activeCount', data => {
-  //   $card.find('.active-count').text(data.count);
-  // });
 });

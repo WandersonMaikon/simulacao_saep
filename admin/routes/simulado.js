@@ -233,7 +233,12 @@ router.get(
     });
   }
 );
-
+// GET /admin/monitor-simulado/:id — página de monitor ao vivo
+router.get("/admin/monitor-simulado/:id", verificarAutenticacao, (req, res) => {
+  const simuladoId = Number(req.params.id);
+  // você pode buscar aqui dados iniciais (ex.: título, turma, etc)
+  res.render("monitor-simulado", { simuladoId });
+});
 // POST /cadastrar-simulado-steps - Processa o cadastro multi‑etapas de simulado
 router.post("/cadastrar-simulado-steps", verificarAutenticacao, (req, res) => {
   // Recupera a conexão com o banco de dados e os dados enviados no corpo da requisição.
