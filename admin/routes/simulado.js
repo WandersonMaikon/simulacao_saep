@@ -207,6 +207,32 @@ router.get("/questao-por-curso/:cursoId", verificarAutenticacao, (req, res) => {
     return res.json(results);
   });
 });
+// GET /admin/simulados/:id/active-count
+router.get(
+  "/admin/simulados/:id/active-count",
+  verificarAutenticacao,
+  (req, res) => {
+    const db = req.db;
+    const simuladoId = Number(req.params.id);
+
+    // Conta quantos alunos estão vinculados ao simulado e ainda não finalizaram
+    const sql = `
+      SELECT COUNT(*) AS count
+      FROM simulado_aluno
+      WHERE simulado_id = ?
+        AND finalizado = 0
+    `;
+    db.query(sql, [simuladoId], (err, results) => {
+      if (err) {
+        console.error("Erro ao buscar active-count:", err);
+        return res
+          .status(500)
+          .json({ error: "Não foi possível obter o contador" });
+      }
+      res.json({ count: results[0].count });
+    });
+  }
+);
 
 // POST /cadastrar-simulado-steps - Processa o cadastro multi‑etapas de simulado
 router.post("/cadastrar-simulado-steps", verificarAutenticacao, (req, res) => {
@@ -272,7 +298,10 @@ router.post("/cadastrar-simulado-steps", verificarAutenticacao, (req, res) => {
           console.log("→ Alunos recebidos no cadastro:", alunosArray);
           console.log("→ Quantidade de alunos recebidos:", alunosArray.length);
           console.log("Quantidade de questões no cadastro:", questoesArray);
-          console.log("→ Quantidade de questões recebidas:", questoesArray.length);
+          console.log(
+            "→ Quantidade de questões recebidas:",
+            questoesArray.length
+          );
           // Verifica se há alunos ou questões para associar ao simulado. Se não houver, retorna uma resposta de sucesso.
           let totalQueries = alunosArray.length + questoesArray.length;
           if (totalQueries === 0) {

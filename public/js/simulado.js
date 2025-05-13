@@ -650,3 +650,51 @@ socket.on("updateSimulation", function (data) {
     }
   }
 });
+$(function () {
+  // 1) detecta simulado ativo
+  const $activeInput = $("input.ativar-simulado:checked").first();
+  if (!$activeInput.length) return;
+
+  const id = $activeInput.data("id");
+
+  // 2) monta o card com número + texto pequeno
+  const $card = $(`
+    <a href="/admin/acompanhar-simulado/${id}"
+       class="shadow rounded-lg bg-white dark:bg-default-50 hover:shadow-lg transition-shadow block">
+      <div class="p-5">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-base font-semibold text-default-600">Simulado Ativo</p>
+            <div class="mt-4 flex items-baseline gap-2">
+              <span class="active-count text-2xl font-semibold text-default-900">0</span>
+              <span class="text-xs text-default-600">Alunos online</span>
+            </div>
+          </div>
+          <span class="blinking-dot"></span>
+        </div>
+      </div>
+    </a>
+  `);
+
+  $(".p-6.space-y-6 > .grid").append($card);
+
+  // 3) função para buscar o count exato
+  function fetchCount() {
+    $.getJSON(`/admin/simulados/${id}/active-count`).done((res) => {
+      if (typeof res.count === "number") {
+        $card.find(".active-count").text(res.count);
+      }
+    });
+  }
+
+  // 4) dispara imediatamente e a cada 5s
+  fetchCount();
+  setInterval(fetchCount, 5000);
+
+  // (Opcional) se usar Socket.IO, basta manter o listener:
+  // const socket = io();
+  // socket.emit('joinAdminSimulado', { simuladoId: id });
+  // socket.on('activeCount', data => {
+  //   $card.find('.active-count').text(data.count);
+  // });
+});
