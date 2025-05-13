@@ -18,6 +18,36 @@
       .question-card {
         max-width: 900px !important;
       }
+      /* Container precisa ser relative para posicionar o ícone */
+      .alternative-container {
+        position: relative;
+        padding-left: 2.5rem; /* espaço para o ícone à esquerda */
+      }
+
+      /* Tesoura escondida por padrão, aparece ao :hover */
+      .eliminate-btn {
+        display: none;
+        position: absolute;
+        left: 1rem; /* distancia do canto esquerdo */
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 1.2rem;
+        cursor: pointer;
+        user-select: none;
+      }
+      .alternative-container:hover .eliminate-btn {
+        display: block;
+      }
+
+      /* Estilo para alternativa “eliminada” */
+      .alternative-container.eliminated .alternative-text {
+        text-decoration: line-through;
+        opacity: 0.5;
+      }
+      .alternative-container.eliminated .alternative-toggle {
+        opacity: 0.5;
+      }
+
       /* 2) Dá um max-height para o card e habilita scroll vertical interno */
       .question-card {
         max-height: 80vh; /* até 80% da altura da viewport */
@@ -267,6 +297,8 @@
                     class="alternative-container p-3 my-2"
                     data-questao="<%= questao.id %>"
                   >
+                    <!-- tesoura à esquerda -->
+                    <span class="eliminate-btn" title="Eliminar opção">✂️</span>
                     <div
                       class="alternative-toggle text-center font-weight-bold"
                       data-alternative="<%= key %>"
@@ -483,7 +515,6 @@
           c.onclick = () => {
             const q = c.dataset.questao;
 
-            // 1️⃣ limpa qualquer seleção pré-existente dessa questão
             document
               .querySelectorAll(
                 `.alternative-container[data-questao="${q}"] .alternative-toggle`
@@ -556,11 +587,11 @@
           fontSize: "1.2rem",
         });
         div.innerHTML = `
-          <p>Você saiu do modo tela cheia!<br>Para continuar, clique abaixo:</p>
-          <button id="reenterFsBtn" style="padding:.8rem 1.5rem;font-size:1rem;">
-            Voltar à Tela Cheia
-          </button>
-        `;
+            <p>Você saiu do modo tela cheia!<br>Para continuar, clique abaixo:</p>
+            <button id="reenterFsBtn" style="padding:.8rem 1.5rem;font-size:1rem;">
+              Voltar à Tela Cheia
+            </button>
+          `;
         document.body.appendChild(div);
         document
           .getElementById("reenterFsBtn")
@@ -731,16 +762,16 @@
         // 1) Desabilita seleção de texto e arraste
         const noSelectStyle = document.createElement("style");
         noSelectStyle.innerHTML = `
-    body, .question-card, .alternative-text {
-      -webkit-user-select: none !important;
-      -moz-user-select: none !important;
-      -ms-user-select: none !important;
-      user-select: none !important;
-    }
-    img, svg {
-      pointer-events: none !important;
-    }
-  `;
+      body, .question-card, .alternative-text {
+        -webkit-user-select: none !important;
+        -moz-user-select: none !important;
+        -ms-user-select: none !important;
+        user-select: none !important;
+      }
+      img, svg {
+        pointer-events: none !important;
+      }
+    `;
         document.head.appendChild(noSelectStyle);
 
         // 2) Bloqueia menu de contexto (botão direito)
@@ -766,6 +797,44 @@
         document.addEventListener("copy", (e) => e.preventDefault());
         document.addEventListener("paste", (e) => e.preventDefault());
       })();
+      // 1) Liga o clique na tesoura
+      function bindEliminateButtons() {
+        document.querySelectorAll(".alternative-container").forEach((c) => {
+          const btn = c.querySelector(".eliminate-btn");
+          btn.onclick = (e) => {
+            e.stopPropagation(); // não dispara seleção de alternativa
+            const q = c.dataset.questao;
+            const alt = c.querySelector(".alternative-toggle").dataset
+              .alternative;
+            const key = `elim_${alunoId}_${simuladoId}_q${q}_a${alt}`;
+            const nowEliminated = c.classList.toggle("eliminated");
+            if (nowEliminated) localStorage.setItem(key, "1");
+            else localStorage.removeItem(key);
+          };
+        });
+      }
+
+      // 2) Reaplica marcações ao renderizar cada página/AJAX
+      function restoreEliminations() {
+        document.querySelectorAll(".alternative-container").forEach((c) => {
+          const q = c.dataset.questao;
+          const alt = c.querySelector(".alternative-toggle").dataset
+            .alternative;
+          const key = `elim_${alunoId}_${simuladoId}_q${q}_a${alt}`;
+          if (localStorage.getItem(key)) c.classList.add("eliminated");
+        });
+      }
+
+      // 3) Inclua ambas em bindAll(), que é chamada após cada fetch/AJAX
+      function bindAll() {
+        bindNavButtons();
+        bindMapNavigation();
+        bindAlternativeClicks();
+        bindEliminateButtons(); // <<< aqui
+        restoreEliminations(); // <<< e aqui
+        markAnsweredQuestions();
+        updateSubmitButton();
+      }
     </script>
   </body>
 </html>
