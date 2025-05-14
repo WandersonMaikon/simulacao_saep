@@ -792,12 +792,12 @@
           ); // use o listener em capture para pegar antes de tudo
         });
 
-        // 4) Também bloqueia Ctrl+X, Ctrl+V se quiser
+        // Bloqueia Ctrl+X, Ctrl+V se quiser
         document.addEventListener("cut", (e) => e.preventDefault());
         document.addEventListener("copy", (e) => e.preventDefault());
         document.addEventListener("paste", (e) => e.preventDefault());
       })();
-      // 1) Liga o clique na tesoura
+      // clique na tesoura
       function bindEliminateButtons() {
         document.querySelectorAll(".alternative-container").forEach((c) => {
           const btn = c.querySelector(".eliminate-btn");
@@ -814,7 +814,7 @@
         });
       }
 
-      // 2) Reaplica marcações ao renderizar cada página/AJAX
+      // renderizar cada página/AJAX
       function restoreEliminations() {
         document.querySelectorAll(".alternative-container").forEach((c) => {
           const q = c.dataset.questao;
@@ -825,13 +825,13 @@
         });
       }
 
-      // 3) Inclua ambas em bindAll(), que é chamada após cada fetch/AJAX
+      // bindAll(), que é chamada após cada fetch/AJAX
       function bindAll() {
         bindNavButtons();
         bindMapNavigation();
         bindAlternativeClicks();
-        bindEliminateButtons(); // <<< aqui
-        restoreEliminations(); // <<< e aqui
+        bindEliminateButtons();
+        restoreEliminations();
         markAnsweredQuestions();
         updateSubmitButton();
       }

@@ -89,7 +89,7 @@ router.get("/admin/simulados", verificarAutenticacao, (req, res) => {
   });
 });
 
-// GET /cadastrar-simulado - Renderiza o formulário para cadastrar um simulado
+// Renderiza o formulário para cadastrar um simulado
 router.get("/cadastrar-simulado", verificarAutenticacao, async (req, res) => {
   try {
     // Utilize promisePool, disponível via req.promisePool ou outra forma
@@ -102,7 +102,7 @@ router.get("/cadastrar-simulado", verificarAutenticacao, async (req, res) => {
   }
 });
 
-// GET /cadastrar-simulado-steps - Renderiza a página de cadastro multi‑etapas de simulado
+// Renderiza a página de cadastro multi‑etapas de simulado
 router.get(
   "/admin/cadastrar-simulado-steps",
   verificarAutenticacao,
@@ -233,19 +233,17 @@ router.get(
     });
   }
 );
-// GET /admin/monitor-simulado/:id — página de monitor ao vivo
+// página de monitor ao vivo
 router.get("/admin/monitor-simulado/:id", verificarAutenticacao, (req, res) => {
   const simuladoId = Number(req.params.id);
-  // você pode buscar aqui dados iniciais (ex.: título, turma, etc)
   res.render("monitor-simulado", { simuladoId });
 });
-// POST /cadastrar-simulado-steps - Processa o cadastro multi‑etapas de simulado
+// Cadastro multi‑etapas de simulado
 router.post("/cadastrar-simulado-steps", verificarAutenticacao, (req, res) => {
   // Recupera a conexão com o banco de dados e os dados enviados no corpo da requisição.
   const db = req.db;
   const { curso, turma, alunos, questoes, tempo_prova, descricao } = req.body;
   const professorId = req.session.user.id; // Identifica o professor autenticado.
-
   // Valida os campos obrigatórios para o cadastro do simulado.
   if (!curso || !turma) {
     return res.status(400).json({ error: "Curso e Turma são obrigatórios." });
